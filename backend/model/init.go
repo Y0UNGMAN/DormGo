@@ -17,14 +17,20 @@ func Database() {
 	} else {
 		println("数据库连接成功")
 	}
-	//创建表
+	//创建用户表
 	err = db.AutoMigrate(&dg_user{})
 	if err != nil {
-		println("创建表s失败")
+		println("创建用户表失败")
 	} else {
-		println("创建表成功")
+		println("创建用户表成功")
 	}
-
+	//创建post表
+	err = db.AutoMigrate(&dg_post{})
+	if err != nil {
+		println("创建post表失败")
+	} else {
+		println("创建post表成功")
+	}
 	DB = db
 
 }

@@ -1,5 +1,6 @@
 <template>
   <div>
+    <h1>寝友Go</h1>
     <h1>登录界面</h1>
   </div>
   <div class="btn-zone">
