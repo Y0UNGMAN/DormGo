@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/Y0UNGMAN/DormGo/backend/api"
+	"github.com/Y0UNGMAN/DormGo/backend/controller"
 	"github.com/Y0UNGMAN/DormGo/backend/middleware"
 	"github.com/gin-gonic/gin"
 )
@@ -9,7 +9,7 @@ import (
 func App() *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.Cors())
-	r.GET("/ping", api.Ping)
-	r.GET("/", api.Ping)
+	r.GET("/ping", controller.Ping)
+	r.GET("/", controller.Ping)
 	return r
 }

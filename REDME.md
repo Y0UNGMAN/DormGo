@@ -7,7 +7,11 @@
 本地创建数据库：dormgo_db
 用户：root    密码：123456
 4.安装跨域工具： go get github.com/gin-contrib/cors
+
+安装redis： go get -u github.com/go-redis/redis
+
 5.启动后端： go run main.go    
+
 ## 前端：
 1 安装 Node.js
 2 创建vue项目：npm create vite@latest frontend
@@ -19,3 +23,6 @@
 
 ## 运行注意
 clone下来在本地运行时，不需要“初始化go模块”以及“初始化go模块” ， 需要安装其他配置，再运行
+
+
+
