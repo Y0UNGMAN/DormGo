@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 // 组件引入
-import AdminLogin from '@/components/AdminLogin'
-import AdminLayout from '@/components/AdminLayout'
-import AdminProfile from '@/views/AdminProfile'
-import AdminSideMenu from '@/views/AdminSideMenu'
+import AdminLogin from '@/components/AdminLogin.vue'
+import AdminLayout from '@/components/AdminLayout.vue'
+import AdminProfile from '@/views/AdminProfile.vue'
+import AdminSideMenu from '@/views/AdminSideMenu.vue'
 
 // 创建路由实例
 const router = createRouter({

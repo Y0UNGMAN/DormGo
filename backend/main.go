@@ -15,12 +15,16 @@ func main() {
 		return
 	}
 	//2.初始化日志
+
 	//3.初始化MySql连接
-	model.Database()
+	if err := model.Init(); err != nil {
+		fmt.Printf("init model failed, err:%v\n", err)
+		return
+	}
 	//4.初始化Redis连接
 	//5.注册路由
-
-	//6.启动服务
 	r := router.App()
+	//6.启动服务
+
 	r.Run(":8080")
 }

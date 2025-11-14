@@ -1,14 +1,24 @@
 package model
 
 import (
+	"fmt"
+
+	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
-func Database() {
-	dsn := "root:123456@tcp(127.0.0.1:3306)/dormgo_db?charset=utf8mb4&parseTime=True&loc=Local"
+func Init() (error error) {
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		viper.GetString("mysql.user"),
+		viper.GetString("mysql.password"),
+		viper.GetString("mysql.host"),
+		viper.GetInt("mysql.port"),
+		viper.GetString("mysql.dbname"),
+	)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	})
@@ -44,5 +54,5 @@ func Database() {
 		println("创建type表成功")
 	}
 	DB = db
-
+	return
 }

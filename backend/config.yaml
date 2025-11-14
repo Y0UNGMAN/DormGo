@@ -10,7 +10,7 @@ log:
   max_backups: 7
 mysql:
   host: "127.0.0.1"
-  port: 13306
+  port: 3306
   user: "root"
   password: "123456"
   dbname: "dormgo_db"
