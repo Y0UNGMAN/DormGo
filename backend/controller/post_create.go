@@ -2,5 +2,6 @@ package controller
 
 import "github.com/gin-gonic/gin"
 
-func CommunityHandler(c *gin.Context) {
+func PostCreate(c *gin.Context) {
+	
 }
