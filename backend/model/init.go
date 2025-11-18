@@ -53,5 +53,11 @@ func Init() (err error) {
 	} else {
 		println("创建type表成功")
 	}
+	err = db.AutoMigrate(&DgAdmin{})
+	if err != nil {
+		println("创建admin表成功")
+	} else {
+		println("创建admin表成功")
+	}
 	return
 }
