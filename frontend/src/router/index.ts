@@ -4,18 +4,19 @@ import AdminLogin from '@/components/AdminLogin.vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import AdminProfile from '@/views/AdminProfile.vue'
 import AdminSideMenu from '@/views/AdminSideMenu.vue'
+import DormgoHome from '@/views/DormgoHome.vue'
 
 // 创建路由实例
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/login',
+      path: '/',
       name: 'AdminLogin',
       component: AdminLogin//登录页面无需布局
     },
     {
-      path: '/',
+      path: '/layout',
       name: 'AdminLayout',
       component: AdminLayout,
       //meta: { requiresAuth: true }, // 需登录访问
@@ -27,7 +28,12 @@ const router = createRouter({
           meta: { title: '个人中心' }
         },
       ]
-    }
+    },
+    {
+      path: '/dormgo',
+      name: 'DormgoHome',
+      component: DormgoHome,
+    },
   ]
 })
 
