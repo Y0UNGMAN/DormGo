@@ -3,7 +3,7 @@
   <div class="dormgo-home">
     <!-- 顶部栏：搜索框和用户头像 -->
     <div class="top-bar">
-      <!-- 搜索框 -->
+      <!-- 搜索框 - 居中 -->
       <div class="search-section">
         <div class="search-container">
           <div class="search-box">
@@ -32,7 +32,7 @@
       </div>
     </div>
 
-    <!-- 上边栏 - 分类筛选 -->
+    <!-- 上边栏 - 分类筛选（居中） -->
     <div class="top-nav">
       <div class="nav-content">
         <div class="category-filters">
@@ -383,15 +383,18 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-/* 搜索框样式 */
+/* 搜索框样式 - 居中 */
 .search-section {
   flex: 1;
-  max-width: 600px;
+  display: flex;
+  justify-content: center; /* 新增：水平居中 */
 }
 
 .search-container {
   display: flex;
   gap: 12px;
+  max-width: 600px; /* 限制最大宽度 */
+  width: 100%; /* 确保容器宽度 */
 }
 
 .search-box {
@@ -480,7 +483,7 @@ onMounted(() => {
   transform: scale(1.05);
 }
 
-/* 上边栏样式 */
+/* 上边栏样式 - 分类筛选居中 */
 .top-nav {
   background: white;
   border-radius: 12px;
@@ -491,7 +494,7 @@ onMounted(() => {
 
 .nav-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* 新增：水平居中 */
   align-items: center;
 }
 
@@ -500,6 +503,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: center; /* 新增：分类按钮居中 */
 }
 
 .filter-label {
