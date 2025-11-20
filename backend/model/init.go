@@ -8,9 +8,9 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
+var db *gorm.DB
 
-func Init() (error error) {
+func Init() (err error) {
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		viper.GetString("mysql.user"),
@@ -19,7 +19,7 @@ func Init() (error error) {
 		viper.GetInt("mysql.port"),
 		viper.GetString("mysql.dbname"),
 	)
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	})
 	if err != nil {
@@ -28,31 +28,36 @@ func Init() (error error) {
 		println("数据库连接成功")
 	}
 	//创建用户表
-	err = db.AutoMigrate(&dgUser{})
+	err = db.AutoMigrate(&DgUser{})
 	if err != nil {
 		println("创建用户表失败")
 	} else {
 		println("创建用户表成功")
 	}
 	//创建post表
-	err = db.AutoMigrate(&dgPost{})
+	err = db.AutoMigrate(&DgPost{})
 	if err != nil {
 		println("创建post表失败")
 	} else {
 		println("创建post表成功")
 	}
-	err = db.AutoMigrate(&dgDorm{})
+	err = db.AutoMigrate(&DgDorm{})
 	if err != nil {
 		println("创建dorm表失败")
 	} else {
 		println("创建dorm表成功")
 	}
-	err = db.AutoMigrate(&dgType{})
+	err = db.AutoMigrate(&DgType{})
 	if err != nil {
 		println("创建type表失败")
 	} else {
 		println("创建type表成功")
 	}
-	DB = db
+	err = db.AutoMigrate(&DgAdmin{})
+	if err != nil {
+		println("创建admin表成功")
+	} else {
+		println("创建admin表成功")
+	}
 	return
 }
