@@ -5,6 +5,8 @@ import AdminLayout from '@/components/AdminLayout.vue'
 import AdminProfile from '@/views/AdminProfile.vue'
 import AdminSideMenu from '@/views/AdminSideMenu.vue'
 import DormgoHome from '@/views/DormgoHome.vue'
+import PostDetail from '@/views/PostDetail.vue'
+import PostPublish from '@/views/PostPublish.vue'
 
 // 创建路由实例
 const router = createRouter({
@@ -34,6 +36,17 @@ const router = createRouter({
       name: 'DormgoHome',
       component: DormgoHome,
     },
+    {
+      path: '/post/:id',
+      name: 'PostDetail',
+      component: PostDetail,
+      props: true
+    },
+    {
+      path: '/publish',
+      name: 'PublishPost',
+      component: PostPublish
+    }
   ]
 })
 

@@ -1,58 +1,63 @@
 <!-- src/components/Card.vue -->
 <template>
   <div class="card" @click="handleCardClick">
-    <div class="card-header">
-      <img :src="post.userAvatar" alt="用户头像" class="user-avatar">
-      <div class="user-info">
-        <span class="user-name">{{ post.userName }}</span>
-        <span class="post-time">{{ post.time }}</span>
-      </div>
-    </div>
+    <!-- 标题放在最上部 -->
+    <h3 class="post-title">
+      {{ post.title }}
+    </h3>
     
     <div class="card-content">
+      <!-- 用户信息：头像和名字 -->
+      <div class="user-info">
+        <img :src="post.userAvatar" alt="用户头像" class="user-avatar">
+        <span class="user-name">
+          {{ post.userName }}
+        </span>
+      </div>
+
       <!-- 分类标签和宿舍楼标签 -->
       <div class="tags-container">
-        <span class="post-category" :class="post.category">{{ getCategoryText(post.category) }}</span>
-        <span class="dorm-tag">{{ post.dormBuilding }}</span>
+        <span class="post-category" :class="post.category">
+          {{ getCategoryText(post.category) }}
+        </span>
+        <span class="dorm-tag">
+          {{ post.dormBuilding }}
+        </span>
       </div>
       
-      <h3 class="post-title">{{ post.title }}</h3>
-      <p class="post-content">{{ post.content }}</p>
+      <!-- 帖子正文 - 只显示一行 -->
+      <p class="post-content">
+        {{ post.content }}
+      </p>
+      
+      <!-- 图片展示 - 最多两张 -->
       <div v-if="post.images && post.images.length > 0" class="post-images">
         <img 
-          v-for="(image, index) in post.images.slice(0, 3)" 
+          v-for="(image, index) in post.images.slice(0, 2)" 
           :key="index" 
           :src="image" 
           :alt="'图片' + (index + 1)"
           class="post-image"
         >
-        <span v-if="post.images.length > 3" class="image-count">+{{ post.images.length - 3 }}</span>
       </div>
     </div>
     
-    <div class="card-footer">
-      <div class="post-stats">
-        <span class="stat-item">
-          <span class="icon">💬</span>
-          {{ post.commentCount || 0 }}
-        </span>
-        <span class="stat-item">
-          <span class="icon">👀</span>
-          {{ post.viewCount || 0 }}
-        </span>
-        <span class="stat-item">
-          <span class="icon">❤️</span>
-          {{ post.likeCount || 0 }}
-        </span>
-      </div>
-      <button class="contact-btn" @click.stop="contactUser">联系TA</button>
-    </div>
+    <!-- 使用独立的统计组件 -->
+    <PostStats
+      :view-count="post.viewCount"
+      :comment-count="post.commentCount"
+      :like-count="post.likeCount"
+      :time="post.time"
+    />
   </div>
 </template>
 
 <script setup>
 import { defineProps } from 'vue'
+import { useRouter } from 'vue-router'
+import PostStats from '@/components/PostStats.vue'
 
+const router = useRouter()
 const props = defineProps({
   post: {
     type: Object,
@@ -88,10 +93,9 @@ const getCategoryText = (category) => {
 
 const handleCardClick = () => {
   console.log('查看帖子详情:', props.post.id)
-}
-
-const contactUser = () => {
-  console.log('联系用户:', props.post.userName)
+  // 增加浏览量
+  props.post.viewCount++
+  router.push(`/post/${props.post.id}`)
 }
 </script>
 
@@ -112,36 +116,40 @@ const contactUser = () => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.card-header {
+/* 标题样式 - 加粗加大 */
+.post-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-content {
+  margin-bottom: 12px;
+}
+
+/* 用户信息样式 */
+.user-info {
   display: flex;
   align-items: center;
   margin-bottom: 12px;
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  margin-right: 12px;
+  margin-right: 8px;
   object-fit: cover;
 }
 
-.user-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
 .user-name {
-  font-weight: 600;
-  color: #333;
+  font-weight: 500;
+  color: #666;
   font-size: 14px;
-}
-
-.post-time {
-  font-size: 12px;
-  color: #999;
-  margin-top: 2px;
 }
 
 /* 标签容器样式 */
@@ -200,29 +208,25 @@ const contactUser = () => {
   font-weight: 500;
 }
 
-.card-content {
-  margin-bottom: 12px;
-}
-
-.post-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
+/* 帖子正文 - 只显示一行（修复兼容性警告） */
 .post-content {
   font-size: 14px;
   color: #666;
   line-height: 1.5;
   margin: 0 0 12px 0;
+  
+  /* 修复：同时定义标准属性和带前缀的属性 */
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  display: box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
   -webkit-box-orient: vertical;
+  box-orient: vertical;
   overflow: hidden;
+  min-height: 21px; /* 保持一行高度 */
 }
 
+/* 图片展示样式 */
 .post-images {
   display: flex;
   gap: 8px;
@@ -230,62 +234,10 @@ const contactUser = () => {
 }
 
 .post-image {
-  width: 80px;
-  height: 80px;
+  width: 120px;
+  height: 90px;
   border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
-}
-
-.image-count {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  background: #f5f5f5;
-  border-radius: 6px;
-  color: #999;
-  font-size: 14px;
-}
-
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.post-stats {
-  display: flex;
-  gap: 16px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #999;
-}
-
-.icon {
-  font-size: 14px;
-}
-
-.contact-btn {
-  padding: 6px 12px;
-  background: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.contact-btn:hover {
-  background: #40a9ff;
 }
 </style>

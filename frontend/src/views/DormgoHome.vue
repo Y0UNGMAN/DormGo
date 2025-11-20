@@ -1,21 +1,34 @@
 <!-- src/views/DormgoHome.vue -->
 <template>
   <div class="dormgo-home">
-    <!-- 搜索框 -->
-    <div class="search-section">
-      <div class="search-container">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input
-            v-model="searchKeyword"
-            type="text"
-            placeholder="搜索帖子标题或内容..."
-            class="search-input"
-            @input="handleSearch"
-          />
-          <button v-if="searchKeyword" class="clear-btn" @click="clearSearch">×</button>
+    <!-- 顶部栏：搜索框和用户头像 -->
+    <div class="top-bar">
+      <!-- 搜索框 -->
+      <div class="search-section">
+        <div class="search-container">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input
+              v-model="searchKeyword"
+              type="text"
+              placeholder="搜索帖子标题/内容"
+              class="search-input"
+              @input="handleSearch"
+            />
+            <button v-if="searchKeyword" class="clear-btn" @click="clearSearch">×</button>
+          </div>
+          <button class="search-btn" @click="handleSearch">搜索</button>
         </div>
-        <button class="search-btn" @click="handleSearch">搜索</button>
+      </div>
+
+      <!-- 用户头像 -->
+      <div class="user-avatar-section">
+        <img 
+          :src="currentUser.avatar" 
+          alt="用户头像" 
+          class="user-avatar"
+          @click="goToProfile"
+        />
       </div>
     </div>
 
@@ -33,13 +46,6 @@
           >
             {{ category.name }}
             <span class="category-count">{{ getCategoryCount(category.id) }}</span>
-          </button>
-        </div>
-        
-        <div class="nav-actions">
-          <button class="publish-btn" @click="handlePublish">
-            <span class="btn-icon">📝</span>
-            发布帖子
           </button>
         </div>
       </div>
@@ -76,6 +82,7 @@
           <button class="clear-filters" @click="clearAllFilters">清除筛选</button>
         </div>
 
+        <!-- 帖子列表 - 直接显示所有帖子 -->
         <div class="posts-container">
           <Card 
             v-for="post in filteredPosts"
@@ -83,13 +90,6 @@
             :post="post"
             class="post-card"
           />
-        </div>
-        
-        <!-- 加载更多 -->
-        <div class="load-more" v-if="hasMorePosts && filteredPosts.length > 0">
-          <button class="load-more-btn" @click="loadMorePosts">
-            加载更多帖子
-          </button>
         </div>
         
         <!-- 空状态 -->
@@ -101,20 +101,42 @@
           <button class="empty-btn" @click="handlePublish">发布帖子</button>
           <button v-if="hasActiveFilters" class="empty-btn secondary" @click="clearAllFilters">查看全部帖子</button>
         </div>
+
+        <!-- 已显示所有帖子的提示 -->
+        <div class="all-posts-loaded" v-if="filteredPosts.length > 0">
+          <div class="loaded-text">已显示所有帖子</div>
+          <div class="loaded-count">共 {{ filteredPosts.length }} 个帖子</div>
+        </div>
       </div>
     </div>
+
+    <!-- 发布帖子按钮 - 固定在右下角 -->
+    <button class="publish-fab" @click="handlePublish">
+      <span class="fab-icon">📝</span>
+      发布帖子
+    </button>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Card from '@/components/Card.vue'
+
+const router = useRouter()
 
 // 响应式数据
 const selectedDorm = ref('all') // 默认显示全部宿舍楼
 const selectedCategory = ref('all')
 const searchKeyword = ref('')
 const posts = ref([])
+
+// 当前用户信息
+const currentUser = ref({
+  id: '1',
+  name: '当前用户',
+  avatar: '/avatars/current-user.jpg'
+})
 
 // 宿舍楼数据
 const dormList = ref([
@@ -124,11 +146,6 @@ const dormList = ref([
   { id: 'rong7', name: '榕园7号' },
   { id: 'rong6', name: '榕园6号' },
   { id: 'rong5', name: '榕园5号' },
-  { id: 'xin1', name: '馨园1号' },
-  { id: 'xin2', name: '馨园2号' },
-  { id: 'xin3', name: '馨园3号' },
-  { id: 'zhi1', name: '芷园1号' },
-  { id: 'zhi2', name: '芷园2号' }
 ])
 
 // 分类数据
@@ -187,34 +204,6 @@ const mockPosts = [
   },
   {
     id: '4',
-    userName: '急需帮助',
-    userAvatar: '/avatars/4.jpg',
-    time: '1天前',
-    category: 'help',
-    dormBuilding: '馨园1号',
-    title: '电脑突然蓝屏开不了机，求大神帮忙',
-    content: '今天早上电脑突然蓝屏，重启后还是不行，有没有懂电脑的同学能帮忙看看？非常感谢！',
-    images: ['/posts/help1.jpg'],
-    commentCount: 15,
-    viewCount: 67,
-    likeCount: 6
-  },
-  {
-    id: '5',
-    userName: '二手交易',
-    userAvatar: '/avatars/5.jpg',
-    time: '2天前',
-    category: 'trade',
-    dormBuilding: '芷园1号',
-    title: '转让几乎全新的机械键盘',
-    content: 'Cherry MX红轴，买来用了不到一个月，因换笔记本用不上了，原价450，现300出。',
-    images: ['/posts/trade1.jpg', '/posts/trade2.jpg', '/posts/trade3.jpg'],
-    commentCount: 3,
-    viewCount: 23,
-    likeCount: 4
-  },
-  {
-    id: '6',
     userName: '美食家',
     userAvatar: '/avatars/6.jpg',
     time: '3小时前',
@@ -228,21 +217,7 @@ const mockPosts = [
     likeCount: 10
   },
   {
-    id: '7',
-    userName: '羽毛球爱好者',
-    userAvatar: '/avatars/7.jpg',
-    time: '4小时前',
-    category: 'sports',
-    dormBuilding: '馨园2号',
-    title: '晚上羽毛球馆约球',
-    content: '晚上7点体育馆羽毛球场地，现有3人，还缺1人，欢迎喜欢羽毛球的朋友加入！',
-    images: [],
-    commentCount: 4,
-    viewCount: 18,
-    likeCount: 6
-  },
-  {
-    id: '8',
+    id: '5',
     userName: '考研党',
     userAvatar: '/avatars/8.jpg',
     time: '6小时前',
@@ -254,6 +229,20 @@ const mockPosts = [
     commentCount: 9,
     viewCount: 34,
     likeCount: 11
+  },
+  {
+    id: '6',
+    userName: '羽毛球爱好者',
+    userAvatar: '/avatars/7.jpg',
+    time: '4小时前',
+    category: 'sports',
+    dormBuilding: '榕园5号',
+    title: '晚上羽毛球馆约球',
+    content: '晚上7点体育馆羽毛球场地，现有3人，还缺1人，欢迎喜欢羽毛球的朋友加入！',
+    images: [],
+    commentCount: 4,
+    viewCount: 18,
+    likeCount: 6
   }
 ]
 
@@ -282,11 +271,6 @@ const filteredPosts = computed(() => {
   }
   
   return filtered
-})
-
-// 计算属性：是否还有更多帖子
-const hasMorePosts = computed(() => {
-  return filteredPosts.value.length < 50
 })
 
 // 计算属性：是否有活跃的筛选条件
@@ -322,6 +306,24 @@ const getDormCount = (dormName) => {
   return posts.value.filter(post => post.dormBuilding === dormName).length
 }
 
+// 从本地存储获取帖子的函数
+const getPostsFromLocal = () => {
+  try {
+    const localPosts = JSON.parse(localStorage.getItem('dormgo_posts') || '[]')
+    return localPosts
+  } catch (error) {
+    console.error('读取本地帖子失败:', error)
+    return []
+  }
+}
+
+// 合并本地帖子与模拟数据
+const loadPosts = () => {
+  const localPosts = getPostsFromLocal()
+  // 将本地帖子放在前面，模拟数据放在后面
+  posts.value = [...localPosts, ...mockPosts]
+}
+
 // 事件处理函数
 const selectDorm = (dormId) => {
   selectedDorm.value = dormId
@@ -348,43 +350,48 @@ const clearAllFilters = () => {
 }
 
 const handlePublish = () => {
-  console.log('发布帖子')
-  // 这里可以跳转到发布页面或打开发布弹窗
+  console.log('跳转到发布帖子页面')
+  router.push('/publish')
 }
 
-const loadMorePosts = () => {
-  console.log('加载更多帖子')
-  // 这里可以调用API加载更多帖子
+const goToProfile = () => {
+  console.log('跳转到个人资料页面')
+  // 这里跳转到个人资料页面
+  // router.push('/profile')
 }
 
 // 生命周期
 onMounted(() => {
-  // 模拟获取帖子数据
-  posts.value = mockPosts
+  loadPosts()
 })
 </script>
 
 <style scoped>
-/* 样式部分与之前相同，保持不变 */
 .dormgo-home {
   min-height: 100vh;
   background: #f5f5f5;
   padding: 20px;
+  position: relative;
 }
 
-.search-section {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* 顶部栏布局 */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
   margin-bottom: 20px;
+}
+
+/* 搜索框样式 */
+.search-section {
+  flex: 1;
+  max-width: 600px;
 }
 
 .search-container {
   display: flex;
   gap: 12px;
-  max-width: 600px;
-  margin: 0 auto;
 }
 
 .search-box {
@@ -453,6 +460,27 @@ onMounted(() => {
   background: #40a9ff;
 }
 
+/* 用户头像样式 */
+.user-avatar-section {
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid #e8e8e8;
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  border-color: #1890ff;
+  transform: scale(1.05);
+}
+
+/* 上边栏样式 */
 .top-nav {
   background: white;
   border-radius: 12px;
@@ -522,34 +550,38 @@ onMounted(() => {
   color: #666;
 }
 
-.nav-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.publish-btn {
+/* 发布按钮 - 固定在右下角 */
+.publish-fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 16px 24px;
   background: #1890ff;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.publish-btn:hover {
-  background: #40a9ff;
-}
-
-.btn-icon {
+  border-radius: 50px;
   font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1000;
 }
 
+.publish-fab:hover {
+  background: #40a9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
+}
+
+.fab-icon {
+  font-size: 18px;
+}
+
+/* 主内容区样式 */
 .main-content {
   display: flex;
   gap: 20px;
@@ -557,6 +589,7 @@ onMounted(() => {
   margin: 0 auto;
 }
 
+/* 左边栏样式 */
 .sidebar {
   width: 200px;
   background: white;
@@ -625,6 +658,7 @@ onMounted(() => {
   color: white;
 }
 
+/* 帖子区域样式 */
 .posts-area {
   flex: 1;
   min-width: 0;
@@ -675,24 +709,25 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
-.load-more {
+/* 已显示所有帖子的提示 */
+.all-posts-loaded {
   text-align: center;
-  padding: 20px;
-}
-
-.load-more-btn {
-  padding: 10px 20px;
+  padding: 40px 20px;
   background: white;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.3s;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
 }
 
-.load-more-btn:hover {
-  background: #f0f0f0;
-  border-color: #d9d9d9;
+.loaded-text {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.loaded-count {
+  font-size: 14px;
+  color: #999;
 }
 
 .empty-state {
@@ -740,9 +775,23 @@ onMounted(() => {
   background: #f5f5f5;
 }
 
+/* 响应式设计 */
 @media (max-width: 768px) {
   .dormgo-home {
     padding: 12px;
+  }
+  
+  .top-bar {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .search-section {
+    max-width: 100%;
+  }
+  
+  .search-container {
+    flex-direction: column;
   }
   
   .main-content {
@@ -764,8 +813,11 @@ onMounted(() => {
     justify-content: center;
   }
   
-  .search-container {
-    flex-direction: column;
+  .publish-fab {
+    bottom: 20px;
+    right: 20px;
+    padding: 14px 20px;
+    font-size: 14px;
   }
 }
 </style>
