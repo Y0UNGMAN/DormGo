@@ -14,6 +14,8 @@ func App() *gin.Engine {
 
 	post := r.Group("/api/v1/post")
 	{
+		//获取所有宿舍
+		post.GET("/dorms", controller.GetDorms)
 		//获取帖子类型
 		post.GET("/post_type", controller.PostType)
 		//根据id获取帖子类型
@@ -24,7 +26,8 @@ func App() *gin.Engine {
 		post.GET("/view/:id", controller.GetPostDetail)
 		//根据宿舍楼返回帖子
 		post.GET("/:dormid", controller.GetPostByDorm)
-
+		//获取所有帖子列表
+		post.GET("/posts", controller.GetPosts)
 	}
 
 	return r

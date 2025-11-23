@@ -38,14 +38,14 @@
         <div class="category-filters">
           <span class="filter-label">分类：</span>
           <button
-            v-for="category in categories"
-            :key="category.id"
+            v-for="posttype in postTypes"
+            :key="posttype.typeid"
             class="filter-btn"
-            :class="{ active: selectedCategory === category.id }"
-            @click="selectCategory(category.id)"
+            :class="{ active: selectedCategory === posttype.typeid }"
+            @click="selectCategory(posttype.typeid)"
           >
-            {{ category.name }}
-            <span class="category-count">{{ getCategoryCount(category.id) }}</span>
+            {{ posttype.typename }}
+            <span class="category-count">{{ getCategoryCount(posttype.typeid) }}</span>
           </button>
         </div>
       </div>
@@ -58,13 +58,13 @@
         <div class="dorm-list">
           <div
             v-for="dorm in dormList"
-            :key="dorm.id"
+            :key="dorm.dormid"
             class="dorm-item"
-            :class="{ active: selectedDorm === dorm.id }"
-            @click="selectDorm(dorm.id)"
+            :class="{ active: selectedDorm === dorm.dormid }"
+            @click="selectDorm(dorm.dormid)"
           >
-            <span class="dorm-name">{{ dorm.name }}</span>
-            <span class="post-count">{{ getDormCount(dorm.name) }}</span>
+            <span class="dorm-name">{{ dorm.dormname }}</span>
+            <span class="post-count">{{ getDormCount(dorm.dormname) }}</span>
           </div>
         </div>
       </div>
@@ -122,131 +122,185 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Card from '@/components/Card.vue'
-
+import axios from 'axios'
 const router = useRouter()
 
 // 响应式数据
 const selectedDorm = ref('all') // 默认显示全部宿舍楼
 const selectedCategory = ref('all')
 const searchKeyword = ref('')
-const posts = ref([])
 
 // 当前用户信息
 const currentUser = ref({
   id: '1',
   name: '当前用户',
-  avatar: '/avatars/current-user.jpg'
+  avatar: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/midnight.jpg'
 })
 
 // 宿舍楼数据
-const dormList = ref([
-  { id: 'all', name: '全部宿舍' },
-  { id: 'rong9', name: '榕园9号' },
-  { id: 'rong8', name: '榕园8号' },
-  { id: 'rong7', name: '榕园7号' },
-  { id: 'rong6', name: '榕园6号' },
-  { id: 'rong5', name: '榕园5号' },
-])
+// const dormList = ref([
+//   { id: 'all', name: '全部宿舍' },
+//   { id: 'rong9', name: '榕园9号' },
+//   { id: 'rong8', name: '榕园8号' },
+//   { id: 'rong7', name: '榕园7号' },
+//   { id: 'rong6', name: '榕园6号' },
+//   { id: 'rong5', name: '榕园5号' },
+// ])
+
+const dormList = ref([]);
+const fetchDormList = async() => {
+  try {
+    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/dorms');
+    if (response.data && response.data.data) {
+      // 成功获取数据，并赋值给响应式变量 dormList
+      dormList.value = response.data.data;
+      console.log('宿舍楼列表:', dormList.value);
+    } else {
+      // 如果数据结构不符合预期
+      throw new Error('接口返回数据结构异常');
+    }
+  } catch (error) {
+    console.error('获取宿舍楼列表失败:', error);
+  }
+};
+
 
 // 分类数据
-const categories = ref([
-  { id: 'all', name: '全部' },
-  { id: 'food', name: '约饭' },
-  { id: 'sports', name: '约球' },
-  { id: 'help', name: '求助' },
-  { id: 'trade', name: '交易' },
-  { id: 'study', name: '学习' }
-])
+// const categories = ref([
+//   { id: 'all', name: '全部' },
+//   { id: 'food', name: '约饭' },
+//   { id: 'sports', name: '约球' },
+//   { id: 'help', name: '求助' },
+//   { id: 'trade', name: '交易' },
+//   { id: 'study', name: '学习' }
+// ])
+
+const postTypes = ref([]);
+const fetchPostTypes = async () => {
+  try {
+    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/post_type');
+    if (response.data && response.data.data) {
+      // 成功获取数据，并赋值给响应式变量 postTypes
+      postTypes.value = response.data.data;
+      console.log('帖子分类列表:', postTypes.value);
+    } else {
+      // 如果数据结构不符合预期
+      throw new Error('接口返回数据结构异常');
+    }
+  } catch (error) {
+    console.error('获取帖子分类失败:', error);
+  }
+};
+
 
 // 模拟帖子数据 - 每个帖子都有分类和宿舍楼信息
-const mockPosts = [
-  {
-    id: '1',
-    userName: '小明同学',
-    userAvatar: '/avatars/1.jpg',
-    time: '2小时前',
-    category: 'food',
-    dormBuilding: '榕园9号',
-    title: '今晚有人一起去食堂吃饭吗？',
-    content: '一个人吃饭太无聊了，想找几个同学一起去食堂，可以聊聊天，交流一下学习心得。',
-    images: ['/posts/food1.jpg'],
-    commentCount: 5,
-    viewCount: 32,
-    likeCount: 8
-  },
-  {
-    id: '2',
-    userName: '篮球少年',
-    userAvatar: '/avatars/2.jpg',
-    time: '5小时前',
-    category: 'sports',
-    dormBuilding: '榕园8号',
-    title: '明天下午篮球场约球，3V3缺两人',
-    content: '明天下午4点在东区篮球场，现有4人，还缺2个，有兴趣的同学欢迎加入！篮球运动对身体很好。',
-    images: ['/posts/sports1.jpg', '/posts/sports2.jpg'],
-    commentCount: 12,
-    viewCount: 45,
-    likeCount: 15
-  },
-  {
-    id: '3',
-    userName: '学习委员',
-    userAvatar: '/avatars/3.jpg',
-    time: '1天前',
-    category: 'study',
-    dormBuilding: '榕园9号',
-    title: '高数复习小组招人',
-    content: '准备期末高数考试，组建复习小组，每周三、五晚上在图书馆讨论区一起学习数学。',
-    images: [],
-    commentCount: 8,
-    viewCount: 28,
-    likeCount: 12
-  },
-  {
-    id: '4',
-    userName: '美食家',
-    userAvatar: '/avatars/6.jpg',
-    time: '3小时前',
-    category: 'food',
-    dormBuilding: '榕园7号',
-    title: '周末想约火锅，有人一起吗？',
-    content: '发现学校附近新开了一家重庆火锅，想周末去尝尝，找几个爱吃火锅的同学一起！',
-    images: ['/posts/food2.jpg'],
-    commentCount: 7,
-    viewCount: 29,
-    likeCount: 10
-  },
-  {
-    id: '5',
-    userName: '考研党',
-    userAvatar: '/avatars/8.jpg',
-    time: '6小时前',
-    category: 'study',
-    dormBuilding: '榕园6号',
-    title: '寻找考研自习伙伴',
-    content: '准备2024年考研，想在图书馆长期自习，寻找志同道合的小伙伴互相监督。',
-    images: [],
-    commentCount: 9,
-    viewCount: 34,
-    likeCount: 11
-  },
-  {
-    id: '6',
-    userName: '羽毛球爱好者',
-    userAvatar: '/avatars/7.jpg',
-    time: '4小时前',
-    category: 'sports',
-    dormBuilding: '榕园5号',
-    title: '晚上羽毛球馆约球',
-    content: '晚上7点体育馆羽毛球场地，现有3人，还缺1人，欢迎喜欢羽毛球的朋友加入！',
-    images: [],
-    commentCount: 4,
-    viewCount: 18,
-    likeCount: 6
-  }
-]
+// const mockPosts = [
+//   {
+//     id: '1',
+//     userName: '小明同学',
+//     userAvatar: '/avatars/1.jpg',
+//     time: '2小时前',
+//     category: 'food',
+//     dormBuilding: '榕园9号',
+//     title: '今晚有人一起去食堂吃饭吗？',
+//     content: '一个人吃饭太无聊了，想找几个同学一起去食堂，可以聊聊天，交流一下学习心得。',
+//     images: ['/posts/food1.jpg'],
+//     commentCount: 5,
+//     viewCount: 32,
+//     likeCount: 8
+//   },
+//   {
+//     id: '2',
+//     userName: '篮球少年',
+//     userAvatar: '/avatars/2.jpg',
+//     time: '5小时前',
+//     category: 'sports',
+//     dormBuilding: '榕园8号',
+//     title: '明天下午篮球场约球，3V3缺两人',
+//     content: '明天下午4点在东区篮球场，现有4人，还缺2个，有兴趣的同学欢迎加入！篮球运动对身体很好。',
+//     images: ['/posts/sports1.jpg', '/posts/sports2.jpg'],
+//     commentCount: 12,
+//     viewCount: 45,
+//     likeCount: 15
+//   },
+//   {
+//     id: '3',
+//     userName: '学习委员',
+//     userAvatar: '/avatars/3.jpg',
+//     time: '1天前',
+//     category: 'study',
+//     dormBuilding: '榕园9号',
+//     title: '高数复习小组招人',
+//     content: '准备期末高数考试，组建复习小组，每周三、五晚上在图书馆讨论区一起学习数学。',
+//     images: [],
+//     commentCount: 8,
+//     viewCount: 28,
+//     likeCount: 12
+//   },
+//   {
+//     id: '4',
+//     userName: '美食家',
+//     userAvatar: '/avatars/6.jpg',
+//     time: '3小时前',
+//     category: 'food',
+//     dormBuilding: '榕园7号',
+//     title: '周末想约火锅，有人一起吗？',
+//     content: '发现学校附近新开了一家重庆火锅，想周末去尝尝，找几个爱吃火锅的同学一起！',
+//     images: ['/posts/food2.jpg'],
+//     commentCount: 7,
+//     viewCount: 29,
+//     likeCount: 10
+//   },
+//   {
+//     id: '5',
+//     userName: '考研党',
+//     userAvatar: '/avatars/8.jpg',
+//     time: '6小时前',
+//     category: 'study',
+//     dormBuilding: '榕园6号',
+//     title: '寻找考研自习伙伴',
+//     content: '准备2024年考研，想在图书馆长期自习，寻找志同道合的小伙伴互相监督。',
+//     images: [],
+//     commentCount: 9,
+//     viewCount: 34,
+//     likeCount: 11
+//   },
+//   {
+//     id: '6',
+//     userName: '羽毛球爱好者',
+//     userAvatar: '/avatars/7.jpg',
+//     time: '4小时前',
+//     category: 'sports',
+//     dormBuilding: '榕园5号',
+//     title: '晚上羽毛球馆约球',
+//     content: '晚上7点体育馆羽毛球场地，现有3人，还缺1人，欢迎喜欢羽毛球的朋友加入！',
+//     images: [],
+//     commentCount: 4,
+//     viewCount: 18,
+//     likeCount: 6
+//   }
+// ]
 
 // 计算属性：筛选帖子（包含搜索、分类、宿舍楼筛选）
+
+const posts = ref([]);
+
+const fetchPostList = async () => {
+  try {
+    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/posts');
+    if (response.data && response.data.data) {
+      // 成功获取数据，并赋值给响应式变量 posts
+      posts.value = response.data.data;
+      console.log('帖子列表:', posts.value);
+    } else {
+      // 如果数据结构不符合预期
+      throw new Error('接口返回数据结构异常');
+    }
+  } catch (error) {
+    console.error('获取帖子列表失败:', error);
+  }
+};
+
 const filteredPosts = computed(() => {
   let filtered = posts.value
   
@@ -261,13 +315,13 @@ const filteredPosts = computed(() => {
   
   // 按分类筛选
   if (selectedCategory.value !== 'all') {
-    filtered = filtered.filter(post => post.category === selectedCategory.value)
+    filtered = filtered.filter(post => post.typeid === selectedCategory.value)
   }
   
   // 按宿舍楼筛选
   if (selectedDorm.value !== 'all') {
     const dormName = getDormName(selectedDorm.value)
-    filtered = filtered.filter(post => post.dormBuilding === dormName)
+    filtered = filtered.filter(post => post.Dorm.dormname === dormName)
   }
   
   return filtered
@@ -279,15 +333,15 @@ const hasActiveFilters = computed(() => {
 })
 
 // 获取分类名称
-const getCategoryName = (categoryId) => {
-  const category = categories.value.find(cat => cat.id === categoryId)
-  return category ? category.name : '全部'
+const getCategoryName = (id) => {
+  const category = postTypes.value.find(cat => cat.typeid === id)
+  return category ? category.typename : '全部'
 }
 
 // 获取宿舍楼名称
 const getDormName = (dormId) => {
-  const dorm = dormList.value.find(d => d.id === dormId)
-  return dorm ? dorm.name : '全部宿舍'
+  const dorm = dormList.value.find(d => d.dormid === dormId)
+  return dorm ? dorm.dormname : '全部宿舍'
 }
 
 // 获取分类的帖子数量
@@ -307,22 +361,22 @@ const getDormCount = (dormName) => {
 }
 
 // 从本地存储获取帖子的函数
-const getPostsFromLocal = () => {
-  try {
-    const localPosts = JSON.parse(localStorage.getItem('dormgo_posts') || '[]')
-    return localPosts
-  } catch (error) {
-    console.error('读取本地帖子失败:', error)
-    return []
-  }
-}
+// const getPostsFromLocal = () => {
+//   try {
+//     const localPosts = JSON.parse(localStorage.getItem('dormgo_posts') || '[]')
+//     return localPosts
+//   } catch (error) {
+//     console.error('读取本地帖子失败:', error)
+//     return []
+//   }
+// }
 
 // 合并本地帖子与模拟数据
-const loadPosts = () => {
-  const localPosts = getPostsFromLocal()
-  // 将本地帖子放在前面，模拟数据放在后面
-  posts.value = [...localPosts, ...mockPosts]
-}
+// const loadPosts = () => {
+//   const localPosts = getPostsFromLocal()
+//   // 将本地帖子放在前面，模拟数据放在后面
+//   posts.value = [...localPosts, ...mockPosts]
+// }
 
 // 事件处理函数
 const selectDorm = (dormId) => {
@@ -330,9 +384,9 @@ const selectDorm = (dormId) => {
   console.log('切换宿舍楼:', getDormName(dormId))
 }
 
-const selectCategory = (categoryId) => {
-  selectedCategory.value = categoryId
-  console.log('切换分类:', getCategoryName(categoryId))
+const selectCategory = (typeid) => {
+  selectedCategory.value = typeid
+  console.log('切换分类:', getCategoryName(typeid))
 }
 
 const handleSearch = () => {
@@ -362,7 +416,10 @@ const goToProfile = () => {
 
 // 生命周期
 onMounted(() => {
-  loadPosts()
+  fetchPostTypes();
+  // loadPosts();
+  fetchDormList();
+  fetchPostList();
 })
 </script>
 

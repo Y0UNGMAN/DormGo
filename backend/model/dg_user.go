@@ -7,6 +7,7 @@ type DgUser struct {
 	StudentId string `gorm:"column:studentid;type:varchar(20);"json:"studentid"`
 	Username  string `gorm:"column:username;type:varchar(50);" json:"username"`
 	Password  string `gorm:"column:password;type:varchar(255);" json:"password"`
+	Avatar    string `gorm:"column:avatar;type:varchar(255);" json:"avatarurl"`
 	DormId    uint   `gorm:"column:dormid" json:"dormid"`
 	Dorm      DgDorm `gorm:"foreignkey:DormId;references:DormId" `
 }

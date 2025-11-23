@@ -22,23 +22,24 @@ func GetPostDetail(id int) (*model.ApiPostDetail, error) {
 	}
 
 	publisherName := user.Username
-
+	publisherAvatar := user.Avatar
 	postDetail := &model.ApiPostDetail{
-		PublisherName: publisherName,
-		DgPost:        post,
+		PublisherName:   publisherName,
+		PublisherAvator: publisherAvatar,
+		DgPost:          post,
 	}
 
 	return postDetail, nil
 
 }
 
-func GetPostByDorm(dormid int) ([]model.ApiPostDetail, error) {
+func GetPostByDorm(dormid int) ([]*model.ApiPostDetail, error) {
 	posts, err := model.GetPostByDorm(dormid)
 	if err != nil {
 		fmt.Println("GetPostByDorm error: ", err)
 		return nil, err
 	}
-	var postDetails []model.ApiPostDetail
+	postDetails := make([]*model.ApiPostDetail, 0, len(posts))
 	for _, post := range posts {
 		user, err := model.GetUserById(int(post.PublisherId))
 		if err != nil {
@@ -46,9 +47,33 @@ func GetPostByDorm(dormid int) ([]model.ApiPostDetail, error) {
 			return nil, err
 		}
 		p := post
-		postDetails = append(postDetails, model.ApiPostDetail{
-			PublisherName: user.Username,
-			DgPost:        &p,
+		postDetails = append(postDetails, &model.ApiPostDetail{
+			PublisherName:   user.Username,
+			PublisherAvator: user.Avatar,
+			DgPost:          p,
+		})
+	}
+	return postDetails, nil
+}
+
+func GetPosts() ([]*model.ApiPostDetail, error) {
+	posts, err := model.GetPosts()
+	if err != nil {
+		fmt.Println("GetPosts error: ", err)
+		return nil, err
+	}
+	postDetails := make([]*model.ApiPostDetail, 0, len(posts))
+	for _, post := range posts {
+		user, err := model.GetUserById(int(post.PublisherId))
+		if err != nil {
+			fmt.Println("GetUserById error: ", err)
+			return nil, err
+		}
+		p := post
+		postDetails = append(postDetails, &model.ApiPostDetail{
+			PublisherName:   user.Username,
+			PublisherAvator: user.Avatar,
+			DgPost:          p,
 		})
 	}
 	return postDetails, nil

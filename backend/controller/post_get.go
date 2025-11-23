@@ -38,6 +38,7 @@ func GetPostDetail(c *gin.Context) {
 
 }
 
+// 根据宿舍号获取帖子
 func GetPostByDorm(c *gin.Context) {
 	idStr := c.Param("dormid")
 	dormid, err := strconv.Atoi(idStr)
@@ -59,6 +60,23 @@ func GetPostByDorm(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    http.StatusOK,
 		"message": "get post by dorm success",
+		"data":    data,
+	})
+}
+
+// 获取所有帖子
+func GetPosts(c *gin.Context) {
+	data, err := logic.GetPosts()
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(400, gin.H{
+			"code":    "400",
+			"message": "get posts failed",
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
+		"message": "get posts success",
 		"data":    data,
 	})
 }
