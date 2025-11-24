@@ -43,14 +43,13 @@
         <label class="form-label">分类</label>
         <div class="category-options">
           <button
-            v-for="category in categories"
-            :key="category.id"
+            v-for="type in types"
+            :key="type.typeid"
             class="category-option"
-            :class="{ active: form.category === category.id }"
-            @click="selectCategory(category.id)"
+            :class="{ active: form.typeid === type.typeid }"
+            @click="selectCategory(type.typeid)"
           >
-            <span class="category-icon">{{ category.icon }}</span>
-            <span class="category-name">{{ category.name }}</span>
+            <span class="category-name">{{ type.typename }}</span>
           </button>
         </div>
       </div>
@@ -61,12 +60,12 @@
         <div class="dorm-options">
           <button
             v-for="dorm in dormList"
-            :key="dorm.id"
+            :key="dorm.dormid"
             class="dorm-option"
-            :class="{ active: form.dormBuilding === dorm.name }"
-            @click="selectDorm(dorm.name)"
+            :class="{ active: form.dormid === dorm.dormid }"
+            @click="selectDorm(dorm.dormid)"
           >
-            {{ dorm.name }}
+            {{ dorm.dormname }}
           </button>
         </div>
       </div>
@@ -128,15 +127,21 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-
+import axios from 'axios';
 const router = useRouter()
 
+// 当前用户信息
+const currentUser = ref({
+  id: '1',
+  name: '当前用户',
+  avatar: '/avatars/current-user.jpg'
+})
 // 表单数据
 const form = ref({
   title: '',
   content: '',
-  category: '',
-  dormBuilding: '',
+  typeid: '',
+  dormid: '',
   images: [] // 存储图片对象：{ url: string, file: File }
 })
 
@@ -145,46 +150,59 @@ const isSubmitting = ref(false)
 const fileInput = ref(null)
 
 // 分类选项
-const categories = ref([
-  { id: 'food', name: '约饭', icon: '🍽️' },
-  { id: 'sports', name: '约球', icon: '⚽' },
-  { id: 'help', name: '求助', icon: '🙋' },
-  { id: 'trade', name: '交易', icon: '💰' },
-  { id: 'study', name: '学习', icon: '📚' }
-])
+const types = ref([])
+const fetchPostTypes = async () => {
+  try {
+    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/post_type');
+    if (response.data && response.data.data) {
+      // 成功获取数据，并赋值给响应式变量 types
+      types.value = response.data.data;
+      console.log('帖子分类列表:', types.value);
+    } else {
+      // 如果数据结构不符合预期
+      throw new Error('接口返回数据结构异常');
+    }
+  } catch (error) {
+    console.error('获取帖子分类失败:', error);
+  }
+};
 
 // 宿舍楼选项
-const dormList = ref([
-  { id: 'rong9', name: '榕园9号' },
-  { id: 'rong8', name: '榕园8号' },
-  { id: 'rong7', name: '榕园7号' },
-  { id: 'rong6', name: '榕园6号' },
-  { id: 'rong5', name: '榕园5号' },
-])
+const dormList = ref([])
+const fetchDormList = async() => {
+  try {
+    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/dorms');
+    if (response.data && response.data.data) {
+      // 成功获取数据，并赋值给响应式变量 dormList
+      dormList.value = response.data.data;
+      console.log('宿舍楼列表:', dormList.value);
+    } else {
+      // 如果数据结构不符合预期
+      throw new Error('接口返回数据结构异常');
+    }
+  } catch (error) {
+    console.error('获取宿舍楼列表失败:', error);
+  }
+};
 
-// 当前用户信息
-const currentUser = ref({
-  id: '1',
-  name: '当前用户',
-  avatar: '/avatars/current-user.jpg'
-})
+
 
 // 计算属性：表单是否有效
 const isFormValid = computed(() => {
   return form.value.title.trim() && 
          form.value.content.trim() && 
-         form.value.category && 
-         form.value.dormBuilding
+         form.value.typeid && 
+         form.value.dormid
 })
 
 // 选择分类
-const selectCategory = (categoryId) => {
-  form.value.category = categoryId
+const selectCategory = (id) => {
+  form.value.typeid = id
 }
 
 // 选择宿舍楼
-const selectDorm = (dormName) => {
-  form.value.dormBuilding = dormName
+const selectDorm = (id) => {
+  form.value.dormid = id
 }
 
 // 触发文件选择
@@ -234,6 +252,7 @@ const removeImage = (index) => {
   form.value.images.splice(index, 1)
 }
 
+
 // 发布帖子
 const handlePublish = async () => {
   if (!isFormValid.value || isSubmitting.value) return
@@ -241,34 +260,21 @@ const handlePublish = async () => {
   isSubmitting.value = true
 
   try {
-    // 模拟发布过程
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // 创建新帖子对象
-    const newPost = {
-      id: Date.now().toString(),
-      userName: currentUser.value.name,
-      userAvatar: currentUser.value.avatar,
-      time: '刚刚',
-      category: form.value.category,
-      dormBuilding: form.value.dormBuilding,
-      title: form.value.title.trim(),
-      content: form.value.content.trim(),
-      images: form.value.images.map(img => img.url), // 实际开发中这里应该上传到服务器
-      commentCount: 0,
-      viewCount: 0,
-      likeCount: 0
+    //创建帖子
+    const post = {
+      publisherid : Number(currentUser.value.id),
+      dormid : Number(form.value.dormid),
+      typeid : Number(form.value.typeid),
+      title : form.value.title,
+      content : form.value.content
+      //图片
     }
-
-    // 保存到本地存储（模拟添加到首页）
-    savePostToLocal(newPost)
-
+    const res = await axios.post('http://127.0.0.1:8080/api/v1/post/create', post)
+    console.log('创建帖子响应:', res.data);
     // 显示成功提示
     alert('帖子发布成功！')
-
     // 跳转回首页
     router.push('/dormgo')
-
   } catch (error) {
     console.error('发布失败:', error)
     alert('发布失败，请重试')
@@ -278,16 +284,16 @@ const handlePublish = async () => {
 }
 
 // 保存帖子到本地存储（模拟添加到首页）
-const savePostToLocal = (post) => {
-  // 从本地存储获取现有帖子
-  const existingPosts = JSON.parse(localStorage.getItem('dormgo_posts') || '[]')
+// const savePostToLocal = (post) => {
+//   // 从本地存储获取现有帖子
+//   const existingPosts = JSON.parse(localStorage.getItem('dormgo_posts') || '[]')
   
-  // 添加新帖子到开头
-  existingPosts.unshift(post)
+//   // 添加新帖子到开头
+//   existingPosts.unshift(post)
   
-  // 保存回本地存储
-  localStorage.setItem('dormgo_posts', JSON.stringify(existingPosts))
-}
+//   // 保存回本地存储
+//   localStorage.setItem('dormgo_posts', JSON.stringify(existingPosts))
+// }
 
 // 返回上一页
 const goBack = () => {
@@ -296,6 +302,8 @@ const goBack = () => {
 
 // 清理URL对象
 onMounted(() => {
+  fetchDormList();
+  fetchPostTypes();
   // 组件卸载时清理所有创建的URL对象
   return () => {
     form.value.images.forEach(image => {

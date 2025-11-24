@@ -349,7 +349,7 @@ const getCategoryCount = (categoryId) => {
   if (categoryId === 'all') {
     return posts.value.length
   }
-  return posts.value.filter(post => post.category === categoryId).length
+  return posts.value.filter(post => post.typeid === categoryId).length
 }
 
 // 获取宿舍楼的帖子数量
@@ -357,7 +357,7 @@ const getDormCount = (dormName) => {
   if (dormName === '全部宿舍') {
     return posts.value.length
   }
-  return posts.value.filter(post => post.dormBuilding === dormName).length
+  return posts.value.filter(post => post.dormname === dormName).length
 }
 
 // 从本地存储获取帖子的函数

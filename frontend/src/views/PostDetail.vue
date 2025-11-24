@@ -16,19 +16,19 @@
         <h1 class="post-title">{{ post.title }}</h1>
         <div class="post-meta">
           <div class="user-info">
-            <img :src="post.userAvatar" alt="用户头像" class="user-avatar">
-            <span class="user-name">{{ post.userName }}</span>
+            <img :src="post.publisheravator" alt="用户头像" class="user-avatar">
+            <span class="user-name">{{ post.publishername }}</span>
           </div>
         </div>
       </div>
 
       <!-- 标签区域 -->
       <div class="tags-section">
-        <span class="post-category" :class="post.category">
-          {{ getCategoryText(post.category) }}
+        <span class="post-category" :class="post.typeid">
+          {{ post.Type?.typename }}
         </span>
         <span class="dorm-tag">
-          {{ post.dormBuilding }}
+          {{ post.Dorm?.dormname }}
         </span>
       </div>
 
@@ -129,6 +129,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PostStats from '@/components/PostStats.vue'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -144,7 +145,7 @@ const currentImageIndex = ref(0)
 const currentUser = ref({
   id: '1',
   name: '当前用户',
-  avatar: '/avatars/current-user.jpg'
+  avatar: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/midnight.jpg'
 })
 
 // 评论数据
@@ -167,85 +168,22 @@ const comments = ref([
   }
 ])
 
-// 分类映射
-const categoryMap = {
-  'food': '约饭',
-  'sports': '约球',
-  'help': '求助',
-  'trade': '交易',
-  'study': '学习'
-}
 
 // 模拟帖子数据
-const mockPosts = {
-  '1': {
-    id: '1',
-    userName: '小明同学',
-    userAvatar: '/avatars/1.jpg',
-    time: '2小时前',
-    category: 'food',
-    dormBuilding: '榕园9号',
-    title: '今晚有人一起去食堂吃饭吗？',
-    content: `一个人吃饭太无聊了，想找几个同学一起去食堂，可以聊聊天，交流一下学习心得。
 
-最近发现食堂新开了几个窗口，味道还不错，价格也实惠。主要是想找几个志同道合的同学一起，可以边吃边聊，分享各自的学习和生活经验。
 
-时间：今晚6点
-地点：学一食堂
-人数：3-4人
-要求：无，欢迎所有同学参加！`,
-    images: ['/posts/food1.jpg', '/posts/food2.jpg'],
-    commentCount: 5,
-    viewCount: 32,
-    likeCount: 8
-  },
-  '2': {
-    id: '2',
-    userName: '篮球少年',
-    userAvatar: '/avatars/2.jpg',
-    time: '5小时前',
-    category: 'sports',
-    dormBuilding: '榕园8号',
-    title: '明天下午篮球场约球，3V3缺两人',
-    content: `明天下午4点在东区篮球场，现有4人，还缺2个，有兴趣的同学欢迎加入！
-
-我们每周都会固定打球，主要是为了锻炼身体，放松心情。无论你是篮球高手还是初学者，我们都欢迎！
-
-装备要求：运动鞋、舒适的运动服装
-水平要求：不限，开心最重要
-时间：明天下午4点-6点
-地点：东区篮球场3号场地`,
-    images: ['/posts/sports1.jpg', '/posts/sports2.jpg'],
-    commentCount: 12,
-    viewCount: 45,
-    likeCount: 15
-  },
-  '3': {
-    id: '3',
-    userName: '学习委员',
-    userAvatar: '/avatars/3.jpg',
-    time: '1天前',
-    category: 'study',
-    dormBuilding: '榕园9号',
-    title: '高数复习小组招人',
-    content: `准备期末高数考试，组建复习小组，每周三、五晚上在图书馆讨论区一起学习数学。
-
-高数确实是很多同学的难点，一个人学习容易遇到瓶颈。组建学习小组可以互相讨论、互相监督，提高学习效率。
-
-学习内容：高等数学上下册
-时间：每周三、五晚上7点-9点
-地点：图书馆三楼讨论区
-人数：4-6人`,
-    images: [],
-    commentCount: 8,
-    viewCount: 28,
-    likeCount: 12
+//根据id获取帖子详情
+const fetchPost = async () =>{
+  const postId = route.params.id
+  try {
+    const response = await axios.get(`http://127.0.0.1:8080/api/v1/post/view/${postId}`);
+    if(response.data && response.data.data){
+      post.value = response.data.data
+      console.log('帖子数据:', post.value);
+    }
+  }catch (err){
+      console.error('获取帖子详情失败', err)
   }
-}
-
-// 获取分类文本
-const getCategoryText = (category) => {
-  return categoryMap[category] || '其他'
 }
 
 // 返回上一页
@@ -257,9 +195,9 @@ const goBack = () => {
 const toggleLike = () => {
   isLiked.value = !isLiked.value
   if (isLiked.value) {
-    post.value.likeCount++
+    post.value.like_count++
   } else {
-    post.value.likeCount--
+    post.value.like_count--
   }
 }
 
@@ -316,11 +254,9 @@ const closeImagePreview = () => {
 
 // 初始化
 onMounted(() => {
-  const postId = route.params.id
-  post.value = mockPosts[postId] || mockPosts['1']
-  
+  fetchPost()
   // 每次进入详情页，浏览量+1
-  post.value.viewCount++
+  post.value.view_count++
 })
 </script>
 

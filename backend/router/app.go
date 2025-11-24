@@ -28,6 +28,8 @@ func App() *gin.Engine {
 		post.GET("/:dormid", controller.GetPostByDorm)
 		//获取所有帖子列表
 		post.GET("/posts", controller.GetPosts)
+		//对帖子点赞
+		post.POST("/postlike", controller.PostLike)
 	}
 
 	return r
