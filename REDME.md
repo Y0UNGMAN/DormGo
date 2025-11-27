@@ -8,6 +8,13 @@
 本地创建数据库：dormgo_db
 用户：root    密码：123456
 3.安装跨域工具： go get github.com/gin-contrib/cors
+
+安装阿里云官方SDK：go get github.com/aliyun/aliyun-oss-go-sdk/oss
+
+安装 UUID 生成库 (用来给图片起唯一的名字，防止重名覆盖)：
+
+go get github.com/google/uuid
+
 4.启动后端： go run main.go    
 
 ## 前端：
