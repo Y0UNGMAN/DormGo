@@ -41,7 +41,7 @@
           <img 
             v-for="(image, index) in post.images" 
             :key="index" 
-            :src="image" 
+            :src="image.image_url" 
             :alt="'图片' + (index + 1)"
             class="detail-image"
             @click="previewImage(index)"
@@ -51,10 +51,10 @@
 
       <!-- 使用独立的统计组件 -->
       <PostStats
-        :view-count="post.viewCount"
-        :comment-count="post.commentCount"
-        :like-count="post.likeCount"
-        :time="post.time"
+        :view-count="post.view_count"
+        :comment-count="post.comment_count"
+        :like-count="post.like_count"
+        :time="post.updated_at"
       />
     </div>
 

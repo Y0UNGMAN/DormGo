@@ -30,6 +30,10 @@ func App() *gin.Engine {
 		post.GET("/posts", controller.GetPosts)
 		//对帖子点赞
 		post.POST("/postlike", controller.PostLike)
+		//取消点赞
+		post.POST("/cancellike", controller.CancelPostLike)
+		//获取点赞情况
+		post.GET("like")
 	}
 
 	return r

@@ -256,20 +256,23 @@ const removeImage = (index) => {
 // 发布帖子
 const handlePublish = async () => {
   if (!isFormValid.value || isSubmitting.value) return
-
   isSubmitting.value = true
 
   try {
-    //创建帖子
-    const post = {
-      publisherid : Number(currentUser.value.id),
-      dormid : Number(form.value.dormid),
-      typeid : Number(form.value.typeid),
-      title : form.value.title,
-      content : form.value.content
-      //图片
-    }
-    const res = await axios.post('http://127.0.0.1:8080/api/v1/post/create', post)
+    const formData = new FormData();
+    formData.append('publisherid', currentUser.value.id);
+    formData.append('dormid', form.value.dormid); 
+    formData.append('typeid', form.value.typeid);
+    formData.append('title', form.value.title);
+    formData.append('content', form.value.content);
+    form.value.images.forEach((image) => {
+      formData.append(`images`, image.file);
+    });
+    const res = await axios.post('http://127.0.0.1:8080/api/v1/post/create', formData,{
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
     console.log('创建帖子响应:', res.data);
     // 显示成功提示
     alert('帖子发布成功！')

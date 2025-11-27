@@ -48,6 +48,7 @@ func GetPostByDorm(c *gin.Context) {
 			"code":    "400",
 			"message": "Atoi failed",
 		})
+		return
 	}
 	data, err := logic.GetPostByDorm(dormid)
 	if err != nil {
@@ -56,6 +57,7 @@ func GetPostByDorm(c *gin.Context) {
 			"code":    "400",
 			"message": "get post by dorm failed",
 		})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code":    http.StatusOK,
@@ -73,6 +75,7 @@ func GetPosts(c *gin.Context) {
 			"code":    "400",
 			"message": "get posts failed",
 		})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code":    http.StatusOK,

@@ -3,6 +3,8 @@ package model
 import (
 	"fmt"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type DgPost struct {
@@ -44,7 +46,7 @@ func CreatePost(post *DgPost) (err error) {
 func GetPostDetail(id int) (*DgPost, error) {
 	var post DgPost
 
-	err := db.Preload("Dorm").Preload("Type").Where("id=?", id).First(&post).Error
+	err := db.Preload("Images").Preload("Dorm").Preload("Type").Where("id=?", id).First(&post).Error
 	if err != nil {
 		fmt.Println("get post detail error: ", err)
 		return nil, err
@@ -66,10 +68,34 @@ func GetPostByDorm(dormid int) ([]*DgPost, error) {
 // 获取所有帖子
 func GetPosts() ([]*DgPost, error) {
 	posts := make([]*DgPost, 0)
-	err := db.Preload("Dorm").Preload("Type").Find(&posts).Error
+	err := db.Preload("Images").Preload("Dorm").Preload("Type").Find(&posts).Error
 	if err != nil {
 		fmt.Println("get posts error: ", err)
 		return nil, err
 	}
 	return posts, err
+}
+
+// 点赞数加一
+func AddLikeCount(postid uint) error {
+	err := db.Model(&DgPost{}).
+		Where("id = ?", postid).
+		UpdateColumn("like_count", gorm.Expr("like_count + ?", 1)).Error
+	if err != nil {
+		fmt.Println("add like count error: ", err)
+		return err
+	}
+	return nil
+}
+
+// 点赞数减一
+func DelLikeCount(postid uint) error {
+	err := db.Model(&DgPost{}).
+		Where("id = ?", postid).
+		UpdateColumn("like_count", gorm.Expr("like_count - ?", 1)).Error
+	if err != nil {
+		fmt.Println("del like count error: ", err)
+		return err
+	}
+	return nil
 }

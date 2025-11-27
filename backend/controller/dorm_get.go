@@ -15,6 +15,7 @@ func GetDorms(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code": 500,
 		})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
