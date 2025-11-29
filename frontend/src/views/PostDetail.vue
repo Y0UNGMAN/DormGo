@@ -93,22 +93,40 @@
       <!-- 评论列表 -->
       <div class="comments-list">
         <div v-for="comment in comments" :key="comment.id" class="comment-item">
-          <img :src="comment.userAvatar" alt="用户头像" class="comment-avatar">
+          <img :src="comment.commenter.avatarurl" alt="用户头像" class="comment-avatar">
           <div class="comment-content">
             <div class="comment-header">
-              <span class="comment-user">{{ comment.userName }}</span>
-              <span class="comment-time">{{ comment.time }}</span>
+              <span class="comment-user">{{ comment.commenter.username }}</span>
+              <span class="comment-time">{{ formatTime(comment.created_at) }}</span>
             </div>
             <p class="comment-text">{{ comment.content }}</p>
             <div class="comment-actions">
-              <button class="comment-action-btn" @click="likeComment(comment.id)">
+              <!-- <button class="comment-action-btn" @click="likeComment(comment.id)">
                 <span class="action-icon">❤️</span>
                 <span class="action-text">{{ comment.likeCount || 0 }}</span>
+              </button> -->
+              <button class="comment-action-btn">
+                <span class="action-icon">❤️</span>
+                <span class="action-text">赞</span>
               </button>
               <button class="comment-action-btn" @click="replyComment(comment.id)">
                 <span class="action-icon">↩️</span>
                 <span class="action-text">回复</span>
               </button>
+            </div>
+            <div v-if="comment.sub_comments && comment.sub_comments.length > 0" class="sub-comments-list">
+              <div v-for="sub in comment.sub_comments" :key="sub.id" class="sub-comment-item">
+                <div class="sub-comment-header">
+                  <span class="sub-user">{{ sub.commenter.username }}</span>
+                  <span class="sub-time">{{ formatTime(sub.created_at) }}</span>
+                </div>
+                <p class="sub-text">
+                  <span v-if="sub.reply_to_user?.username" class="reply-target">
+                    回复 @{{ sub.reply_to_user.username }}: 
+                  </span>
+                  {{ sub.content }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -149,27 +167,34 @@ const currentUser = ref({
 })
 
 // 评论数据
-const comments = ref([
-  {
-    id: '1',
-    userName: '热心同学',
-    userAvatar: '/avatars/comment1.jpg',
-    time: '1小时前',
-    content: '这个看起来不错，我也有兴趣！',
-    likeCount: 2
-  },
-  {
-    id: '2',
-    userName: '路人甲',
-    userAvatar: '/avatars/comment2.jpg',
-    time: '30分钟前',
-    content: '具体在哪个食堂？我也想去。',
-    likeCount: 0
+const comments = ref([])
+const totalComments = ref(0)
+
+// 获取评论列表
+const fetchComments = async () => {
+  const postId = route.params.id
+  console.log('获取评论，帖子ID:', postId)
+  try {
+    // 对应后端接口：GET /getcomment?post_id=1&page=1
+    const response = await axios.get(`http://127.0.0.1:8080/api/v1/post/getcomment`, {
+      params: {
+        post_id: postId,
+        page: 1,
+      }
+    })
+
+    // 解析后端返回的结构: { code: 200, data: { list: [...], total: 5 } }
+    if (response.data && response.data.code === 200) {
+      const data = response.data.data
+      comments.value = data.list || [] // 赋值给 comments
+      totalComments.value = data.total || 0 // 赋值给总数
+      console.log('评论获取成功:', comments.value)
+    }
+  } catch (err) {
+    console.error('获取评论失败', err)
   }
-])
+}
 
-
-// 模拟帖子数据
 
 
 //根据id获取帖子详情
@@ -252,11 +277,26 @@ const closeImagePreview = () => {
   showImagePreview.value = false
 }
 
+// 时间格式化工具函数
+const formatTime = (timeStr) => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  // 转换为本地时间格式：2025/11/28 12:04
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit', 
+    hour: '2-digit', 
+    minute: '2-digit'
+  })
+}
+
 // 初始化
 onMounted(() => {
   fetchPost()
   // 每次进入详情页，浏览量+1
   post.value.view_count++
+  fetchComments()
 })
 </script>
 
@@ -724,5 +764,56 @@ onMounted(() => {
   .current-user-avatar {
     align-self: flex-start;
   }
+}
+
+/* 新增：子评论样式 */
+.sub-comments-list {
+  background: #f9f9f9; /* 浅灰色背景，区分主评论 */
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.sub-comment-item {
+  margin-bottom: 10px;
+  border-bottom: 1px dashed #eee; /* 虚线分隔 */
+  padding-bottom: 10px;
+  text-align: left; /* 强制左对齐 */
+}
+
+.sub-comment-item:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sub-comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.sub-user {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+.sub-time {
+  font-size: 12px;
+  color: #bbb;
+}
+
+.sub-text {
+  font-size: 13px;
+  color: #444;
+  margin: 0;
+  text-align: left;
+}
+
+.reply-target {
+  color: #1890ff; /* 蓝色的 "回复 @xxx" */
+  font-weight: 500;
+  margin-right: 4px;
 }
 </style>

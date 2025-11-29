@@ -9,7 +9,7 @@ type DgType struct {
 
 // 获取帖子类型列表
 func GetPostType() (posttypelist []*DgType, err error) {
-	err = db.Find(&posttypelist).Error
+	err = DB.Find(&posttypelist).Error
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -18,7 +18,7 @@ func GetPostType() (posttypelist []*DgType, err error) {
 }
 
 func GetPostTypeById(id int) (posttype *DgType, err error) {
-	err = db.Where("TypeId=?", id).Find(&posttype).Error
+	err = DB.Where("TypeId=?", id).Find(&posttype).Error
 	if err != nil {
 		fmt.Println(err)
 		return nil, err

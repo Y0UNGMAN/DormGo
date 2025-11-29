@@ -15,7 +15,7 @@ type DgUser struct {
 // 根据id获取用户信息
 func GetUserById(id int) (*DgUser, error) {
 	var user DgUser
-	err := db.Where("id=?", id).First(&user).Error
+	err := DB.Where("id=?", id).First(&user).Error
 	if err != nil {
 		fmt.Println("get user detail error: ", err)
 		return nil, err
