@@ -1,0 +1,26 @@
+app:
+  name: "dorm_go"
+  mode: "dev"
+  port: 8080
+log:
+  level: "debug"
+  filename: "dorm_go.log"
+  max_size: 200
+  max_age: 30
+  max_backups: 7
+mysql:
+  host: "127.0.0.1"
+  port: 3306
+  user: "root"
+  password: "123456"
+  dbname: "dormgo_db"
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  db: 0
+oss:
+  Endpoint: "oss-cn-guangzhou.aliyuncs.com"
+  AccessKeyId: "LTAI5tNEFKUYVv6oHrYHX55R"
+  AccessKeySecret: "RoxP14nB40icFjiw5vTrIPcdedbvow"
+  BucketName: "dorm-go"
+  BaseURL : "https://dorm-go.oss-cn-guangzhou.aliyuncs.com"
