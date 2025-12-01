@@ -137,15 +137,7 @@ const currentUser = ref({
   avatar: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/midnight.jpg'
 })
 
-// 宿舍楼数据
-// const dormList = ref([
-//   { id: 'all', name: '全部宿舍' },
-//   { id: 'rong9', name: '榕园9号' },
-//   { id: 'rong8', name: '榕园8号' },
-//   { id: 'rong7', name: '榕园7号' },
-//   { id: 'rong6', name: '榕园6号' },
-//   { id: 'rong5', name: '榕园5号' },
-// ])
+
 
 const dormList = ref([]);
 const fetchDormList = async() => {
@@ -165,15 +157,6 @@ const fetchDormList = async() => {
 };
 
 
-// 分类数据
-// const categories = ref([
-//   { id: 'all', name: '全部' },
-//   { id: 'food', name: '约饭' },
-//   { id: 'sports', name: '约球' },
-//   { id: 'help', name: '求助' },
-//   { id: 'trade', name: '交易' },
-//   { id: 'study', name: '学习' }
-// ])
 
 const postTypes = ref([]);
 const fetchPostTypes = async () => {
@@ -191,6 +174,8 @@ const fetchPostTypes = async () => {
     console.error('获取帖子分类失败:', error);
   }
 };
+
+
 
 // 计算属性：筛选帖子（包含搜索、分类、宿舍楼筛选）
 
@@ -271,23 +256,7 @@ const getDormCount = (dormName) => {
   return posts.value.filter(post => post.dormname === dormName).length
 }
 
-// 从本地存储获取帖子的函数
-// const getPostsFromLocal = () => {
-//   try {
-//     const localPosts = JSON.parse(localStorage.getItem('dormgo_posts') || '[]')
-//     return localPosts
-//   } catch (error) {
-//     console.error('读取本地帖子失败:', error)
-//     return []
-//   }
-// }
 
-// 合并本地帖子与模拟数据
-// const loadPosts = () => {
-//   const localPosts = getPostsFromLocal()
-//   // 将本地帖子放在前面，模拟数据放在后面
-//   posts.value = [...localPosts, ...mockPosts]
-// }
 
 // 事件处理函数
 const selectDorm = (dormId) => {
