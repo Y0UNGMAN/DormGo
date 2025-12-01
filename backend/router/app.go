@@ -12,6 +12,15 @@ func App() *gin.Engine {
 	r.GET("/ping", controller.Ping)
 	r.GET("/", controller.Ping)
 
+	user := r.Group("/api/v1/user")
+	{
+		//用户注册
+		user.POST("/signup", controller.Register)
+		//用户登录
+		user.POST("/login", controller.Login)
+
+	}
+
 	post := r.Group("/api/v1/post")
 	{
 		//获取所有宿舍
@@ -34,6 +43,10 @@ func App() *gin.Engine {
 		post.POST("/cancellike", controller.CancelPostLike)
 		//获取点赞情况
 		post.GET("like")
+		//发布评论
+		post.POST("/comment", controller.CreateComment)
+		//获取评论
+		post.GET("/getcomment", controller.GetComment)
 	}
 
 	return r

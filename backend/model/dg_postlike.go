@@ -13,7 +13,7 @@ type DgPostLike struct {
 }
 
 func PostLike(like *DgPostLike) error {
-	err := db.Create(like).Error
+	err := DB.Create(like).Error
 	if err != nil {
 		return err
 	}
@@ -21,7 +21,7 @@ func PostLike(like *DgPostLike) error {
 }
 
 func CancelPostLike(postid uint, likerid uint) error {
-	err := db.Where("postid = ? AND likerid = ?", postid, likerid).Delete(&DgPostLike{}).Error
+	err := DB.Where("postid = ? AND likerid = ?", postid, likerid).Delete(&DgPostLike{}).Error
 	if err != nil {
 		return err
 	}

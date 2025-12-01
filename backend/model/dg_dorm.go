@@ -11,7 +11,7 @@ type DgDorm struct {
 
 func GetDorms() ([]*DgDorm, error) {
 	dorms := make([]*DgDorm, 0)
-	err := db.Find(&dorms).Error
+	err := DB.Find(&dorms).Error
 	if err != nil {
 		fmt.Println(err)
 		return nil, err

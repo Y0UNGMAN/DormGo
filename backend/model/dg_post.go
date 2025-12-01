@@ -34,7 +34,7 @@ type ApiPostDetail struct {
 
 // 发帖
 func CreatePost(post *DgPost) (err error) {
-	err = db.Create(post).Error
+	err = DB.Create(post).Error
 	if err != nil {
 		fmt.Println("create post error: ", err)
 		return err
@@ -46,7 +46,7 @@ func CreatePost(post *DgPost) (err error) {
 func GetPostDetail(id int) (*DgPost, error) {
 	var post DgPost
 
-	err := db.Preload("Images").Preload("Dorm").Preload("Type").Where("id=?", id).First(&post).Error
+	err := DB.Preload("Images").Preload("Dorm").Preload("Type").Where("id=?", id).First(&post).Error
 	if err != nil {
 		fmt.Println("get post detail error: ", err)
 		return nil, err
@@ -57,7 +57,7 @@ func GetPostDetail(id int) (*DgPost, error) {
 // 根据宿舍楼id返回所有该宿舍楼的帖子
 func GetPostByDorm(dormid int) ([]*DgPost, error) {
 	posts := make([]*DgPost, 0)
-	err := db.Where("dormid=?", dormid).Find(&posts).Error
+	err := DB.Where("dormid=?", dormid).Find(&posts).Error
 	if err != nil {
 		fmt.Println("get post dorm error: ", err)
 		return nil, err
@@ -68,7 +68,7 @@ func GetPostByDorm(dormid int) ([]*DgPost, error) {
 // 获取所有帖子
 func GetPosts() ([]*DgPost, error) {
 	posts := make([]*DgPost, 0)
-	err := db.Preload("Images").Preload("Dorm").Preload("Type").Find(&posts).Error
+	err := DB.Preload("Images").Preload("Dorm").Preload("Type").Find(&posts).Error
 	if err != nil {
 		fmt.Println("get posts error: ", err)
 		return nil, err
@@ -78,7 +78,7 @@ func GetPosts() ([]*DgPost, error) {
 
 // 点赞数加一
 func AddLikeCount(postid uint) error {
-	err := db.Model(&DgPost{}).
+	err := DB.Model(&DgPost{}).
 		Where("id = ?", postid).
 		UpdateColumn("like_count", gorm.Expr("like_count + ?", 1)).Error
 	if err != nil {
@@ -90,11 +90,23 @@ func AddLikeCount(postid uint) error {
 
 // 点赞数减一
 func DelLikeCount(postid uint) error {
-	err := db.Model(&DgPost{}).
+	err := DB.Model(&DgPost{}).
 		Where("id = ?", postid).
 		UpdateColumn("like_count", gorm.Expr("like_count - ?", 1)).Error
 	if err != nil {
 		fmt.Println("del like count error: ", err)
+		return err
+	}
+	return nil
+}
+
+// 评论数加一
+func AddCommentCount(db *gorm.DB, postid uint) error {
+	err := db.Model(&DgPost{}).
+		Where("id = ?", postid).
+		UpdateColumn("comment_count", gorm.Expr("comment_count + ?", 1)).Error
+	if err != nil {
+		fmt.Println("add comment count error: ", err)
 		return err
 	}
 	return nil
