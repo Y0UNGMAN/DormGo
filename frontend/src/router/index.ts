@@ -1,21 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
+
 // 组件引入
+// Vue 项目里常用 @ 作为 src 根目录的别名
 import AdminLogin from '@/components/AdminLogin.vue'
 import AdminLayout from '@/components/AdminLayout.vue'
 import AdminProfile from '@/views/AdminProfile.vue'
-import AdminSideMenu from '@/views/AdminSideMenu.vue'
 import DormgoHome from '@/views/DormgoHome.vue'
 import PostDetail from '@/views/PostDetail.vue'
 import PostPublish from '@/views/PostPublish.vue'
 
 // 创建路由实例
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(),  // Histoty模式的URL更干净
   routes: [
     {
-      path: '/',
-      name: 'AdminLogin',
-      component: AdminLogin//登录页面无需布局
+      path: '/',  // URL地址
+      name: 'AdminLogin', // 给该路由起的名字
+      component: AdminLogin
     },
     {
       path: '/layout',
@@ -34,29 +35,33 @@ const router = createRouter({
     {
       path: '/dormgo',
       name: 'DormgoHome',
-      component: DormgoHome,
+      meta: { title: 'Dormgo首页' },
+      component: DormgoHome
     },
     {
-      path: '/post/:id',
+      // 动态路由
+      path: '/post/:id',  // :id → 路径参数，可以动态传入不同帖子 ID
       name: 'PostDetail',
+      meta: { title: '帖子详情' },
       component: PostDetail,
-      props: true
+      props: true // 自动把路径参数传给组件 props
     },
     {
       path: '/publish',
       name: 'PublishPost',
+      meta: { title: '发布帖子' },
       component: PostPublish
     }
   ]
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   // 设置页面标题
   if (to.meta.title) {
-    document.title = to.meta.title + ' - 寝友Go管理员后台'
+    document.title = to.meta.title as string
   } else {
-    document.title = '寝友Go管理员后台'
+    document.title = ''
   }
 
   // 权限校验

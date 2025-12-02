@@ -10,9 +10,7 @@
       <!-- 用户信息：头像和名字 -->
       <div class="user-info">
         <img :src="post.userAvatar" alt="用户头像" class="user-avatar">
-        <span class="user-name">
-          {{ post.userName }}
-        </span>
+        <span class="user-name">{{ post.userName }}</span>
       </div>
 
       <!-- 分类标签和宿舍楼标签 -->
@@ -26,9 +24,7 @@
       </div>
       
       <!-- 帖子正文 - 只显示一行 -->
-      <p class="post-content">
-        {{ post.content }}
-      </p>
+      <p class="post-content">{{ post.content }}</p>
       
       <!-- 图片展示 - 最多两张 -->
       <div v-if="post.images && post.images.length > 0" class="post-images">
@@ -36,7 +32,7 @@
           v-for="(image, index) in post.images.slice(0, 2)" 
           :key="index" 
           :src="image" 
-          :alt="'图片' + (index + 1)"
+          :alt="`图片${index + 1}`"
           class="post-image"
         >
       </div>
@@ -61,14 +57,13 @@ const router = useRouter()
 const props = defineProps({
   post: {
     type: Object,
-    required: true,
     default: () => ({
       id: '',
-      userName: '匿名用户',
-      userAvatar: '/default-avatar.png',
-      time: '刚刚',
-      category: 'help',
-      dormBuilding: '榕园9号',
+      userName: '',
+      userAvatar: '',
+      time: '',
+      category: '',
+      dormBuilding: '',
       title: '',
       content: '',
       images: [],
@@ -93,8 +88,6 @@ const getCategoryText = (category) => {
 
 const handleCardClick = () => {
   console.log('查看帖子详情:', props.post.id)
-  // 增加浏览量
-  props.post.viewCount++
   router.push(`/post/${props.post.id}`)
 }
 </script>
@@ -120,6 +113,7 @@ const handleCardClick = () => {
 .post-title {
   font-size: 18px;
   font-weight: 700;
+  text-align: center;
   color: #333;
   margin: 0 0 12px 0;
   line-height: 1.4;

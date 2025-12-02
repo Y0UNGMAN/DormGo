@@ -155,7 +155,6 @@
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PostStats from '@/components/PostStats.vue'
-// ⭐ 导入 alert() 版本不需要 Element Plus
 
 const route = useRoute()
 const router = useRouter()
