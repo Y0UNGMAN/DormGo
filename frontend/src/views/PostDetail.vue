@@ -98,6 +98,10 @@
             </div>
             <p class="comment-text">{{ comment.content }}</p>
             <div class="comment-actions">
+              <!-- <button class="comment-action-btn" @click="likeComment(comment.id)">
+                <span class="action-icon">❤️</span>
+                <span class="action-text">{{ comment.likeCount || 0 }}</span>
+              </button> -->
               <button class="comment-action-btn">
                 <span class="action-icon">❤️</span>
                 <span class="action-text">赞</span>
@@ -107,9 +111,8 @@
                 <span class="action-text">回复</span>
               </button>
             </div>
-
             <div v-if="comment.sub_comments && comment.sub_comments.length > 0" class="sub-comments-list">
-              <div v-for="sub in getVisibleSubComments(comment)" :key="sub.id" class="sub-comment-item">
+              <div v-for="sub in comment.sub_comments" :key="sub.id" class="sub-comment-item">
                 <div class="sub-comment-header">
                   <span class="sub-user">{{ sub.commenter.username }}</span>
                   <span class="sub-time">{{ formatTime(sub.created_at) }}</span>
@@ -120,21 +123,6 @@
                   </span>
                   {{ sub.content }}
                 </p>
-              </div>
-
-              <div v-if="comment.sub_comments.length > 1" class="sub-comments-footer">
-                <button class="toggle-comments-btn" @click="toggleSubComments(comment.id)">
-                  <span v-if="isCommentExpanded(comment.id)">折叠</span>
-                  <span v-else>
-                      展开剩余 {{ comment.sub_comments.length - 1 }} 条评论
-                  </span>
-                </button>
-                <button 
-                  class="toggle-comments-btn reply-sub-btn" 
-                  @click="replyComment(comment, true)"
-                >
-                  发表回复
-                </button>
               </div>
             </div>
           </div>
@@ -180,131 +168,37 @@ const currentUser = ref({
   avatarurl: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/current_user.jpg' 
 })
 
-// ⭐⭐⭐ Mock 数据用于测试 (保持不变) ⭐⭐⭐
+// 评论数据
+const comments = ref([])
+const totalComments = ref(0)
 
-const mockPublisher = {
-  id: '100',
-  publishername: '楼栋管理员',
-  publisheravator: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/admin.jpg'
-};
-
-const mockCommenter1 = { id: '2', username: '热心居民A', avatarurl: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/resident_a.jpg' };
-const mockCommenter2 = { id: '3', username: '快遞小哥', avatarurl: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/courier.jpg' };
-const mockCommenter3 = { id: '4', username: '吃瓜群众', avatarurl: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/onlooker.jpg' };
-
-const mockComments = [
-  {
-    id: 'c1',
-    post_id: route.params.id,
-    parent_id: null,
-    content: '哇，这个共享洗衣机真的太方便了！感谢楼长发布信息！',
-    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-    commenter: mockCommenter1,
-    sub_comments: [
-      {
-        id: 'c1-1',
-        post_id: route.params.id,
-        parent_id: 'c1',
-        content: '@热心居民A 确实，希望能多增加几个！',
-        created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-        commenter: mockCommenter3,
-        reply_to_user: mockCommenter1, // 回复目标用户
-        sub_comments: [],
-      },
-      {
-        id: 'c1-2',
-        post_id: route.params.id,
-        parent_id: 'c1',
-        content: '@吃瓜群众 我已经反馈给物业了，应该很快会有结果。',
-        created_at: new Date(Date.now() - 3600000 * 3).toISOString(),
-        commenter: mockPublisher,
-        reply_to_user: mockCommenter3, // 回复目标用户
-        sub_comments: [],
-      },
-      {
-        id: 'c1-3',
-        post_id: route.params.id,
-        parent_id: 'c1',
-        content: '我是路过的，看到这个服务觉得你们宿舍楼挺人性化的。',
-        created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-        commenter: mockCommenter2,
-        reply_to_user: null, // 直接回复一级评论
-        sub_comments: [],
+// 获取评论列表
+const fetchComments = async () => {
+  const postId = route.params.id
+  console.log('获取评论，帖子ID:', postId)
+  try {
+    // 对应后端接口：GET /getcomment?post_id=1&page=1
+    const response = await axios.get(`http://127.0.0.1:8080/api/v1/post/getcomment`, {
+      params: {
+        post_id: postId,
+        page: 1,
       }
-    ],
-  },
-  {
-    id: 'c2',
-    post_id: route.params.id,
-    parent_id: null,
-    content: '请问这个预约系统在哪里可以找到链接？',
-    created_at: new Date(Date.now() - 3600000 * 1).toISOString(),
-    commenter: mockCommenter2,
-    sub_comments: [],
-  },
-];
+    })
 
-const mockPost = {
-  id: route.params.id,
-  title: '关于D栋共享洗衣机投入使用通知',
-  content: '同学们，经过为期两周的设备调试和安装，D栋新的共享洗衣机和烘干机已正式投入使用。大家可以通过楼道内的二维码进行扫码预约，并查看详细使用说明。请大家爱惜设备，文明使用！',
-  publisherid: mockPublisher.id,
-  publishername: mockPublisher.publishername,
-  publisheravator: mockPublisher.publisheravator,
-  typeid: 'notice',
-  Dorm: { dormname: 'D栋', dormid: 'd004' },
-  Type: { typename: '通知公告' },
-  view_count: 452,
-  like_count: 88,
-  comment_count: mockComments.length, // 初始一级评论数
-  updated_at: new Date(Date.now() - 3600000 * 10).toISOString(),
-  images: [
-    { image_url: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/post_images/washer_1.jpg' },
-    { image_url: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/post_images/washer_2.jpg' },
-  ],
-};
-
-
-// 计算属性：获取正在回复的主评论或子评论对象
-const replyingToComment = computed(() => {
-  if (!replyToCommentId.value) return null
-  
-  const parentComment = comments.value.find(c => c.id === replyToCommentId.value);
-  if (parentComment) {
-      if (replyToTargetUser.value && replyToTargetUser.value.id === parentComment.commenter.id) {
-        return parentComment;
-      }
-      
-      if (parentComment.sub_comments && replyToTargetUser.value) {
-        const subComment = parentComment.sub_comments.find(sub => sub.commenter.id === replyToTargetUser.value.id)
-        if (subComment) return subComment;
-      }
-
-      return parentComment;
+    // 解析后端返回的结构: { code: 200, data: { list: [...], total: 5 } }
+    if (response.data && response.data.code === 200) {
+      const data = response.data.data
+      comments.value = data.list || [] // 赋值给 comments
+      totalComments.value = data.total || 0 // 赋值给总数
+      console.log('评论获取成功:', comments.value)
+    }
+  } catch (err) {
+    console.error('获取评论失败', err)
   }
-  return null;
-})
+}
 
 // ********* 评论操作函数 *********
 
-const replyComment = (comment, isSubReply = false) => {
-  if (!comment.parent_id || isSubReply) {
-    replyToCommentId.value = comment.id;
-    replyToTargetUser.value = comment.commenter;
-  } else {
-    replyToCommentId.value = comment.parent_id;
-    replyToTargetUser.value = comment.commenter;
-  }
-  
-  newComment.value = `@${comment.commenter.username} `
-  document.querySelector('.comment-input')?.focus()
-}
-
-const cancelReply = () => {
-  replyToCommentId.value = null
-  replyToTargetUser.value = null
-  newComment.value = ''
-}
 
 // ⭐ 提交评论 - 使用 alert() 提示
 const submitComment = () => {
@@ -421,6 +315,79 @@ const contactUser = () => {
   alert(`尝试联系用户: ${post.value.publishername}`);
 }
 
+// 提交评论
+// 修改 submitComment 函数
+const submitComment = async () => {
+  // 1. 基础校验：内容不能为空
+  if (!newComment.value.trim()) {
+    alert("请输入评论内容")
+    return
+  }
+
+  // 2. 获取必要参数
+  const postId = parseInt(route.params.id) // 从路由获取当前帖子ID
+  
+  // ⚠️ 关键点：后端需要 commenter_id。
+  // 在实际应用中，你应该从 localStorage 或 Pinia Store 中获取当前登录用户的真实ID。
+  // 这里暂时使用 currentUser.id，请确保 currentUser.id 是数字类型或能转为数字。
+  const userId = parseInt(currentUser.value.id) 
+
+  if (!userId) {
+    alert("无法获取用户信息，请重新登录")
+    // router.push('/login') // 可以选择跳转去登录
+    return
+  }
+
+  try {
+    // 3. 发送 POST 请求
+    const response = await axios.post('http://127.0.0.1:8080/api/v1/post/comment', {
+      post_id: postId,
+      content: newComment.value.trim(),
+      commenter_id: userId,
+      parent_id: 0 // 0 代表这是顶级评论（楼主层）
+    })
+
+    // 4. 处理响应
+    if (response.data && response.data.code === 200) {
+      // 成功：清空输入框
+      newComment.value = ''
+      
+      // 刷新评论列表（重新从后端拉取最新数据）
+      await fetchComments()
+      
+      // 更新帖子统计数据中的评论数（视觉上的+1）
+      if (post.value) {
+        post.value.comment_count++
+      }
+      
+      alert("评论发布成功")
+    } else {
+      // 业务逻辑错误
+      alert(response.data.msg || "发布失败")
+    }
+  } catch (error) {
+    console.error("发布评论接口报错:", error)
+    alert("网络错误，请稍后重试")
+  }
+}
+
+// 点赞评论
+const likeComment = (commentId) => {
+  const comment = comments.value.find(c => c.id === commentId)
+  if (comment) {
+    comment.likeCount = (comment.likeCount || 0) + 1
+  }
+}
+
+// 回复评论
+const replyComment = (commentId) => {
+  const comment = comments.value.find(c => c.id === commentId)
+  if (comment) {
+    newComment.value = `@${comment.userName} `
+  }
+}
+
+// 预览图片
 const previewImage = (index) => {
   currentImageIndex.value = index
   showImagePreview.value = true
@@ -430,9 +397,11 @@ const closeImagePreview = () => {
   showImagePreview.value = false
 }
 
+// 时间格式化工具函数
 const formatTime = (timeStr) => {
   if (!timeStr) return ''
   const date = new Date(timeStr)
+  // 转换为本地时间格式：2025/11/28 12:04
   return date.toLocaleString('zh-CN', {
     year: 'numeric', 
     month: '2-digit', 
@@ -445,6 +414,8 @@ const formatTime = (timeStr) => {
 // 初始化
 onMounted(() => {
   fetchPost()
+  // 每次进入详情页，浏览量+1
+  post.value.view_count++
   fetchComments()
 })
 </script>
@@ -898,5 +869,56 @@ onMounted(() => {
   .current-user-avatar {
     align-self: flex-start;
   }
+}
+
+/* 新增：子评论样式 */
+.sub-comments-list {
+  background: #f9f9f9; /* 浅灰色背景，区分主评论 */
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.sub-comment-item {
+  margin-bottom: 10px;
+  border-bottom: 1px dashed #eee; /* 虚线分隔 */
+  padding-bottom: 10px;
+  text-align: left; /* 强制左对齐 */
+}
+
+.sub-comment-item:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sub-comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.sub-user {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+
+.sub-time {
+  font-size: 12px;
+  color: #bbb;
+}
+
+.sub-text {
+  font-size: 13px;
+  color: #444;
+  margin: 0;
+  text-align: left;
+}
+
+.reply-target {
+  color: #1890ff; /* 蓝色的 "回复 @xxx" */
+  font-weight: 500;
+  margin-right: 4px;
 }
 </style>
