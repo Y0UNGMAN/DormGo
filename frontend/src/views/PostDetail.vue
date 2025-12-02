@@ -233,21 +233,59 @@ const contactUser = () => {
 }
 
 // 提交评论
-const submitComment = () => {
-  if (!newComment.value.trim()) return
-
-  const comment = {
-    id: Date.now().toString(),
-    userName: currentUser.value.name,
-    userAvatar: currentUser.value.avatar,
-    time: '刚刚',
-    content: newComment.value.trim(),
-    likeCount: 0
+// 修改 submitComment 函数
+const submitComment = async () => {
+  // 1. 基础校验：内容不能为空
+  if (!newComment.value.trim()) {
+    alert("请输入评论内容")
+    return
   }
 
-  comments.value.unshift(comment)
-  post.value.commentCount++
-  newComment.value = ''
+  // 2. 获取必要参数
+  const postId = parseInt(route.params.id) // 从路由获取当前帖子ID
+  
+  // ⚠️ 关键点：后端需要 commenter_id。
+  // 在实际应用中，你应该从 localStorage 或 Pinia Store 中获取当前登录用户的真实ID。
+  // 这里暂时使用 currentUser.id，请确保 currentUser.id 是数字类型或能转为数字。
+  const userId = parseInt(currentUser.value.id) 
+
+  if (!userId) {
+    alert("无法获取用户信息，请重新登录")
+    // router.push('/login') // 可以选择跳转去登录
+    return
+  }
+
+  try {
+    // 3. 发送 POST 请求
+    const response = await axios.post('http://127.0.0.1:8080/api/v1/post/comment', {
+      post_id: postId,
+      content: newComment.value.trim(),
+      commenter_id: userId,
+      parent_id: 0 // 0 代表这是顶级评论（楼主层）
+    })
+
+    // 4. 处理响应
+    if (response.data && response.data.code === 200) {
+      // 成功：清空输入框
+      newComment.value = ''
+      
+      // 刷新评论列表（重新从后端拉取最新数据）
+      await fetchComments()
+      
+      // 更新帖子统计数据中的评论数（视觉上的+1）
+      if (post.value) {
+        post.value.comment_count++
+      }
+      
+      alert("评论发布成功")
+    } else {
+      // 业务逻辑错误
+      alert(response.data.msg || "发布失败")
+    }
+  } catch (error) {
+    console.error("发布评论接口报错:", error)
+    alert("网络错误，请稍后重试")
+  }
 }
 
 // 点赞评论
