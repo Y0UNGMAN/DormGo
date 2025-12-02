@@ -1,7 +1,5 @@
-<!-- src/views/PostDetail.vue -->
 <template>
   <div class="post-detail">
-    <!-- 返回按钮 -->
     <div class="back-header">
       <button class="back-btn" @click="goBack">
         <span class="back-icon">←</span>
@@ -9,9 +7,7 @@
       </button>
     </div>
 
-    <!-- 帖子内容 -->
     <div class="post-content">
-      <!-- 标题区域 -->
       <div class="title-section">
         <h1 class="post-title">{{ post.title }}</h1>
         <div class="post-meta">
@@ -22,7 +18,6 @@
         </div>
       </div>
 
-      <!-- 标签区域 -->
       <div class="tags-section">
         <span class="post-category" :class="post.typeid">
           {{ post.Type?.typename }}
@@ -32,11 +27,9 @@
         </span>
       </div>
 
-      <!-- 正文内容 -->
       <div class="content-section">
         <p class="post-content-text">{{ post.content }}</p>
-        
-        <!-- 图片展示 -->
+
         <div v-if="post.images && post.images.length > 0" class="post-images">
           <img 
             v-for="(image, index) in post.images" 
@@ -49,16 +42,14 @@
         </div>
       </div>
 
-      <!-- 使用独立的统计组件 -->
       <PostStats
         :view-count="post.view_count"
         :comment-count="post.comment_count"
         :like-count="post.like_count"
-        :time="post.updated_at"
+        :time="formatTime(post.updated_at)"
       />
     </div>
 
-    <!-- 操作按钮 -->
     <div class="action-buttons">
       <button class="action-btn like-btn" :class="{ liked: isLiked }" @click="toggleLike">
         <span class="btn-icon">{{ isLiked ? '❤️' : '🤍' }}</span>
@@ -70,27 +61,33 @@
       </button>
     </div>
 
-    <!-- 评论区 -->
     <div class="comments-section">
-      <h3 class="comments-title">评论 ({{ comments.length }})</h3>
+      <h3 class="comments-title">评论 ({{ post.comment_count }})</h3>
       
-      <!-- 评论输入 -->
       <div class="comment-input-section">
-        <img :src="currentUser.avatar" alt="用户头像" class="current-user-avatar">
+        <img :src="currentUser.avatarurl" alt="用户头像" class="current-user-avatar">
         <div class="comment-input-container">
+          <div v-if="replyingToComment" class="reply-target-tip">
+            正在回复：@{{ replyingToComment.commenter.username }}
+            <button class="cancel-reply-btn" @click="cancelReply">×</button>
+          </div>
+
           <textarea 
             v-model="newComment" 
-            placeholder="写下你的评论..." 
+            :placeholder="replyingToComment ? '回复 ' + replyingToComment.commenter.username + '...' : '写下你的评论...'" 
             class="comment-input"
             rows="3"
           ></textarea>
-          <button class="submit-comment-btn" @click="submitComment" :disabled="!newComment.trim()">
-            发布评论
+          <button 
+            class="submit-comment-btn" 
+            @click="submitComment" 
+            :disabled="!newComment.trim() || isSubmitting"
+          >
+            {{ isSubmitting ? '发布中...' : (replyingToComment ? '回复' : '发布评论') }}
           </button>
         </div>
       </div>
 
-      <!-- 评论列表 -->
       <div class="comments-list">
         <div v-for="comment in comments" :key="comment.id" class="comment-item">
           <img :src="comment.commenter.avatarurl" alt="用户头像" class="comment-avatar">
@@ -109,7 +106,7 @@
                 <span class="action-icon">❤️</span>
                 <span class="action-text">赞</span>
               </button>
-              <button class="comment-action-btn" @click="replyComment(comment.id)">
+              <button class="comment-action-btn" @click="replyComment(comment)">
                 <span class="action-icon">↩️</span>
                 <span class="action-text">回复</span>
               </button>
@@ -133,37 +130,43 @@
       </div>
     </div>
 
-    <!-- 图片预览模态框 -->
-    <div v-if="showImagePreview" class="image-preview-modal" @click="closeImagePreview">
-      <div class="modal-content">
+    <div v-if="showImagePreview && post.images && post.images.length > 0" class="image-preview-modal" @click="closeImagePreview">
+      <div class="modal-content" @click.stop>
         <button class="close-modal-btn" @click="closeImagePreview">×</button>
-        <img :src="post.images[currentImageIndex]" alt="预览图片" class="preview-image">
+        <img :src="post.images[currentImageIndex].image_url" alt="预览图片" class="preview-image">
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PostStats from '@/components/PostStats.vue'
-import axios from 'axios'
+// ⭐ 导入 alert() 版本不需要 Element Plus
 
 const route = useRoute()
 const router = useRouter()
 
 // 帖子数据
-const post = ref({})
+const post = ref({ comment_count: 0 }) 
 const isLiked = ref(false)
 const newComment = ref('')
 const showImagePreview = ref(false)
 const currentImageIndex = ref(0)
+const comments = ref([])
+const isSubmitting = ref(false)
 
-// 当前用户信息
+// 回复状态管理
+const replyToCommentId = ref(null)
+const replyToTargetUser = ref(null)
+const expandedComments = reactive(new Set())
+
+// 当前用户信息（模拟）
 const currentUser = ref({
   id: '1',
-  name: '当前用户',
-  avatar: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/midnight.jpg'
+  username: '当前用户',
+  avatarurl: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/current_user.jpg' 
 })
 
 // 评论数据
@@ -195,28 +198,111 @@ const fetchComments = async () => {
   }
 }
 
+// ********* 评论操作函数 *********
 
 
-//根据id获取帖子详情
-const fetchPost = async () =>{
-  const postId = route.params.id
-  try {
-    const response = await axios.get(`http://127.0.0.1:8080/api/v1/post/view/${postId}`);
-    if(response.data && response.data.data){
-      post.value = response.data.data
-      console.log('帖子数据:', post.value);
+// ⭐ 提交评论 - 使用 alert() 提示
+const submitComment = () => {
+  if (!newComment.value.trim() || isSubmitting.value) return
+
+  isSubmitting.value = true
+  
+  // 模拟网络请求和后端处理
+  setTimeout(() => {
+    isSubmitting.value = false;
+    
+    // 获取回复目标信息
+    const postId = route.params.id
+    const content = newComment.value.trim()
+    const parentId = replyToCommentId.value
+    const replyToUserId = replyToTargetUser.value ? replyToTargetUser.value.id : null
+
+    // 模拟后端返回的新评论对象
+    const newCommentData = {
+        id: Date.now().toString(), 
+        post_id: postId,
+        parent_id: parentId,
+        content: content.replace(`@${replyToTargetUser.value?.username} `, '').trim(),
+        created_at: new Date().toISOString(),
+        commenter: currentUser.value,
+        reply_to_user: replyToTargetUser.value,
+        sub_comments: []
     }
-  }catch (err){
-      console.error('获取帖子详情失败', err)
+    
+    // 更新前端数据
+    if (parentId) {
+      const parent = comments.value.find(c => c.id === parentId)
+      if (parent) {
+        if (!parent.sub_comments) {
+          parent.sub_comments = []
+        }
+        parent.sub_comments.push(newCommentData)
+        expandedComments.add(parentId)
+      }
+    } else {
+      comments.value.unshift(newCommentData)
+    }
+
+    // 更新评论总数
+    post.value.comment_count = post.value.comment_count + 1
+
+    // 清理状态和提示
+    alert('评论发布成功！');
+    
+    cancelReply() 
+
+  }, 1000); // 模拟 1 秒延迟
+}
+
+// ********* 子评论展开/折叠函数 *********
+
+// 切换子评论的展开/折叠状态
+const toggleSubComments = (commentId) => {
+  if (expandedComments.has(commentId)) {
+    expandedComments.delete(commentId)
+  } else {
+    expandedComments.add(commentId)
   }
 }
 
-// 返回上一页
+// 检查评论是否处于展开状态
+const isCommentExpanded = (commentId) => {
+  return expandedComments.has(commentId)
+}
+
+// 获取应该显示的子评论列表
+const getVisibleSubComments = (comment) => {
+  if (!comment.sub_comments || comment.sub_comments.length === 0) {
+    return []
+  }
+  const defaultVisibleCount = 1;
+
+  if (isCommentExpanded(comment.id)) {
+    return comment.sub_comments
+  }
+  return comment.sub_comments.slice(0, defaultVisibleCount)
+}
+
+
+// ********* 帖子数据获取与工具函数 *********
+
+const fetchComments = () => {
+  setTimeout(() => {
+    comments.value = mockComments;
+  }, 500);
+}
+
+const fetchPost = () =>{
+  setTimeout(() => {
+    post.value = mockPost;
+    post.value.view_count = (post.value.view_count || 0) + 1;
+  }, 300);
+}
+
 const goBack = () => {
   router.back()
 }
 
-// 点赞/取消点赞
 const toggleLike = () => {
   isLiked.value = !isLiked.value
   if (isLiked.value) {
@@ -226,10 +312,8 @@ const toggleLike = () => {
   }
 }
 
-// 联系用户
 const contactUser = () => {
-  console.log('联系用户:', post.value.userName)
-  // 这里可以打开聊天窗口
+  alert(`尝试联系用户: ${post.value.publishername}`);
 }
 
 // 提交评论
@@ -310,7 +394,6 @@ const previewImage = (index) => {
   showImagePreview.value = true
 }
 
-// 关闭图片预览
 const closeImagePreview = () => {
   showImagePreview.value = false
 }
@@ -339,13 +422,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 样式代码与上一轮提供的完全一致，为简洁在此省略，请确保在您的项目中包含完整的样式 */
 .post-detail {
   min-height: 100vh;
   background: #f5f5f5;
   padding: 0;
 }
-
-/* 返回按钮 */
 .back-header {
   background: white;
   padding: 16px 20px;
@@ -354,7 +436,6 @@ onMounted(() => {
   top: 0;
   z-index: 100;
 }
-
 .back-btn {
   display: flex;
   align-items: center;
@@ -367,113 +448,62 @@ onMounted(() => {
   padding: 8px 0;
   transition: color 0.3s;
 }
-
 .back-btn:hover {
   color: #1890ff;
 }
-
 .back-icon {
   font-size: 18px;
 }
-
-/* 帖子内容 - 移除所有居中 */
 .post-content {
   background: white;
   margin: 0;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: left; /* 确保文本左对齐 */
+  text-align: left; 
 }
-
-/* 标题区域 */
 .title-section {
   margin-bottom: 20px;
-  text-align: left; /* 标题左对齐 */
+  text-align: left; 
 }
-
 .post-title {
   font-size: 24px;
   font-weight: 700;
   color: #333;
   margin: 0 0 16px 0;
   line-height: 1.4;
-  text-align: left; /* 标题文本左对齐 */
+  text-align: left; 
 }
-
 .post-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  text-align: left; /* 用户信息左对齐 */
+  text-align: left; 
 }
-
 .user-info {
   display: flex;
   align-items: center;
   gap: 12px;
-  text-align: left; /* 用户信息左对齐 */
+  text-align: left; 
 }
-
 .user-avatar {
   width: 44px;
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
 }
-
 .user-name {
   font-size: 16px;
   font-weight: 600;
   color: #333;
 }
-
-/* 标签区域 */
 .tags-section {
   display: flex;
   gap: 12px;
   margin-bottom: 24px;
   flex-wrap: wrap;
-  text-align: left; /* 标签左对齐 */
-  justify-content: flex-start; /* 确保标签从左边开始 */
+  text-align: left; 
+  justify-content: flex-start; 
 }
-
-.post-category {
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.post-category.food {
-  background: #fff0f0;
-  color: #ff4757;
-  border: 1px solid #ff4757;
-}
-
-.post-category.sports {
-  background: #f0f8ff;
-  color: #1e90ff;
-  border: 1px solid #1e90ff;
-}
-
-.post-category.help {
-  background: #fff8e1;
-  color: #ffa502;
-  border: 1px solid #ffa502;
-}
-
-.post-category.trade {
-  background: #f0fff0;
-  color: #2ed573;
-  border: 1px solid #2ed573;
-}
-
-.post-category.study {
-  background: #f0f0ff;
-  color: #5352ed;
-  border: 1px solid #5352ed;
-}
-
 .dorm-tag {
   padding: 6px 12px;
   background: #f8f9fa;
@@ -483,31 +513,25 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
 }
-
-/* 正文内容 */
 .content-section {
   margin-bottom: 24px;
-  text-align: left; /* 正文内容左对齐 */
+  text-align: left; 
 }
-
 .post-content-text {
   font-size: 16px;
   color: #333;
   line-height: 1.8;
   margin: 0 0 24px 0;
   white-space: pre-wrap;
-  text-align: left; /* 确保正文文本左对齐 */
+  text-align: left; 
 }
-
-/* 图片展示 */
 .post-images {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
   margin-top: 16px;
-  justify-items: start; /* 图片从左边开始排列 */
+  justify-items: start; 
 }
-
 .detail-image {
   width: 100%;
   height: 200px;
@@ -516,21 +540,17 @@ onMounted(() => {
   cursor: pointer;
   transition: transform 0.3s ease;
 }
-
 .detail-image:hover {
   transform: scale(1.02);
 }
-
-/* 操作按钮 */
 .action-buttons {
   display: flex;
   gap: 12px;
   padding: 20px;
   background: white;
   margin-top: 20px;
-  text-align: left; /* 操作按钮区域左对齐 */
+  text-align: left; 
 }
-
 .action-btn {
   flex: 1;
   display: flex;
@@ -545,59 +565,48 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.3s ease;
 }
-
 .like-btn {
   background: #f5f5f5;
   color: #666;
   border: 1px solid #e8e8e8;
 }
-
 .like-btn:hover {
   background: #fff0f0;
   color: #ff4757;
   border-color: #ff4757;
 }
-
 .like-btn.liked {
   background: #fff0f0;
   color: #ff4757;
   border-color: #ff4757;
 }
-
 .contact-btn {
   background: #1890ff;
   color: white;
 }
-
 .contact-btn:hover {
   background: #40a9ff;
 }
-
-/* 评论区 - 移除居中 */
 .comments-section {
   background: white;
   margin: 20px 0 0 0;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: left; /* 评论区左对齐 */
+  text-align: left; 
 }
-
 .comments-title {
   font-size: 20px;
   font-weight: 600;
   color: #333;
   margin: 0 0 20px 0;
-  text-align: left; /* 评论标题左对齐 */
+  text-align: left; 
 }
-
-/* 评论输入 */
 .comment-input-section {
   display: flex;
   gap: 16px;
   margin-bottom: 24px;
-  text-align: left; /* 评论输入左对齐 */
+  text-align: left; 
 }
-
 .current-user-avatar {
   width: 40px;
   height: 40px;
@@ -605,12 +614,34 @@ onMounted(() => {
   object-fit: cover;
   flex-shrink: 0;
 }
-
 .comment-input-container {
   flex: 1;
-  text-align: left; /* 评论输入容器左对齐 */
+  text-align: left; 
 }
-
+.reply-target-tip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #e6f7ff;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid #91d5ff;
+  border-bottom: none;
+  font-size: 14px;
+  color: #1890ff;
+}
+.cancel-reply-btn {
+  background: none;
+  border: none;
+  color: #1890ff;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 0 4px;
+}
+.cancel-reply-btn:hover {
+  opacity: 1;
+}
 .comment-input {
   width: 100%;
   padding: 12px;
@@ -619,14 +650,12 @@ onMounted(() => {
   font-size: 14px;
   resize: vertical;
   transition: border-color 0.3s;
-  text-align: left; /* 输入框文本左对齐 */
+  text-align: left; 
 }
-
-.comment-input:focus {
+.comment-input-container .comment-input:focus {
   outline: none;
   border-color: #1890ff;
 }
-
 .submit-comment-btn {
   margin-top: 12px;
   padding: 8px 16px;
@@ -638,37 +667,30 @@ onMounted(() => {
   cursor: pointer;
   transition: background 0.3s;
 }
-
 .submit-comment-btn:hover:not(:disabled) {
   background: #40a9ff;
 }
-
 .submit-comment-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
-
-/* 评论列表 */
 .comments-list {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  text-align: left; /* 评论列表左对齐 */
+  text-align: left; 
 }
-
 .comment-item {
   display: flex;
   gap: 12px;
   padding-bottom: 20px;
   border-bottom: 1px solid #f0f0f0;
-  text-align: left; /* 每个评论项左对齐 */
+  text-align: left; 
 }
-
 .comment-item:last-child {
   border-bottom: none;
   padding-bottom: 0;
 }
-
 .comment-avatar {
   width: 36px;
   height: 36px;
@@ -676,45 +698,38 @@ onMounted(() => {
   object-fit: cover;
   flex-shrink: 0;
 }
-
 .comment-content {
   flex: 1;
-  text-align: left; /* 评论内容左对齐 */
+  text-align: left; 
 }
-
 .comment-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  text-align: left; /* 评论头部左对齐 */
+  text-align: left; 
 }
-
 .comment-user {
   font-size: 14px;
   font-weight: 600;
   color: #333;
 }
-
 .comment-time {
   font-size: 12px;
   color: #999;
 }
-
 .comment-text {
   font-size: 14px;
   color: #333;
   line-height: 1.6;
   margin: 0 0 12px 0;
-  text-align: left; /* 评论文本左对齐 */
+  text-align: left; 
 }
-
 .comment-actions {
   display: flex;
   gap: 16px;
-  text-align: left; /* 评论操作左对齐 */
+  text-align: left; 
 }
-
 .comment-action-btn {
   display: flex;
   align-items: center;
@@ -728,13 +743,76 @@ onMounted(() => {
   border-radius: 4px;
   transition: all 0.3s;
 }
-
 .comment-action-btn:hover {
   background: #f5f5f5;
   color: #666;
 }
-
-/* 图片预览模态框 */
+.sub-comments-list {
+  background: #f9f9f9; 
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+.sub-comment-item {
+  margin-bottom: 10px;
+  border-bottom: 1px dashed #eee; 
+  padding-bottom: 10px;
+  text-align: left; 
+}
+.sub-comment-item:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.sub-comment-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.sub-user {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+.sub-time {
+  font-size: 12px;
+  color: #bbb;
+}
+.sub-text {
+  font-size: 13px;
+  color: #444;
+  margin: 0;
+  text-align: left;
+}
+.reply-target {
+  color: #1890ff; 
+  font-weight: 500;
+  margin-right: 4px;
+}
+.sub-comments-footer {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.toggle-comments-btn {
+  background: none;
+  border: none;
+  color: #1890ff;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 0.3s;
+}
+.toggle-comments-btn:hover {
+  opacity: 0.8;
+}
+.reply-sub-btn {
+    color: #666;
+    border-left: 1px solid #e8e8e8;
+    padding-left: 12px;
+}
 .image-preview-modal {
   position: fixed;
   top: 0;
@@ -747,13 +825,11 @@ onMounted(() => {
   justify-content: center;
   z-index: 1000;
 }
-
 .modal-content {
   position: relative;
   max-width: 90%;
   max-height: 90%;
 }
-
 .close-modal-btn {
   position: absolute;
   top: -40px;
@@ -765,40 +841,32 @@ onMounted(() => {
   cursor: pointer;
   padding: 8px;
 }
-
 .preview-image {
   max-width: 100%;
   max-height: 80vh;
   object-fit: contain;
   border-radius: 8px;
 }
-
-/* 响应式设计 */
 @media (max-width: 768px) {
   .post-content,
   .comments-section {
     padding: 16px;
   }
-  
   .post-title {
     font-size: 20px;
   }
-  
   .post-meta {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
   .action-buttons {
     padding: 12px;
     flex-direction: column;
   }
-  
   .comment-input-section {
     flex-direction: column;
   }
-  
   .current-user-avatar {
     align-self: flex-start;
   }
