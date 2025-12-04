@@ -137,10 +137,8 @@ const currentUser = ref({
   avatar: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/midnight.jpg'
 })
 
-
-
-const dormList = ref([]);
-const fetchDormList = async() => {
+const dormList = ref([]);   // 宿舍列表
+const fetchDormList = async() => {    
   try {
     const response = await axios.get('http://127.0.0.1:8080/api/v1/post/dorms');
     if (response.data && response.data.data) {
@@ -156,10 +154,8 @@ const fetchDormList = async() => {
   }
 };
 
-
-
-const postTypes = ref([]);
-const fetchPostTypes = async () => {
+const postTypes = ref([]);    // 宿舍分类
+const fetchPostTypes = async () => {     
   try {
     const response = await axios.get('http://127.0.0.1:8080/api/v1/post/post_type');
     if (response.data && response.data.data) {
@@ -175,12 +171,9 @@ const fetchPostTypes = async () => {
   }
 };
 
-
-
 // 计算属性：筛选帖子（包含搜索、分类、宿舍楼筛选）
 
-const posts = ref([]);
-
+const posts = ref([]);    // 帖子
 const fetchPostList = async () => {
   try {
     const response = await axios.get('http://127.0.0.1:8080/api/v1/post/posts');
@@ -197,7 +190,7 @@ const fetchPostList = async () => {
   }
 };
 
-const filteredPosts = computed(() => {
+const filteredPosts = computed(() => {  // 筛选帖子
   let filtered = posts.value
   
   // 搜索筛选：在标题和内容中搜索
@@ -255,8 +248,6 @@ const getDormCount = (dormName) => {
   }
   return posts.value.filter(post => post.dormname === dormName).length
 }
-
-
 
 // 事件处理函数
 const selectDorm = (dormId) => {

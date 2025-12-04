@@ -3,16 +3,19 @@
   <div class="post-stats">
     <!-- 左侧：统计数据 -->
     <div class="stats-left">
+      <!-- 浏览量 -->
       <span class="stat-item">
         <span class="stat-icon">👀</span>
         <span class="stat-number">{{ viewCount }}</span>
         <span class="stat-text">浏览</span>
       </span>
+      <!-- 评论数 -->
       <span class="stat-item">
         <span class="stat-icon">💬</span>
         <span class="stat-number">{{ commentCount }}</span>
         <span class="stat-text">评论</span>
       </span>
+      <!-- 点赞数 -->
       <span class="stat-item">
         <span class="stat-icon">❤️</span>
         <span class="stat-number">{{ likeCount }}</span>
@@ -31,19 +34,19 @@
 import { defineProps } from 'vue'
 
 const props = defineProps({
-  viewCount: {
+  viewCount: {    // 浏览数
     type: Number,
     default: 0
   },
-  commentCount: {
+  commentCount: {   // 评论数
     type: Number,
     default: 0
   },
-  likeCount: {
+  likeCount: {    // 点赞数
     type: Number,
     default: 0
   },
-  time: {
+  time: {   // 发布时间
     type: String,
     default: '刚刚'
   }
