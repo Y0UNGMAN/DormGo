@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/Y0UNGMAN/DormGo/backend/model"
-	"github.com/Y0UNGMAN/DormGo/backend/redis"
 	"github.com/Y0UNGMAN/DormGo/backend/router"
 	"github.com/Y0UNGMAN/DormGo/backend/settings"
 	"github.com/Y0UNGMAN/DormGo/backend/utils"
@@ -30,10 +29,10 @@ func main() {
 		return
 	}
 	//4.初始化Redis连接
-	if err := redis.Init(); err != nil {
-		fmt.Printf("init redis failed, err:%v\n", err)
-		return
-	}
+	//if err := redis.Init(); err != nil {
+	//	fmt.Printf("init redis failed, err:%v\n", err)
+	//	return
+	//}
 	//5.注册路由
 	r := router.App()
 

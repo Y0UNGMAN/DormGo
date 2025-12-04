@@ -8,6 +8,9 @@ import AdminProfile from '@/views/AdminProfile.vue'
 import DormgoHome from '@/views/DormgoHome.vue'
 import PostDetail from '@/views/PostDetail.vue'
 import PostPublish from '@/views/PostPublish.vue'
+import Login from '@/views/Login.vue'
+import PersonalHome from '@/views/PersonalHome.vue'
+
 
 // 创建路由实例
 const router = createRouter({
@@ -51,6 +54,18 @@ const router = createRouter({
       name: 'PublishPost',
       meta: { title: '发布帖子' },
       component: PostPublish
+    },
+    {
+      path: '/login',
+      name: 'Login',
+      meta: { title: '登录' },
+      component: Login,
+    },
+    {
+      path: '/home',
+      name: 'Home',
+      meta: { title: '个人中心' },
+      component: PersonalHome,
     }
   ]
 })
