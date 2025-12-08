@@ -42,7 +42,7 @@ func App() *gin.Engine {
 		//取消点赞
 		post.POST("/cancellike", controller.CancelPostLike)
 		//获取点赞情况
-		post.GET("like")
+		post.GET("like", controller.PostLike)
 		//发布评论
 		post.POST("/comment", controller.CreateComment)
 		//获取评论
