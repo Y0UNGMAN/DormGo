@@ -15,6 +15,9 @@ const Statistics = () => import('@/views/Statistics.vue')
 const SystemConfig = () => import('@/views/SystemConfig.vue')
 const SensitiveWordManage = () => import('@/views/SensitiveWordManage.vue')
 const PostTypeConfig = () => import('@/views/PostTypeConfig.vue')
+const DormGoHome = () => import('@/views/DormGoHome.vue')
+const PostDetail = () => import('@/views/PostDetail.vue')
+const PostPublish = () => import('@/views/PostPublish.vue')
 
 const routes: RouteRecordRaw[] = [
   {
@@ -105,6 +108,26 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/:pathMatch(.*)*',
     redirect: '/login'
+  },
+  {
+      path: '/dormgo',
+      name: 'DormgoHome',
+      meta: { title: 'Dormgo首页' },
+      component: DormGoHome
+  },
+  {
+    // 动态路由
+    path: '/post/:id',  // :id → 路径参数，可以动态传入不同帖子 ID
+    name: 'PostDetail',
+    meta: { title: '帖子详情' },
+    component: PostDetail,
+    props: true // 自动把路径参数传给组件 props
+  },
+  {
+    path: '/publish',
+    name: 'PublishPost',
+    meta: { title: '发布帖子' },
+    component: PostPublish
   }
 ]
 
