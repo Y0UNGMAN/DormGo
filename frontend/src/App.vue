@@ -5,10 +5,8 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'App'
-}
+<script setup lang="ts">
+// Vue 3 推荐使用 <script setup> 语法糖，无需显式导出组件
 </script>
 
 <style>
@@ -21,7 +19,8 @@ export default {
 }
 
 #app {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  /* 使用 vw/vh 更符合现代布局 */
 }
 </style>

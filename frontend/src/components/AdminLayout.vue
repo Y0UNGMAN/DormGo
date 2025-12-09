@@ -1,211 +1,129 @@
 <template>
-  <div class="admin-layout">
-    <!-- 顶部导航栏 -->
-    <header class="admin-header">
-      <div class="header-left">
-        <h1>寝友Go 管理员后台</h1>
+  <el-container class="admin-layout">
+    <el-aside :width="isCollapse ? '64px' : '220px'" class="sidebar-container">
+      <div class="sidebar-logo">
+        <el-icon color="#42b983" size="24" style="margin-right: 8px"><School /></el-icon>
+        <span v-show="!isCollapse">寝友Go 管理后台</span>
       </div>
-      <!-- 右上角个人中心 -->
-      <div class="header-right">
-        <div class="user-center" @click="toggleUserMenu">
-          <img 
-            src="https://via.placeholder.com/32" 
-            alt="用户头像" 
-            class="user-avatar"
-          >
-          <span class="user-name">{{ adminInfo.nickname || '管理员' }}</span>
-          <i class="icon-down">▼</i>
-        </div>
-        <!-- 个人中心下拉菜单 -->
-        <div class="user-menu" v-if="showUserMenu">
-          <a @click="goToProfile">个人资料</a>
-          <a @click="resetPwd">重置密码</a>
-          <a @click="handleLogout" class="logout">退出登录</a>
-        </div>
-      </div>
-    </header>
+      <AdminSideMenu :collapse="isCollapse" class="side-menu" />
+    </el-aside>
 
-    <div class="admin-content">
-      <!-- 左侧菜单（引入拆分的组件） -->
-      <aside class="admin-sidebar">
-        <AdminSideMenu />
-      </aside>
+    <el-container>
+      <el-header class="admin-header">
+        <div class="header-left">
+          <el-icon class="trigger-icon" @click="toggleCollapse">
+            <component :is="isCollapse ? Expand : Fold" />
+          </el-icon>
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item v-if="route.meta.title">{{ route.meta.title }}</el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
 
-      <!-- 中间内容区域 -->
-       <main class="admin-main">
-        <!-- 子路由出口 -->
-        <router-view />
-      </main>
-    </div>
-  </div>
+        <div class="header-right">
+          <el-dropdown @command="handleCommand" trigger="click">
+            <div class="user-info">
+              <el-avatar :size="32" :src="adminInfo.avatar || defaultAvatar" />
+              <span class="user-name">{{ adminInfo.nickname || '管理员' }}</span>
+              <el-icon><CaretBottom /></el-icon>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="profile">个人资料</el-dropdown-item>
+                <el-dropdown-item command="config">系统配置</el-dropdown-item>
+                <el-dropdown-item command="password">重置密码</el-dropdown-item>
+                <el-dropdown-item divided command="logout" style="color: #f56c6c;">退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </el-header>
+
+      <el-main class="admin-main">
+        <router-view v-slot="{ Component }">
+          <transition name="fade-transform" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </el-main>
+      
+      <el-footer class="admin-footer">
+         © 2025 寝友Go 管理系统
+      </el-footer>
+    </el-container>
+  </el-container>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
-import AdminSideMenu from '../views/AdminSideMenu.vue'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { ElMessageBox, ElMessage } from 'element-plus'
+import { Fold, Expand, CaretBottom, School } from '@element-plus/icons-vue'
+import AdminSideMenu from '@/views/AdminSideMenu.vue' // 注意引用路径
 
-// 响应式数据
-const adminInfo = ref({})
-const showUserMenu = ref(false)
 const router = useRouter()
+const route = useRoute()
 
-// 页面挂载时获取管理员信息
+const isCollapse = ref(false)
+const adminInfo = ref({})
+const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+
 onMounted(() => {
-  const info = JSON.parse(localStorage.getItem('adminInfo'))
-  adminInfo.value = info || {}
+  const info = localStorage.getItem('adminInfo')
+  if (info) {
+    adminInfo.value = JSON.parse(info)
+  }
 })
 
-// 切换个人中心菜单显示状态
-const toggleUserMenu = () => {
-  showUserMenu.value = !showUserMenu.value
+const toggleCollapse = () => {
+  isCollapse.value = !isCollapse.value
 }
 
-// 点击页面其他区域关闭菜单
-const closeUserMenu = (e) => {
-  if (!e.target.closest('.user-center')) {
-    showUserMenu.value = false
+const handleCommand = (command) => {
+  switch (command) {
+    case 'profile':
+      router.push('/admin/profile')
+      break
+    case 'config':
+      router.push('/admin/system-config')
+      break
+    case 'password':
+      router.push('/admin/reset-pwd')
+      break
+    case 'logout':
+      handleLogout()
+      break
   }
 }
 
-// 个人资料页面跳转
-const goToProfile = () => {
-  router.push('/admin/profile')
-  showUserMenu.value = false
-}
-
-// 重置密码页面跳转
-const resetPwd = () => {
-  router.push('/admin/reset-pwd')
-  showUserMenu.value = false
-}
-
-// 退出登录
 const handleLogout = () => {
-  localStorage.removeItem('adminToken')
-  localStorage.removeItem('adminInfo')
-  router.push('/login')
+  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    localStorage.removeItem('adminToken')
+    localStorage.removeItem('adminInfo')
+    ElMessage.success('已安全退出')
+    router.push('/login')
+  }).catch(() => {})
 }
-
-// 监听点击事件
-onMounted(() => {
-  document.addEventListener('click', closeUserMenu)
-})
-
-// 组件卸载前移除事件监听
-onBeforeUnmount(() => {
-  document.removeEventListener('click', closeUserMenu)
-})
 </script>
 
 <style scoped>
-/* 布局整体样式 */
-.admin-layout {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* 顶部导航栏 */
-.admin-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 30px;
-  height: 60px;
-  background: #2d3748;
-  color: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  z-index: 10;
-}
-.header-left h1 {
-  font-size: 18px;
-  font-weight: 500;
-}
-
-/* 右上角个人中心 */
-.header-right {
-  display: flex;
-  align-items: center;
-}
-.user-center {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background 0.3s;
-}
-.user-center:hover {
-  background: rgba(255,255,255,0.1);
-}
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 8px;
-  border: 2px solid rgba(255,255,255,0.3);
-}
-.user-name {
-  font-size: 14px;
-  margin-right: 8px;
-}
-.icon-down {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-/* 个人中心下拉菜单 */
-.user-menu {
-  position: absolute;
-  top: 60px;
-  right: 30px;
-  width: 160px;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  overflow: hidden;
-  z-index: 100;
-}
-.user-menu a {
-  display: block;
-  padding: 12px 20px;
-  color: #333;
-  font-size: 14px;
-  text-decoration: none;
-  transition: background 0.3s;
-}
-.user-menu a:hover {
-  background: #f5f5f5;
-}
-.user-menu .logout {
-  color: #e53e3e;
-  border-top: 1px solid #eee;
-  margin-top: 5px;
-}
-
-/* 内容区域（侧边栏+主内容） */
-.admin-content {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-/* 中间主内容区域 */
-.admin-main {
-  flex: 1;
-  padding: 30px;
-  background: #f8f9fa;
-  overflow-y: auto;
-}
-.empty-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  color: #666;
-  font-size: 16px;
-}
+.admin-layout { height: 100vh; width: 100%; }
+.sidebar-container { background-color: #304156; transition: width 0.3s; overflow-x: hidden; display: flex; flex-direction: column; }
+.sidebar-logo { height: 60px; line-height: 60px; background: #2b3649; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.sidebar-logo span { color: #fff; font-weight: 600; font-size: 16px; white-space: nowrap; }
+.side-menu { flex: 1; border-right: none; }
+.admin-header { background: #fff; height: 60px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 4px rgba(0,21,41,0.08); padding: 0 20px; z-index: 9; }
+.header-left { display: flex; align-items: center; }
+.trigger-icon { font-size: 20px; cursor: pointer; margin-right: 20px; color: #606266; }
+.header-right .user-info { display: flex; align-items: center; cursor: pointer; padding: 0 8px; }
+.user-name { margin: 0 8px; font-size: 14px; color: #606266; }
+.admin-main { background-color: #f0f2f5; padding: 20px; position: relative; }
+.admin-footer { height: 40px; line-height: 40px; text-align: center; color: #999; font-size: 12px; background: #f0f2f5; }
+.fade-transform-leave-active, .fade-transform-enter-active { transition: all 0.5s; }
+.fade-transform-enter-from { opacity: 0; transform: translateX(-30px); }
+.fade-transform-leave-to { opacity: 0; transform: translateX(30px); }
 </style>
