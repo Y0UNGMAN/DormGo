@@ -34,14 +34,14 @@ func SignUp(p *model.RegisterRequest) error {
 	return nil
 }
 
-func LoginIn(p *model.LoginRequest) (token string, err error) {
-	user := new(model.DgUser)
+func LoginIn(p *model.LoginRequest) (token string, user *model.DgUser, err error) {
+	user = new(model.DgUser)
 	user, err = model.Login(p.Username, p.Password)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	token, err = utils.GenToken(user.UserID, user.Username)
 
-	return token, err
+	return token, user, err
 }

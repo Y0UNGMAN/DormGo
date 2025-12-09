@@ -62,8 +62,8 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
-
-	token, err := logic.LoginIn(p)
+	user := new(model.DgUser)
+	token, user, err := logic.LoginIn(p)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"code":    http.StatusInternalServerError,
@@ -76,6 +76,7 @@ func Login(c *gin.Context) {
 		"code":    http.StatusOK,
 		"message": "Login Success",
 		"token":   token,
+		"user":    user,
 	})
 }
 

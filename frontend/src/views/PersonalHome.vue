@@ -9,10 +9,10 @@
     <div class="profile-header">
       <div class="user-info-card">
         <div class="avatar-container">
-          <img :src="userInfo.avatar" alt="头像" class="large-avatar" />
+          <img :src="currentUser.avatarurl" alt="头像" class="large-avatar" />
           <div class="edit-avatar-badge">📷</div>
         </div>
-        <h2 class="user-name">{{ userInfo.name }}</h2>
+        <h2 class="user-name">{{ currentUser.username }}</h2>
         <p class="user-bio">暂无个性签名...</p>
         
         <div class="user-stats">
@@ -75,16 +75,13 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Card from '@/components/Card.vue' // 复用你的卡片组件
 import axios from 'axios'
-
+import { useUserStore } from '@/stores/user';
+const userStore = useUserStore(); 
 const router = useRouter()
 const activeTab = ref('posts') // posts 或 likes
 
 // 用户信息
-const userInfo = ref({
-  name: '加载中...',
-  avatar: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/midnight.jpg',
-  id: ''
-})
+const currentUser = computed(() => userStore.currentUser);
 
 // 我的帖子列表
 const myPosts = ref([])
@@ -96,23 +93,10 @@ const goHome = () => {
 }
 
 const handleLogout = () => {
-  if(confirm('确定要退出登录吗？')) {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    router.push('/login')
-  }
+  userStore.logout();
+  router.push('/loginin');
 }
 
-const fetchUserInfo = () => {
-  // 尝试从 localStorage 获取（实际应调用 API）
-  const storedUser = localStorage.getItem('user')
-  if (storedUser) {
-    userInfo.value = JSON.parse(storedUser)
-  } else {
-    // 未登录，跳转登录页
-    router.push('/login')
-  }
-}
 
 const fetchMyPosts = async () => {
   // 这里应该调用 API 获取当前用户的帖子
@@ -129,7 +113,7 @@ const fetchMyPosts = async () => {
          content: '骑了两年，车况良好，海韵苑自取...',
          typeid: 1, // 交易
          Dorm: { dormname: '海韵苑' },
-         User: userInfo.value,
+         User: { username: currentUser.value.username },
          created_at: '2023-10-20'
        }
      ]
@@ -144,7 +128,6 @@ const displayPosts = computed(() => {
 })
 
 onMounted(() => {
-  fetchUserInfo()
   fetchMyPosts()
 })
 </script>

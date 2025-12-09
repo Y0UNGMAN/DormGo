@@ -18,9 +18,19 @@ func App() *gin.Engine {
 		user.POST("/signup", controller.Register)
 		//用户登录
 		user.POST("/login", controller.Login)
-
 	}
-
+	authPost := r.Group("/api/v1/post")
+	authPost.Use(middleware.JWTAuthMiddleware())
+	{
+		//发帖
+		authPost.POST("/create", controller.PostCreate)
+		//对帖子点赞
+		authPost.POST("/postlike", controller.PostLike)
+		//取消点赞
+		authPost.POST("/cancellike", controller.CancelPostLike)
+		//发布评论
+		authPost.POST("/comment", controller.CreateComment)
+	}
 	post := r.Group("/api/v1/post")
 	{
 		//获取所有宿舍
@@ -29,22 +39,14 @@ func App() *gin.Engine {
 		post.GET("/post_type", controller.PostType)
 		//根据id获取帖子类型
 		post.GET("/post_type/:id", controller.PostTypeDetial)
-		//发帖
-		post.POST("/create", controller.PostCreate)
 		//点击查看帖子详情（根据id返回帖子）
 		post.GET("/view/:id", controller.GetPostDetail)
 		//根据宿舍楼返回帖子
 		post.GET("/:dormid", controller.GetPostByDorm)
 		//获取所有帖子列表
 		post.GET("/posts", controller.GetPosts)
-		//对帖子点赞
-		post.POST("/postlike", controller.PostLike)
-		//取消点赞
-		post.POST("/cancellike", controller.CancelPostLike)
 		//获取点赞情况
 		post.GET("like", controller.PostLike)
-		//发布评论
-		post.POST("/comment", controller.CreateComment)
 		//获取评论
 		post.GET("/getcomment", controller.GetComment)
 	}

@@ -281,8 +281,7 @@ const handlePublish = () => {
 
 const goToProfile = () => {
   console.log('跳转到个人资料页面')
-  // 这里跳转到个人资料页面
-  // router.push('/profile')
+  router.push('/personalhome')
 }
 
 // 生命周期

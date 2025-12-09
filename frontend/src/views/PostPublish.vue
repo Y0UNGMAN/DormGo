@@ -128,14 +128,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios';
+import api from '@/api/index.ts';
+import { useUserStore } from '@/stores/user';
+const userStore = useUserStore();
 const router = useRouter()
 
 // 当前用户信息
-const currentUser = ref({
-  id: '1',
-  name: '当前用户',
-  avatar: '/avatars/current-user.jpg'
-})
+const currentUser = computed(() => userStore.currentUser)
+const currentUserId = computed(() => userStore.currentUserId)
 // 表单数据
 const form = ref({
   title: '',
@@ -153,7 +153,7 @@ const fileInput = ref(null)
 const types = ref([])
 const fetchPostTypes = async () => {
   try {
-    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/post_type');
+    const response = await api.get('/api/v1/post/post_type');
     if (response.data && response.data.data) {
       // 成功获取数据，并赋值给响应式变量 types
       types.value = response.data.data;
@@ -171,7 +171,7 @@ const fetchPostTypes = async () => {
 const dormList = ref([])
 const fetchDormList = async() => {
   try {
-    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/dorms');
+    const response = await api.get('/api/v1/post/dorms');
     if (response.data && response.data.data) {
       // 成功获取数据，并赋值给响应式变量 dormList
       dormList.value = response.data.data;
@@ -258,9 +258,15 @@ const handlePublish = async () => {
   if (!isFormValid.value || isSubmitting.value) return
   isSubmitting.value = true
 
+  if (!userStore.isLoggedIn) {
+        alert("请先登录才能发布帖子！")
+        router.push('/loginin') 
+        return
+    }
+
   try {
     const formData = new FormData();
-    formData.append('publisherid', currentUser.value.id);
+    formData.append('publisherid', currentUserId.value);
     formData.append('dormid', form.value.dormid); 
     formData.append('typeid', form.value.typeid);
     formData.append('title', form.value.title);
@@ -268,7 +274,7 @@ const handlePublish = async () => {
     form.value.images.forEach((image) => {
       formData.append(`images`, image.file);
     });
-    const res = await axios.post('http://127.0.0.1:8080/api/v1/post/create', formData,{
+    const res = await api.post('/api/v1/post/create', formData,{
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -285,18 +291,6 @@ const handlePublish = async () => {
     isSubmitting.value = false
   }
 }
-
-// 保存帖子到本地存储（模拟添加到首页）
-// const savePostToLocal = (post) => {
-//   // 从本地存储获取现有帖子
-//   const existingPosts = JSON.parse(localStorage.getItem('dormgo_posts') || '[]')
-  
-//   // 添加新帖子到开头
-//   existingPosts.unshift(post)
-  
-//   // 保存回本地存储
-//   localStorage.setItem('dormgo_posts', JSON.stringify(existingPosts))
-// }
 
 // 返回上一页
 const goBack = () => {

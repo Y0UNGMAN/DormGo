@@ -18,6 +18,8 @@ const PostTypeConfig = () => import('@/views/PostTypeConfig.vue')
 const DormGoHome = () => import('@/views/DormGoHome.vue')
 const PostDetail = () => import('@/views/PostDetail.vue')
 const PostPublish = () => import('@/views/PostPublish.vue')
+const LoginIn = () => import('@/views/Login.vue')
+const PersonalHome = () => import('@/views/PersonalHome.vue')
 
 const routes: RouteRecordRaw[] = [
   {
@@ -27,7 +29,7 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '管理员登录' }
   },
   {
-    path: '/',
+    path: '/admin',
     name: 'AdminLayout',
     component: AdminLayout,
     meta: { requiresAuth: true },
@@ -102,7 +104,7 @@ const routes: RouteRecordRaw[] = [
         name: 'ResetPwd',
         component: ResetPwd,
         meta: { title: '重置密码' }
-      }
+      },
     ]
   },
   {
@@ -110,7 +112,7 @@ const routes: RouteRecordRaw[] = [
     redirect: '/login'
   },
   {
-      path: '/dormgo',
+      path: '/',
       name: 'DormgoHome',
       meta: { title: 'Dormgo首页' },
       component: DormGoHome
@@ -128,6 +130,18 @@ const routes: RouteRecordRaw[] = [
     name: 'PublishPost',
     meta: { title: '发布帖子' },
     component: PostPublish
+  },
+  {
+    path: '/loginin',
+    name: 'LoginIn',
+    meta: { title: '登录' },
+    component: LoginIn
+  },
+  {
+    path: '/personalhome',
+    name: 'PersonalHome',
+    meta: { title: '个人中心' },
+    component: PersonalHome
   }
 ]
 

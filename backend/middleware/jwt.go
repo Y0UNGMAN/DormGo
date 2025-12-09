@@ -27,6 +27,8 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 				"code": 401,
 				"msg":  "Invalid token",
 			})
+			c.Abort()
+			return
 		}
 
 		mc, err := utils.ParseToken(parts[1])

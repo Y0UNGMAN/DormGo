@@ -76,7 +76,7 @@
       
       <!-- 评论输入 -->
       <div class="comment-input-section">
-        <img :src="currentUser.avatar" alt="用户头像" class="current-user-avatar">
+        <img :src="currentUser?.avatarurl" alt="用户头像" class="current-user-avatar">
         <div class="comment-input-container">
           <textarea 
             v-model="newComment" 
@@ -93,7 +93,7 @@
       <!-- 评论列表 -->
       <div class="comments-list">
         <div v-for="comment in comments" :key="comment.id" class="comment-item">
-          <img :src="comment.commenter.avatarurl" alt="用户头像" class="comment-avatar">
+          <img :src="comment.commenter?.avatarurl" alt="用户头像" class="comment-avatar">
           <div class="comment-content">
             <div class="comment-header">
               <span class="comment-user">{{ comment.commenter.username }}</span>
@@ -148,6 +148,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PostStats from '@/components/PostStats.vue'
 import axios from 'axios'
+import api from '@/api/index.ts';
+import { useUserStore } from '@/stores/user'
+const userStore = useUserStore();
 
 const route = useRoute()
 const router = useRouter()
@@ -159,12 +162,10 @@ const newComment = ref('')
 const showImagePreview = ref(false)
 const currentImageIndex = ref(0)
 
-// 当前用户信息
-const currentUser = ref({
-  id: '1',
-  name: '当前用户',
-  avatar: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/midnight.jpg'
-})
+// 【新定义】：直接从 Store 中获取当前用户信息，它是响应式的
+const currentUser = computed(() => userStore.currentUser)
+const currentUserId = computed(() => userStore.currentUserId)
+
 
 // 评论数据
 const comments = ref([])
@@ -176,7 +177,7 @@ const fetchComments = async () => {
   console.log('获取评论，帖子ID:', postId)
   try {
     // 对应后端接口：GET /getcomment?post_id=1&page=1
-    const response = await axios.get(`http://127.0.0.1:8080/api/v1/post/getcomment`, {
+    const response = await api.get(`/api/v1/post/getcomment`, {
       params: {
         post_id: postId,
         page: 1,
@@ -201,7 +202,7 @@ const fetchComments = async () => {
 const fetchPost = async () =>{
   const postId = route.params.id
   try {
-    const response = await axios.get(`http://127.0.0.1:8080/api/v1/post/view/${postId}`);
+    const response = await api.get(`/api/v1/post/view/${postId}`);
     if(response.data && response.data.data){
       post.value = response.data.data
       console.log('帖子数据:', post.value);
@@ -242,12 +243,8 @@ const submitComment = async () => {
   }
 
   // 2. 获取必要参数
-  const postId = parseInt(route.params.id) // 从路由获取当前帖子ID
-  
-  // ⚠️ 关键点：后端需要 commenter_id。
-  // 在实际应用中，你应该从 localStorage 或 Pinia Store 中获取当前登录用户的真实ID。
-  // 这里暂时使用 currentUser.id，请确保 currentUser.id 是数字类型或能转为数字。
-  const userId = parseInt(currentUser.value.id) 
+  const postId = parseInt(route.params.id)
+  const userId = parseInt(currentUserId.value) 
 
   if (!userId) {
     alert("无法获取用户信息，请重新登录")
@@ -257,7 +254,7 @@ const submitComment = async () => {
 
   try {
     // 3. 发送 POST 请求
-    const response = await axios.post('http://127.0.0.1:8080/api/v1/post/comment', {
+    const response = await api.post('/api/v1/post/comment', {
       post_id: postId,
       content: newComment.value.trim(),
       commenter_id: userId,

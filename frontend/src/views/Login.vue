@@ -79,7 +79,9 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
-
+import { useUserStore } from '@/stores/user';
+import api from '@/api/index.ts';
+const userStore = useUserStore();
 const router = useRouter()
 const isLoginMode = ref(true)
 
@@ -104,9 +106,15 @@ const handleSubmit = async () => {
     return
   }
 
-  if (!isLoginMode.value && formData.password !== formData.confirmPassword) {
-    alert('两次输入的密码不一致')
-    return
+  if (!isLoginMode.value) {
+    if (formData.password !== formData.confirmPassword) {
+          alert('两次输入的密码不一致')
+          return
+      }
+      if (!formData.dormId) {
+          alert('请选择宿舍楼')
+          return
+      }
   }
 
   try {
@@ -118,27 +126,54 @@ const handleSubmit = async () => {
       // const res = await axios.post('.../login', ...)
       
       // 模拟登录成功，存储用户信息
-      localStorage.setItem('token', 'mock_token_123456')
-      localStorage.setItem('user', JSON.stringify({
-        name: formData.username,
-        avatar: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/midnight.jpg',
-        id: 1
-      }))
-      
+      const loginPayload = {
+        username: formData.username,
+        password: formData.password
+      }
+      const res = await api.post('/api/v1/user/login', loginPayload)
+      if (res.data.code === 200) {
+        console.log('登录成功，返回数据:', res.data)
+        const data = res.data;
+        const token = data.token; 
+        const user = {
+            id: data.user.id,          // 假设后端返回的 user id
+            username: data.user.username,  // 假设后端返回的 username
+            avatarurl: data.user.avatarurl, // 假设后端返回的 avatar url
+            dormid : data.user.dormid
+        };
+        userStore.setLogin(token, user);
       alert('登录成功！')
       router.push('/') // 跳转回主页
-    } else {
+      } else {
+        alert(`登录失败: ${res.data.message || '用户名或密码错误'}`)
+      }
+  } else {
       console.log('执行注册:', formData)
-      // const res = await axios.post('.../register', ...)
+      const signupPayload = {
+        username: formData.username,
+        password: formData.password,
+        re_password: formData.confirmPassword // 对应后端需要的 re_password 字段
+        // 注意：dormId 字段未包含在您提供的注册请求体中，如果需要提交，请自行添加到 payload 中
+      }
+      const res = await api.post('/api/v1/user/signup', signupPayload)
+      if (res.data.code === 200) {
+        alert('注册成功，请立即登录！')
+        // 注册成功后，自动切换到登录模式
+        isLoginMode.value = true 
+      } else {
+        // 注册失败，显示后端返回的错误信息
+        alert(`注册失败: ${res.data.message || '请检查信息或重试'}`)
+      }
       alert('注册成功，请登录')
       isLoginMode.value = true
     }
-
-  } catch (error) {
-    console.error(error)
-    alert('操作失败，请重试')
+  }catch (error) {
+    console.error('API请求错误:', error)
+    const errorMessage = error.response ? error.response.data.message : '网络连接失败，请检查'
+    alert(`操作失败: ${errorMessage}`)
   }
 }
+
 </script>
 
 <style scoped>
