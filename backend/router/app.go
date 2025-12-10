@@ -30,6 +30,10 @@ func App() *gin.Engine {
 		authPost.POST("/cancellike", controller.CancelPostLike)
 		//发布评论
 		authPost.POST("/comment", controller.CreateComment)
+		//点击查看帖子详情（根据id返回帖子）
+		authPost.GET("/view/:id", controller.GetPostDetail)
+		//报名
+		authPost.GET("/signup", controller.PostSignup)
 	}
 	post := r.Group("/api/v1/post")
 	{
@@ -39,8 +43,7 @@ func App() *gin.Engine {
 		post.GET("/post_type", controller.PostType)
 		//根据id获取帖子类型
 		post.GET("/post_type/:id", controller.PostTypeDetial)
-		//点击查看帖子详情（根据id返回帖子）
-		post.GET("/view/:id", controller.GetPostDetail)
+
 		//根据宿舍楼返回帖子
 		post.GET("/:dormid", controller.GetPostByDorm)
 		//获取所有帖子列表

@@ -89,12 +89,12 @@ const myPosts = ref([])
 const likedPosts = ref([])
 
 const goHome = () => {
-  router.push('/')
+  router.push('/dormgo')
 }
 
 const handleLogout = () => {
   userStore.logout();
-  router.push('/loginin');
+  router.push('/');
 }
 
 

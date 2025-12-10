@@ -7,18 +7,37 @@ import (
 )
 
 // 获取post 信息 和 发布者user（只有name） 信息
-func GetPostDetail(id int) (*model.ApiPostDetail, error) {
+func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, error) {
 	post, err := model.GetPostDetail(id)
 	if err != nil {
 		fmt.Println("GetPostDetail error: ", err)
-		return nil, err
+		return nil, false, err
 	}
+	go func() {
+		_ = model.AddViewCount(post.ID)
+	}()
+
 	publisherId := post.PublisherId
 
 	user, err := model.GetUserById(int(publisherId))
 	if err != nil {
 		fmt.Println("GetUserById error: ", err)
-		return nil, err
+		return nil, false, err
+	}
+
+	isLiked, err := model.CheckIsLiked(uint(id), usrId)
+	if err != nil {
+		fmt.Println("IsLiked error: ", err)
+		return nil, false, err
+	}
+
+	isSignedUp := false
+	if post.IsLimited {
+		var err error
+		isSignedUp, err = model.CheckIsSignedUp(uint(id), usrId)
+		if err != nil {
+			fmt.Println("CheckSignedUp error:", err)
+		}
 	}
 
 	publisherName := user.Username
@@ -26,10 +45,11 @@ func GetPostDetail(id int) (*model.ApiPostDetail, error) {
 	postDetail := &model.ApiPostDetail{
 		PublisherName:   publisherName,
 		PublisherAvator: publisherAvatar,
+		IsSignedUp:      isSignedUp,
 		DgPost:          post,
 	}
 
-	return postDetail, nil
+	return postDetail, isLiked, nil
 
 }
 

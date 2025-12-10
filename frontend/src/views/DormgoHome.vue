@@ -24,7 +24,7 @@
       <!-- 用户头像 -->
       <div class="user-avatar-section">
         <img 
-          :src="currentUser.avatar" 
+          :src="currentUser.avatarurl" 
           alt="用户头像" 
           class="user-avatar"
           @click="goToProfile"
@@ -123,6 +123,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Card from '@/components/Card.vue'
 import axios from 'axios'
+import { useUserStore } from '@/stores/user';
+const userStore = useUserStore();
 const router = useRouter()
 
 // 响应式数据
@@ -131,11 +133,8 @@ const selectedCategory = ref('all')
 const searchKeyword = ref('')
 
 // 当前用户信息
-const currentUser = ref({
-  id: '1',
-  name: '当前用户',
-  avatar: 'https://dorm-go.oss-cn-guangzhou.aliyuncs.com/avator/midnight.jpg'
-})
+const currentUser = computed(() => userStore.currentUser)
+const currentUserId = computed(() => userStore.currentUserId)
 
 const dormList = ref([]);   // 宿舍列表
 const fetchDormList = async() => {    

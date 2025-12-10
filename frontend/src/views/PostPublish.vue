@@ -70,6 +70,34 @@
         </div>
       </div>
 
+      <div class="form-section">
+        <div class="limit-switch-container">
+          <label class="form-label">限时/报名</label>
+          <div class="switch" :class="{ checked: form.isLimited }" @click="toggleLimit">
+            <div class="slider"></div>
+          </div>
+        </div>
+
+        <div v-if="form.isLimited" class="limit-settings">
+          <div class="setting-item">
+            <label class="sub-label">截止时间</label>
+            <input 
+              type="datetime-local" 
+              v-model="form.deadline"
+              class="date-input"
+            >
+          </div>
+          <div class="setting-item">
+            <label class="sub-label">最大人数 (0为不限)</label>
+            <input 
+              type="number" 
+              v-model.number="form.maxEnrollment"
+              class="number-input" 
+              min="1"
+            >
+          </div>
+        </div>
+      </div>
       <!-- 图片上传 -->
       <div class="form-section">
         <label class="form-label">上传图片</label>
@@ -142,7 +170,10 @@ const form = ref({
   content: '',
   typeid: '',
   dormid: '',
-  images: [] // 存储图片对象：{ url: string, file: File }
+  images: [], // 存储图片对象：{ url: string, file: File }
+  isLimited: false,
+  deadline: '',
+  maxEnrollment: 0
 })
 
 // 状态
@@ -251,7 +282,10 @@ const removeImage = (index) => {
   URL.revokeObjectURL(form.value.images[index].url)
   form.value.images.splice(index, 1)
 }
-
+// 切换开关
+const toggleLimit = () => {
+  form.value.isLimited = !form.value.isLimited
+}
 
 // 发布帖子
 const handlePublish = async () => {
@@ -263,7 +297,15 @@ const handlePublish = async () => {
         router.push('/loginin') 
         return
     }
-
+  if (form.value.isLimited) {
+    if (!form.value.deadline) {
+        alert("请选择截止时间")
+        isSubmitting.value = false
+        return
+    }
+    // 将 datetime-local 的时间转换为 RFC3339 格式 (加时区，或者让后端处理)
+    // datetime-local 格式如 "2023-11-01T12:00"，可以直接传给后端，GORM通常能解析
+  }
   try {
     const formData = new FormData();
     formData.append('publisherid', currentUserId.value);
@@ -271,6 +313,11 @@ const handlePublish = async () => {
     formData.append('typeid', form.value.typeid);
     formData.append('title', form.value.title);
     formData.append('content', form.value.content);
+    formData.append('is_limited', form.value.isLimited);
+    if (form.value.isLimited) {
+        formData.append('deadline', new Date(form.value.deadline).toISOString());
+        formData.append('max_enrollment', form.value.maxEnrollment);
+    }
     form.value.images.forEach((image) => {
       formData.append(`images`, image.file);
     });
@@ -638,5 +685,70 @@ onMounted(() => {
   .image-preview {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+.limit-switch-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+/* 开关样式 */
+.switch {
+  width: 50px;
+  height: 26px;
+  background-color: #ccc;
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.switch.checked {
+  background-color: #1890ff;
+}
+.slider {
+  width: 22px;
+  height: 22px;
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+}
+.switch.checked .slider {
+  transform: translateX(24px);
+}
+
+.limit-settings {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  animation: slideDown 0.3s ease;
+}
+
+.setting-item {
+  margin-bottom: 12px;
+}
+
+.sub-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.date-input, .number-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

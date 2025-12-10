@@ -143,7 +143,7 @@ const handleSubmit = async () => {
         };
         userStore.setLogin(token, user);
       alert('登录成功！')
-      router.push('/') // 跳转回主页
+      router.push('/dormgo') // 跳转回主页
       } else {
         alert(`登录失败: ${res.data.message || '用户名或密码错误'}`)
       }

@@ -112,7 +112,7 @@ const routes: RouteRecordRaw[] = [
     redirect: '/login'
   },
   {
-      path: '/',
+      path: '/dormgo',
       name: 'DormgoHome',
       meta: { title: 'Dormgo首页' },
       component: DormGoHome
@@ -132,7 +132,7 @@ const routes: RouteRecordRaw[] = [
     component: PostPublish
   },
   {
-    path: '/loginin',
+    path: '/',
     name: 'LoginIn',
     meta: { title: '登录' },
     component: LoginIn

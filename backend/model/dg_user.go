@@ -89,3 +89,12 @@ func Login(username, password string) (*DgUser, error) {
 	// 登录成功，返回用户对象
 	return &user, nil
 }
+
+func UserIdToId(userId uint) (uint, error) {
+	var user DgUser
+	err := DB.Model(&DgUser{}).Where("user_id=?", userId).First(&user).Error
+	if err != nil {
+		return 0, err
+	}
+	return user.ID, nil
+}

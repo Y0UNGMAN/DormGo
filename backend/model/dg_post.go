@@ -8,27 +8,32 @@ import (
 )
 
 type DgPost struct {
-	ID           uint       `gorm:"primarykey;AUTO_INCREMENT" json:"id"`
-	PublisherId  uint       `gorm:"column:publisherid" json:"publisherid" binding:"required"`
-	AccepterId   uint       `gorm:"column:accepterid" json:"accepterid"`
-	DormId       uint       `gorm:"column:dormid" json:"dormid" binding:"required"`
-	Dorm         DgDorm     `gorm:"foreignkey:DormId;references:DormId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" `
-	Title        string     `gorm:"column:title;type:varchar(255);" json:"title" binding:"required"`
-	Content      string     `gorm:"column:content;type:text;" json:"content" binding:"required"`
-	TypeId       uint       `gorm:"column:typeid" json:"typeid" binding:"required"`
-	Type         DgType     `gorm:"foreignkey:TypeId;references:TypeId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" `
-	Status       string     `gorm:"column:status;type:varchar(50);" json:"status"`
-	CommentCount uint       `gorm:"column:comment_count" json:"comment_count"`
-	ViewCount    uint       `gorm:"column:view_count" json:"view_count"`
-	LikeCount    uint       `gorm:"column:like_count" json:"like_count"`
-	Images       []DgImages `gorm:"foreignKey:PostID;references:ID" json:"images"`
-	CreatedAt    time.Time  `gorm:"column:created_at" json:"created_at"`
-	UpdatedAt    time.Time  `gorm:"column:updated_at" json:"updated_at"`
+	ID                uint       `gorm:"primarykey;AUTO_INCREMENT" json:"id"`
+	PublisherId       uint       `gorm:"column:publisherid" json:"publisherid" binding:"required"`
+	AccepterId        uint       `gorm:"column:accepterid" json:"accepterid"`
+	DormId            uint       `gorm:"column:dormid" json:"dormid" binding:"required"`
+	Dorm              DgDorm     `gorm:"foreignkey:DormId;references:DormId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" `
+	Title             string     `gorm:"column:title;type:varchar(255);" json:"title" binding:"required"`
+	Content           string     `gorm:"column:content;type:text;" json:"content" binding:"required"`
+	TypeId            uint       `gorm:"column:typeid" json:"typeid" binding:"required"`
+	Type              DgType     `gorm:"foreignkey:TypeId;references:TypeId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" `
+	Status            string     `gorm:"column:status;type:varchar(50);" json:"status"`
+	CommentCount      uint       `gorm:"column:comment_count" json:"comment_count"`
+	ViewCount         uint       `gorm:"column:view_count" json:"view_count"`
+	LikeCount         uint       `gorm:"column:like_count" json:"like_count"`
+	Images            []DgImages `gorm:"foreignKey:PostID;references:ID" json:"images"`
+	IsLimited         bool       `gorm:"column:is_limited" json:"is_limited"`
+	Deadline          *time.Time `gorm:"column:deadline" json:"deadline"`
+	MaxEnrollment     int        `gorm:"column:max_enrollment" json:"max_enrollment"`
+	CurrentEnrollment int        `gorm:"column:current_enrollment" json:"current_enrollment"`
+	CreatedAt         time.Time  `gorm:"column:created_at" json:"created_at"`
+	UpdatedAt         time.Time  `gorm:"column:updated_at" json:"updated_at"`
 }
 
 type ApiPostDetail struct {
 	PublisherName   string `json:"publishername"`
 	PublisherAvator string `json:"publisheravator"`
+	IsSignedUp      bool   `json:"is_signed_up"`
 	*DgPost
 }
 
@@ -110,4 +115,77 @@ func AddCommentCount(db *gorm.DB, postid uint) error {
 		return err
 	}
 	return nil
+}
+
+// 浏览量加一
+func AddViewCount(postid uint) error {
+	err := DB.Model(&DgPost{}).
+		Where("id = ?", postid).
+		UpdateColumn("view_count", gorm.Expr("view_count + ?", 1)).Error
+	if err != nil {
+		fmt.Println("add view count error: ", err)
+		return err
+	}
+	return nil
+}
+
+// 用户报名
+func SignupPost(postID uint, userID uint) error {
+	userid, err := UserIdToId(userID)
+	if err != nil {
+		return err
+	}
+	return DB.Transaction(func(tx *gorm.DB) error {
+		// 1. 检查帖子是否存在、未过期、名额未满
+		var post DgPost
+		if err := tx.Where("id = ?", postID).First(&post).Error; err != nil {
+			return err
+		}
+		// 检查是否开启限时
+		if !post.IsLimited {
+			return fmt.Errorf("该帖子未开启报名")
+		}
+		// 检查时间
+		if post.Deadline != nil && time.Now().After(*post.Deadline) {
+			return fmt.Errorf("报名已截止")
+		}
+		// 检查人数
+		if post.MaxEnrollment > 0 && post.CurrentEnrollment >= post.MaxEnrollment {
+			return fmt.Errorf("名额已满")
+		}
+
+		// 2. 检查是否重复报名
+		var count int64
+		tx.Model(&DgSignup{}).Where("post_id = ? AND user_id = ?", postID, userid).Count(&count)
+		if count > 0 {
+			return fmt.Errorf("你已经报过名了")
+		}
+
+		// 3. 创建报名记录
+		signup := DgSignup{PostID: postID, UserID: userid}
+		if err := tx.Create(&signup).Error; err != nil {
+			return err
+		}
+
+		// 4. 帖子当前报名人数 +1
+		if err := tx.Model(&DgPost{}).Where("id = ?", postID).UpdateColumn("current_enrollment", gorm.Expr("current_enrollment + ?", 1)).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+// 检查用户是否已报名
+func CheckIsSignedUp(postID uint, userID uint) (bool, error) {
+	userid, err := UserIdToId(userID)
+	if err != nil {
+		return false, err
+	}
+	var count int64
+	err = DB.Model(&DgSignup{}).Where("post_id = ? AND user_id = ?", postID, userid).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }

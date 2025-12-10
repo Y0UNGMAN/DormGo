@@ -32,6 +32,33 @@
         </span>
       </div>
 
+      <div v-if="post.is_limited" class="activity-card" :class="{ 'expired': isExpired }">
+        <div class="activity-header">
+            <span class="activity-tag">{{ isExpired ? '已结束' : '正在报名' }}</span>
+            <span class="activity-deadline">截止: {{ formatTime(post.deadline) }}</span>
+        </div>
+        
+        <div class="activity-body">
+            <div class="progress-info">
+                <span>报名进度</span>
+                <span>{{ post.current_enrollment }} / {{ post.max_enrollment > 0 ? post.max_enrollment : '不限' }}</span>
+            </div>
+            <div class="progress-bar-bg" v-if="post.max_enrollment > 0">
+                <div class="progress-bar-fill" :style="{ width: progressPercentage + '%' }"></div>
+            </div>
+        </div>
+
+        <button 
+            class="signup-btn" 
+            :disabled="isExpired || isFull || post.is_signed_up"
+            :class="{ 'btn-gray': isExpired || isFull || post.is_signed_up }"
+            @click="handleSignup"
+        >
+            {{ signupButtonText }}
+        </button>
+      </div>
+      
+
       <!-- 正文内容 -->
       <div class="content-section">
         <p class="post-content-text">{{ post.content }}</p>
@@ -78,6 +105,10 @@
       <div class="comment-input-section">
         <img :src="currentUser?.avatarurl" alt="用户头像" class="current-user-avatar">
         <div class="comment-input-container">
+          <div v-if="replyToCommentId !== 0" class="reply-status-bar">
+            <span>正在回复: <strong>{{ replyToUser }}</strong></span>
+            <button class="cancel-reply-btn" @click="cancelReply">取消回复</button>
+          </div>
           <textarea 
             v-model="newComment" 
             placeholder="写下你的评论..." 
@@ -109,13 +140,14 @@
                 <span class="action-icon">❤️</span>
                 <span class="action-text">赞</span>
               </button>
-              <button class="comment-action-btn" @click="replyComment(comment.id)">
+              <button class="comment-action-btn" @click="replyComment(comment)">
                 <span class="action-icon">↩️</span>
                 <span class="action-text">回复</span>
               </button>
             </div>
             <div v-if="comment.sub_comments && comment.sub_comments.length > 0" class="sub-comments-list">
               <div v-for="sub in comment.sub_comments" :key="sub.id" class="sub-comment-item">
+                <img :src="sub.commenter?.avatarurl" alt="用户头像" class="sub-comment-avatar">
                 <div class="sub-comment-header">
                   <span class="sub-user">{{ sub.commenter.username }}</span>
                   <span class="sub-time">{{ formatTime(sub.created_at) }}</span>
@@ -126,6 +158,12 @@
                   </span>
                   {{ sub.content }}
                 </p>
+
+                <div class="sub-comment-actions">
+                   <button class="sub-comment-action-btn" @click="replyComment(sub)">
+                      回复
+                   </button>
+                </div>
               </div>
             </div>
           </div>
@@ -171,6 +209,11 @@ const currentUserId = computed(() => userStore.currentUserId)
 const comments = ref([])
 const totalComments = ref(0)
 
+// 用于存储当前正在回复的评论ID (默认为0，表示顶级评论)
+const replyToCommentId = ref(0)
+// 用于存储被回复人的名字（用于界面展示）
+const replyToUser = ref('')
+
 // 获取评论列表
 const fetchComments = async () => {
   const postId = route.params.id
@@ -203,9 +246,12 @@ const fetchPost = async () =>{
   const postId = route.params.id
   try {
     const response = await api.get(`/api/v1/post/view/${postId}`);
+    console.log('获取帖子详情响应:', response);
     if(response.data && response.data.data){
       post.value = response.data.data
+      isLiked.value = response.data.isliked
       console.log('帖子数据:', post.value);
+      console.log('当前用户是否点赞:', isLiked.value);
     }
   }catch (err){
       console.error('获取帖子详情失败', err)
@@ -217,13 +263,103 @@ const goBack = () => {
   router.back()
 }
 
+const isExpired = computed(() => {
+    if (!post.value.deadline) return false;
+    return new Date() > new Date(post.value.deadline);
+});
+
+const isFull = computed(() => {
+    if (post.value.max_enrollment === 0) return false;
+    return post.value.current_enrollment >= post.value.max_enrollment;
+});
+
+const progressPercentage = computed(() => {
+    if (!post.value.max_enrollment) return 0;
+    let p = (post.value.current_enrollment / post.value.max_enrollment) * 100;
+    return p > 100 ? 100 : p;
+});
+
+// 报名动作
+const handleSignup = async () => {
+    if (!userStore.isLoggedIn) {
+        alert("请先登录");
+        return;
+    }
+    if (!confirm("确定要报名参加吗？")) return;
+
+    try {
+        const res = await api.post('/api/v1/post/signup', {
+            post_id: post.value.id
+        });
+        if (res.data.code === 200) {
+            alert("报名成功！");
+            // 手动更新前端状态
+            post.value.is_signed_up = true;
+            post.value.current_enrollment++;
+        } else {
+            alert(res.data.msg);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("报名失败");
+    }
+};
+
+const signupButtonText = computed(() => {
+    if (post.value.is_signed_up) return '已报名';
+    if (isExpired.value) return '报名已截止';
+    if (isFull.value) return '名额已满';
+    return '立即报名';
+});
+
 // 点赞/取消点赞
-const toggleLike = () => {
-  isLiked.value = !isLiked.value
-  if (isLiked.value) {
-    post.value.like_count++
-  } else {
-    post.value.like_count--
+const toggleLike = async () => {
+  console.log('【调试】当前用户信息:', userStore.currentUser);
+  console.log('【调试】计算出的用户ID:', currentUserId.value);
+  if (!currentUserId.value) {
+    alert("请先登录")
+    router.push('/')
+    return
+  }
+  const postId = parseInt(route.params.id)
+  const userId = parseInt(currentUserId.value)
+  const payload = {
+    postid: postId,
+    likerid: userId
+  }
+
+  try {
+    let response;
+    
+    // 3. 根据当前状态决定调用哪个接口
+    if (isLiked.value) {
+      // 当前已点赞 -> 执行取消点赞
+      response = await api.post('/api/v1/post/cancellike', payload)
+    } else {
+      // 当前未点赞 -> 执行点赞
+      response = await api.post('/api/v1/post/postlike', payload)
+    }
+
+    // 4. 处理响应
+    if (response.data && response.data.code === 200) {
+      // 切换前端状态
+      isLiked.value = !isLiked.value
+      
+      // 更新显示的数字
+      if (post.value) {
+        if (isLiked.value) {
+          post.value.like_count++
+        } else {
+          post.value.like_count--
+        }
+      }
+    } else {
+      alert(response.data.msg || "操作失败")
+    }
+
+  } catch (error) {
+    console.error("点赞操作网络错误:", error)
+    // 可以添加更友好的提示，例如 ElMessage.error('网络错误')
   }
 }
 
@@ -258,7 +394,7 @@ const submitComment = async () => {
       post_id: postId,
       content: newComment.value.trim(),
       commenter_id: userId,
-      parent_id: 0 // 0 代表这是顶级评论（楼主层）
+      parent_id: replyToCommentId.value // 0 代表这是顶级评论（楼主层）
     })
 
     // 4. 处理响应
@@ -266,6 +402,8 @@ const submitComment = async () => {
       // 成功：清空输入框
       newComment.value = ''
       
+      replyToCommentId.value = 0 
+      replyToUser.value = ''
       // 刷新评论列表（重新从后端拉取最新数据）
       await fetchComments()
       
@@ -294,11 +432,26 @@ const likeComment = (commentId) => {
 }
 
 // 回复评论
-const replyComment = (commentId) => {
-  const comment = comments.value.find(c => c.id === commentId)
-  if (comment) {
-    newComment.value = `@${comment.userName} `
+const replyComment = (commentItem) => {
+  if (commentItem) {
+    // 设置回复的目标ID
+    replyToCommentId.value = commentItem.id
+    // 设置目标用户名（用于显示）
+    replyToUser.value = commentItem.commenter.username
+    // 清空输入框或保持原样
+    newComment.value = ''
+    // 聚焦输入框
+    setTimeout(() => {
+      document.querySelector('.comment-input')?.focus()
+    }, 100)
   }
+}
+
+// 取消回复状态（变回发布顶级评论）
+const cancelReply = () => {
+  replyToCommentId.value = 0
+  replyToUser.value = ''
+  newComment.value = ''
 }
 
 // 预览图片
@@ -329,8 +482,6 @@ const formatTime = (timeStr) => {
 // 初始化
 onMounted(() => {
   fetchPost()
-  // 每次进入详情页，浏览量+1
-  post.value.view_count++
   fetchComments()
 })
 </script>
@@ -810,12 +961,24 @@ onMounted(() => {
 }
 
 .sub-comment-item {
-  margin-bottom: 10px;
+  display: flex;      /* 关键：启用 Flex 布局，让头像和内容左右排列 */
+  gap: 10px;          /* 头像和内容之间的间距 */
+  margin-bottom: 12px;
   border-bottom: 1px dashed #eee; /* 虚线分隔 */
-  padding-bottom: 10px;
+  padding-bottom: 12px;
   text-align: left; /* 强制左对齐 */
 }
-
+.sub-comment-avatar {
+  width: 30px;        /* 比主评论头像(36px)稍小一点，体现层级感 */
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;     /* 防止头像被压缩 */
+  margin-top: 2px;    /* 微调垂直对齐 */
+}
+.sub-comment-content {
+  flex: 1;            /* 占据剩余宽度 */
+}
 .sub-comment-item:last-child {
   margin-bottom: 0;
   border-bottom: none;
@@ -825,6 +988,7 @@ onMounted(() => {
 .sub-comment-header {
   display: flex;
   justify-content: space-between;
+  align-items: center; /* 确保名字和时间垂直对齐 */
   margin-bottom: 4px;
 }
 
@@ -850,5 +1014,131 @@ onMounted(() => {
   color: #1890ff; /* 蓝色的 "回复 @xxx" */
   font-weight: 500;
   margin-right: 4px;
+}
+
+/* 新增样式 */
+.reply-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f0f7ff;
+  padding: 8px 12px;
+  border-radius: 8px 8px 0 0; /* 下方圆角为0，与输入框拼接 */
+  border: 1px solid #e8e8e8;
+  border-bottom: none;
+  font-size: 13px;
+  color: #666;
+}
+
+.cancel-reply-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.cancel-reply-btn:hover {
+  color: #ff4d4f;
+}
+
+/* 微调输入框，如果有回复条时，去掉上边框圆角 */
+.reply-status-bar + .comment-input {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* ...原有的样式... */
+
+/* 新增：子评论的操作栏 */
+.sub-comment-actions {
+  display: flex;
+  justify-content: flex-end; /* 按钮靠右，或者 flex-start 靠左 */
+  margin-top: 4px;
+}
+
+.sub-comment-action-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #999;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sub-comment-action-btn:hover {
+  color: #1890ff;
+  background-color: #e6f7ff;
+}
+
+.activity-card {
+    background: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.activity-card.expired {
+    background: #f5f5f5;
+    border-color: #d9d9d9;
+    filter: grayscale(1); /* 变灰效果 */
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.activity-tag {
+    background: #1890ff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.activity-body {
+    margin-bottom: 15px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #555;
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #52c41a;
+    transition: width 0.3s;
+}
+
+.signup-btn {
+    width: 100%;
+    padding: 10px;
+    background: #1890ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.signup-btn.btn-gray {
+    background: #ccc;
+    cursor: not-allowed;
 }
 </style>
