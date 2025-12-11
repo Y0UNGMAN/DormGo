@@ -200,7 +200,7 @@ const newComment = ref('')
 const showImagePreview = ref(false)
 const currentImageIndex = ref(0)
 
-// 【新定义】：直接从 Store 中获取当前用户信息，它是响应式的
+// 直接从 Store 中获取当前用户信息，它是响应式的
 const currentUser = computed(() => userStore.currentUser)
 const currentUserId = computed(() => userStore.currentUserId)
 

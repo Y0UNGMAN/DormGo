@@ -33,7 +33,7 @@ func App() *gin.Engine {
 		//点击查看帖子详情（根据id返回帖子）
 		authPost.GET("/view/:id", controller.GetPostDetail)
 		//报名
-		authPost.GET("/signup", controller.PostSignup)
+		authPost.POST("/signup", controller.PostSignup)
 	}
 	post := r.Group("/api/v1/post")
 	{

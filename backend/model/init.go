@@ -88,5 +88,12 @@ func Init() (err error) {
 		println("创建cmtlike表成功")
 	}
 
+	err = DB.AutoMigrate(&DgSignup{})
+	if err != nil {
+		println("创建signup表失败")
+	} else {
+		println("创建signup表成功")
+	}
+
 	return
 }
