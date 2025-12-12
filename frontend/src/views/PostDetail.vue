@@ -366,7 +366,7 @@ const toggleLike = async () => {
 // 联系用户
 const contactUser = () => {
   console.log('联系用户:', post.value.userName)
-  // 这里可以打开聊天窗口
+  goToChat(post.value.publisherid);
 }
 
 // 提交评论
@@ -478,6 +478,34 @@ const formatTime = (timeStr) => {
     minute: '2-digit'
   })
 }
+
+const goToChat = (targetUserId) => {
+  // 1. 校验登录
+  if (!userStore.isLoggedIn) {
+    alert("请先登录");
+    router.push('/loginin');
+    return;
+  }
+  // 2. 校验参数有效性
+  if (!targetUserId) {
+    console.warn("目标用户ID为空");
+    return;
+  }
+  // 3. 禁止给自己发私信
+  if (parseInt(targetUserId) === parseInt(currentUserId.value)) {
+    alert("不能和自己聊天哦");
+    return;
+  }
+  // 4. 跳转路由
+  router.push({
+    name: 'Chat',
+    params: { id: targetUserId }
+  });
+};
+
+
+
+
 
 // 初始化
 onMounted(() => {

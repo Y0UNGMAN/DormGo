@@ -76,18 +76,18 @@ func GetPostByDorm(dormid int) ([]*model.ApiPostDetail, error) {
 	return postDetails, nil
 }
 
-func GetPosts() ([]*model.ApiPostDetail, error) {
-	posts, err := model.GetPosts()
+func GetPosts(page int, pageSize int) ([]*model.ApiPostDetail, int64, error) {
+	posts, total, err := model.GetPosts(page, pageSize)
 	if err != nil {
 		fmt.Println("GetPosts error: ", err)
-		return nil, err
+		return nil, 0, err
 	}
 	postDetails := make([]*model.ApiPostDetail, 0, len(posts))
 	for _, post := range posts {
 		user, err := model.GetUserById(int(post.PublisherId))
 		if err != nil {
 			fmt.Println("GetUserById error: ", err)
-			return nil, err
+			continue
 		}
 		p := post
 		postDetails = append(postDetails, &model.ApiPostDetail{
@@ -96,5 +96,5 @@ func GetPosts() ([]*model.ApiPostDetail, error) {
 			DgPost:          p,
 		})
 	}
-	return postDetails, nil
+	return postDetails, total, nil
 }

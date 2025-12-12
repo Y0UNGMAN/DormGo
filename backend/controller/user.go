@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/Y0UNGMAN/DormGo/backend/logic"
 	"github.com/Y0UNGMAN/DormGo/backend/middleware"
@@ -99,4 +100,28 @@ func GetCurrentUser(c *gin.Context) (userID int64, err error) {
 	}
 	return
 
+}
+
+func GetUserInfoPublic(c *gin.Context) {
+	idStr := c.Query("user_id")
+	id, _ := strconv.Atoi(idStr)
+
+	user, err := logic.GetUserById(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code": http.StatusInternalServerError,
+			"msg":  "用户不存在",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"msg":  "Success",
+		"data": gin.H{
+			"id":        user.UserID,
+			"username":  user.Username,
+			"avatarurl": user.Avatar,
+			"dorm":      user.Dorm,
+		},
+	})
 }

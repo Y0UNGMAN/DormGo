@@ -71,14 +71,26 @@ func GetPostByDorm(dormid int) ([]*DgPost, error) {
 }
 
 // 获取所有帖子
-func GetPosts() ([]*DgPost, error) {
+func GetPosts(page int, pageSize int) ([]*DgPost, int64, error) {
 	posts := make([]*DgPost, 0)
-	err := DB.Preload("Images").Preload("Dorm").Preload("Type").Find(&posts).Error
+	var total int64
+	err := DB.Model(&DgPost{}).Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	offset := (page - 1) * pageSize
+	err = DB.Preload("Images").
+		Preload("Dorm").
+		Preload("Type").
+		Order("created_at desc"). // <--- 关键：时间倒序
+		Offset(offset).
+		Limit(pageSize). // <--- 关键：限制数量
+		Find(&posts).Error
 	if err != nil {
 		fmt.Println("get posts error: ", err)
-		return nil, err
+		return nil, 0, err
 	}
-	return posts, err
+	return posts, total, err
 }
 
 // 点赞数加一
@@ -169,6 +181,17 @@ func SignupPost(postID uint, userID uint) error {
 
 		// 4. 帖子当前报名人数 +1
 		if err := tx.Model(&DgPost{}).Where("id = ?", postID).UpdateColumn("current_enrollment", gorm.Expr("current_enrollment + ?", 1)).Error; err != nil {
+			return err
+		}
+
+		notification := DgNotification{
+			ReceiverID: post.PublisherId,
+			SenderID:   userid,
+			Type:       "signup",
+			PostID:     postID,
+			Content:    "报名了你的活动", // 前端可以拼接成 "用户A 报名了你的活动"
+		}
+		if err := tx.Create(&notification).Error; err != nil {
 			return err
 		}
 

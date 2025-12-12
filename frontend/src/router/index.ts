@@ -20,7 +20,7 @@ const PostDetail = () => import('@/views/PostDetail.vue')
 const PostPublish = () => import('@/views/PostPublish.vue')
 const LoginIn = () => import('@/views/Login.vue')
 const PersonalHome = () => import('@/views/PersonalHome.vue')
-
+const ChatPage = () => import('@/views/ChatPage.vue')
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
@@ -142,6 +142,12 @@ const routes: RouteRecordRaw[] = [
     name: 'PersonalHome',
     meta: { title: '个人中心' },
     component: PersonalHome
+  },
+  {
+    path: '/chat/:id', // :id 是对方的用户ID
+    name: 'Chat',
+    component: ChatPage,
+    meta: { title : "私信页" }
   }
 ]
 

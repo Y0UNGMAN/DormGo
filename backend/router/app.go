@@ -18,6 +18,8 @@ func App() *gin.Engine {
 		user.POST("/signup", controller.Register)
 		//用户登录
 		user.POST("/login", controller.Login)
+		//获取用户信息
+		user.GET("/info", controller.GetUserInfoPublic)
 	}
 	authPost := r.Group("/api/v1/post")
 	authPost.Use(middleware.JWTAuthMiddleware())
@@ -34,7 +36,24 @@ func App() *gin.Engine {
 		authPost.GET("/view/:id", controller.GetPostDetail)
 		//报名
 		authPost.POST("/signup", controller.PostSignup)
+
 	}
+
+	message := r.Group("api/v1/message")
+	message.Use(middleware.JWTAuthMiddleware())
+	{
+		//获取通知
+		message.GET("/notifications", controller.GetNotifacation)
+		//发私信
+		message.POST("/send", controller.SendMessage)
+		//获取聊天记录
+		message.GET("/history", controller.GetMessageHistory)
+		//获取未读通知数量
+		message.GET("/unreadcount", controller.GetUnreadCount)
+		//已读所有消息
+		message.POST("/read_all", controller.ReadAllNotification)
+	}
+
 	post := r.Group("/api/v1/post")
 	{
 		//获取所有宿舍

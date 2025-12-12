@@ -23,14 +23,18 @@
 
       <!-- 用户头像 -->
       <div class="user-avatar-section">
-        <img 
-          :src="currentUser.avatarurl" 
-          alt="用户头像" 
-          class="user-avatar"
-          @click="goToProfile"
-        />
+        <div class="avatar-wrapper" @click="goToProfile">
+            <img 
+              :src="currentUser.avatarurl" 
+              alt="用户头像" 
+              class="user-avatar"
+            />
+            <div v-if="unreadCount > 0" class="global-badge">
+                {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
     <!-- 上边栏 - 分类筛选（居中） -->
     <div class="top-nav">
@@ -101,9 +105,11 @@
           <button class="empty-btn" @click="handlePublish">发布帖子</button>
           <button v-if="hasActiveFilters" class="empty-btn secondary" @click="clearAllFilters">查看全部帖子</button>
         </div>
-
+        <div v-if="isLoading" class="loading-state">
+           ⏳ 正在加载更多帖子...
+        </div>
         <!-- 已显示所有帖子的提示 -->
-        <div class="all-posts-loaded" v-if="filteredPosts.length > 0">
+        <div class="all-posts-loaded" v-if="filteredPosts.length > 0 && !hasMore ">
           <div class="loaded-text">已显示所有帖子</div>
           <div class="loaded-count">共 {{ filteredPosts.length }} 个帖子</div>
         </div>
@@ -119,10 +125,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed,onUnmounted ,onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Card from '@/components/Card.vue'
 import axios from 'axios'
+import api from '@/api/index.js';
 import { useUserStore } from '@/stores/user';
 const userStore = useUserStore();
 const router = useRouter()
@@ -137,9 +144,16 @@ const currentUser = computed(() => userStore.currentUser)
 const currentUserId = computed(() => userStore.currentUserId)
 
 const dormList = ref([]);   // 宿舍列表
+const page = ref(1);
+const hasMore = ref(true);
+const isLoading = ref(false);
+
+const unreadCount = computed(() => userStore.unreadCount);
+let pollingTimer = null;
+
 const fetchDormList = async() => {    
   try {
-    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/dorms');
+    const response = await api.get('/api/v1/post/dorms');
     if (response.data && response.data.data) {
       // 成功获取数据，并赋值给响应式变量 dormList
       dormList.value = response.data.data;
@@ -156,7 +170,7 @@ const fetchDormList = async() => {
 const postTypes = ref([]);    // 宿舍分类
 const fetchPostTypes = async () => {     
   try {
-    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/post_type');
+    const response = await api.get('/api/v1/post/post_type');
     if (response.data && response.data.data) {
       // 成功获取数据，并赋值给响应式变量 postTypes
       postTypes.value = response.data.data;
@@ -173,21 +187,52 @@ const fetchPostTypes = async () => {
 // 计算属性：筛选帖子（包含搜索、分类、宿舍楼筛选）
 
 const posts = ref([]);    // 帖子
-const fetchPostList = async () => {
+const fetchPostList = async (isRefresh = false) => {
+  if (isLoading.value || (!hasMore.value && !isRefresh)) return;
+  isLoading.value = true; // 上锁
+  if (isRefresh) {
+    page.value = 1;
+    hasMore.value = true; // 重置 hasMore
+  }
   try {
-    const response = await axios.get('http://127.0.0.1:8080/api/v1/post/posts');
-    if (response.data && response.data.data) {
-      // 成功获取数据，并赋值给响应式变量 posts
-      posts.value = response.data.data;
+    const response = await api.get(`/api/v1/post/posts?page=${page.value}&size=10`);
+    if (response.data && response.data.code === 200) {
+      const newPosts = response.data.data;
+      if (isRefresh) {
+         posts.value = newPosts;
+      } else {
+         posts.value = [...posts.value, ...newPosts];
+      }
+      hasMore.value = response.data.has_more;
+      if (hasMore.value) {
+        page.value++; 
+      }
+      console.log(`加载第 ${page.value-1} 页成功, 当前总数: ${posts.value.length}`);
       console.log('帖子列表:', posts.value);
-    } else {
-      // 如果数据结构不符合预期
-      throw new Error('接口返回数据结构异常');
-    }
+    } 
   } catch (error) {
     console.error('获取帖子列表失败:', error);
+  }finally {
+    isLoading.value = false; 
   }
 };
+
+const handleScroll = () => {
+
+  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop; 
+  const clientHeight = document.documentElement.clientHeight; 
+  const scrollHeight = document.documentElement.scrollHeight; 
+
+  // 距离底部还有 100px 时，提前加载
+  if (scrollTop + clientHeight >= scrollHeight - 100) {
+    // 如果还有更多数据，且当前不在加载中
+    if (hasMore.value && !isLoading.value) {
+        console.log("触底加载下一页...");
+        fetchPostList();
+    }
+  }
+}
+
 
 const filteredPosts = computed(() => {  // 筛选帖子
   let filtered = posts.value
@@ -286,10 +331,24 @@ const goToProfile = () => {
 // 生命周期
 onMounted(() => {
   fetchPostTypes();
-  // loadPosts();
   fetchDormList();
-  fetchPostList();
-})
+  fetchPostList(true);
+
+  if (userStore.isLoggedIn) {
+      userStore.fetchUnreadCount(); // 先立刻查一次
+      pollingTimer = setInterval(() => {
+          userStore.fetchUnreadCount();
+      }, 5000); 
+  }  
+
+  window.addEventListener('scroll', handleScroll);
+  
+});
+
+onUnmounted(() => {
+  if (pollingTimer) clearInterval(pollingTimer);
+});
+
 </script>
 
 <style scoped>
@@ -749,5 +808,37 @@ onMounted(() => {
     padding: 14px 20px;
     font-size: 14px;
   }
+}
+
+/* 新增样式 */
+.avatar-wrapper {
+  position: relative; /* 为了让红点绝对定位 */
+  display: inline-block;
+  cursor: pointer;
+}
+
+.global-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: #ff4d4f;
+  color: white;
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 12px;
+  height: 18px;
+  line-height: 18px;
+  min-width: 18px;
+  text-align: center;
+  border: 2px solid white; /* 增加一点白边，更好看 */
+  font-weight: bold;
+  z-index: 10;
+}
+/* 在 style scoped 底部添加 */
+.loading-state {
+  text-align: center;
+  padding: 20px;
+  color: #1890ff;
+  font-size: 14px;
 }
 </style>

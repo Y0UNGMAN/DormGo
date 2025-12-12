@@ -45,3 +45,7 @@ func LoginIn(p *model.LoginRequest) (token string, user *model.DgUser, err error
 
 	return token, user, err
 }
+
+func GetUserById(id int) (*model.DgUser, error) {
+	return model.GetUserById(id)
+}

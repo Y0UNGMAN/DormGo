@@ -82,7 +82,14 @@ func GetPostByDorm(c *gin.Context) {
 
 // 获取所有帖子
 func GetPosts(c *gin.Context) {
-	data, err := logic.GetPosts()
+	pageStr := c.DefaultQuery("page", "1")
+	pageSizeStr := c.DefaultQuery("size", "10")
+	page, _ := strconv.Atoi(pageStr)
+	pageSize, _ := strconv.Atoi(pageSizeStr)
+	if pageSize > 100 {
+		pageSize = 100
+	}
+	data, total, err := logic.GetPosts(page, pageSize)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(400, gin.H{
@@ -91,9 +98,16 @@ func GetPosts(c *gin.Context) {
 		})
 		return
 	}
+	hasMore := false
+	if int64(page*pageSize) < total {
+		hasMore = true
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"code":    http.StatusOK,
-		"message": "get posts success",
-		"data":    data,
+		"code":     http.StatusOK,
+		"message":  "get posts success",
+		"data":     data,
+		"total":    total,   // 总数
+		"page":     page,    // 当前页码
+		"has_more": hasMore, // 是否还有下一页
 	})
 }

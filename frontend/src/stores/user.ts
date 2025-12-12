@@ -1,5 +1,6 @@
 // stores/user.ts
 import { defineStore } from 'pinia';
+import api from '@/api/index.ts';
 
 export interface UserInfo {
   id: number;
@@ -15,6 +16,7 @@ export const useUserStore = defineStore('user', {
     // 生产环境中通常只存储 token，然后用 token 去换取完整的 user info
     token: localStorage.getItem('token') || null,
     userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null') as UserInfo | null,
+    unreadCount: 0,
   }),
   
   getters: {
@@ -47,5 +49,22 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('userInfo');
       // 刷新页面或重定向到登录页
     },
+
+    async fetchUnreadCount() {
+      if (!this.token) return;
+      try {
+        const res = await api.get('api/v1/message/unreadcount');
+        if (res.data.code === 200) {
+          this.unreadCount = res.data.data;
+        }
+      } catch (error) {
+        console.error("轮询未读消息失败", error);
+      }  
+    },
+
+    clearUnread() {
+      this.unreadCount = 0;
+    }
+
   },
 });

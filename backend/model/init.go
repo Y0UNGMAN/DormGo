@@ -94,6 +94,17 @@ func Init() (err error) {
 	} else {
 		println("创建signup表成功")
 	}
-
+	err = DB.AutoMigrate(&DgMessage{})
+	if err != nil {
+		println("创建Message表失败")
+	} else {
+		println("创建Message表成功")
+	}
+	err = DB.AutoMigrate(&DgNotification{})
+	if err != nil {
+		println("创建Notification表失败")
+	} else {
+		println("创建Notification表成功")
+	}
 	return
 }
