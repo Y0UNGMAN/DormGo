@@ -140,6 +140,7 @@ const handleSend = async () => {
     content: content,
     created_at: new Date().toISOString()
   }
+  console.log("乐观更新消息", tempMsg)
   messages.value.push(tempMsg)
   inputContent.value = ''
   scrollToBottom()
@@ -204,7 +205,7 @@ onMounted(async () => {
   // 开启轮询 (每3秒拉一次新消息)
   pollingTimer = setInterval(() => {
     fetchHistory(false)
-  }, 3000)
+  }, 2000)
   
   // 自动聚焦输入框
   inputRef.value?.focus()

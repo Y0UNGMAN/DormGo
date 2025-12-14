@@ -1,7 +1,11 @@
 <template>
   <div id="app">
     <!-- 路由出口：所有页面通过这里渲染 -->
-    <router-view/>
+    <router-view v-slot="{ Component }">
+      <keep-alive include="DormgoHome">
+        <component :is="Component" />
+      </keep-alive>
+  </router-view>
   </div>
 </template>
 

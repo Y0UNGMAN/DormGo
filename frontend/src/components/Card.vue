@@ -1,94 +1,148 @@
-<!-- src/components/Card.vue -->
 <template>
   <div class="card" @click="handleCardClick">
-    <!-- 标题放在最上部 -->
     <h3 class="post-title">
       {{ post.title }}
     </h3>
     
     <div class="card-content">
-      <!-- 用户信息：头像和名字 -->
       <div class="user-info">
-        <img :src="post.userAvatar" alt="用户头像" class="user-avatar">
-        <span class="user-name">{{ post.userName }}</span>
+        <img 
+          :src="post.publisheravator || post.User?.avatarurl || defaultAvatar" 
+          alt="用户头像" 
+          class="user-avatar"
+        >
+        <span class="user-name">{{ post.publishername || post.User?.username || '未知用户' }}</span>
       </div>
 
-      <!-- 分类标签和宿舍楼标签 -->
       <div class="tags-container">
-        <span class="post-category" :class="post.category">
-          {{ getCategoryText(post.category) }}
+        <span class="post-category" :class="getCategoryClass(post.typeid)">
+          {{ post.Type?.typename || post.PostType?.typename || '未分类' }}
         </span>
+        
         <span class="dorm-tag">
-          {{ post.dormBuilding }}
+          {{ post.Dorm?.dormname || '未知宿舍' }}
+        </span>
+
+        <span v-if="post.is_limited" class="limit-tag" :class="isExpired ? 'expired' : 'active'">
+          {{ isExpired ? '已结束' : '正在报名' }}
         </span>
       </div>
       
-      <!-- 帖子正文 - 只显示一行 -->
+      
+      <div v-if="post.is_limited" class="deadline-info" :class="{ 'text-red': isExpired, 'text-green': !isExpired }">
+        ⏰ 截止时间: {{ formatDetailTime(post.deadline) }}
+      </div>
+
       <p class="post-content">{{ post.content }}</p>
       
-      <!-- 图片展示 - 最多两张 -->
-      <div v-if="post.images && post.images.length > 0" class="post-images">
+      <div v-if="processedImages.length > 0" class="post-images">
         <img 
-          v-for="(image, index) in post.images.slice(0, 2)" 
+          v-for="(imgUrl, index) in processedImages.slice(0, 2)" 
           :key="index" 
-          :src="image" 
+          :src="imgUrl" 
           :alt="`图片${index + 1}`"
           class="post-image"
         >
       </div>
     </div>
     
-    <!-- 使用独立的统计组件 -->
     <PostStats
-      :view-count="post.viewCount"
-      :comment-count="post.commentCount"
-      :like-count="post.likeCount"
-      :time="post.time"
+      :view-count="post.view_count || post.viewCount || 0"
+      :comment-count="post.comment_count || post.commentCount || 0"
+      :like-count="post.like_count || post.likeCount || 0"
+      :time="formatTime(post.created_at || post.time)"
     />
   </div>
 </template>
 
 <script setup>
-import { defineProps } from 'vue'
+import { defineProps, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import PostStats from '@/components/PostStats.vue'
 
 const router = useRouter()
+const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png' // 默认头像
+
 const props = defineProps({
   post: {
     type: Object,
-    default: () => ({
-      id: '',
-      userName: '',
-      userAvatar: '',
-      time: '',
-      category: '',
-      dormBuilding: '',
-      title: '',
-      content: '',
-      images: [],
-      commentCount: 0,
-      viewCount: 0,
-      likeCount: 0
-    })
+    required: true,
+    default: () => ({})
   }
 })
 
-const categoryMap = {
-  'food': '约饭',
-  'sports': '约球',
-  'help': '求助',
-  'trade': '交易',
-  'study': '学习'
+// 计算是否过期
+const isExpired = computed(() => {
+  if (!props.post.deadline) return false
+  return new Date() > new Date(props.post.deadline)
+})
+
+// 详细时间格式化 (用于截止时间)
+const formatDetailTime = (timeStr) => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+  })
 }
 
-const getCategoryText = (category) => {
-  return categoryMap[category] || '其他'
+
+// 修改重点：处理图片逻辑
+const processedImages = computed(() => {
+  const imgs = props.post.images
+  if (!imgs) return []
+
+  // 情况1：如果是数组 (后端返回的新格式)
+  if (Array.isArray(imgs)) {
+    if (imgs.length === 0) return []
+
+    // 判断数组里面是字符串还是对象
+    // 如果是对象（你提供的数据格式），需要提取 image_url
+    if (typeof imgs[0] === 'object' && imgs[0] !== null) {
+      // 1. 拷贝数组防止影响原数据
+      // 2. 按 order 字段排序 (确保图片顺序正确)
+      // 3. 提取 image_url
+      return [...imgs]
+        .sort((a, b) => a.order - b.order)
+        .map(item => item.image_url)
+    }
+
+    // 如果本身就是字符串数组 ['url1', 'url2']，直接返回
+    return imgs
+  }
+
+  // 情况2：如果是字符串 "url1,url2" (兼容旧格式)
+  if (typeof imgs === 'string') {
+    return imgs.split(',')
+  }
+
+  return []
+})
+
+// 简单的分类样式映射
+const getCategoryClass = (typeid) => {
+  const classMap = {
+    1: 'food',   
+    2: 'sports', 
+    3: 'help',   
+    4: 'trade',  
+    5: 'study'   
+  }
+  return classMap[typeid] || 'default-tag'
+}
+
+// 时间格式化
+const formatTime = (timeStr) => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  return date.toLocaleDateString() 
 }
 
 const handleCardClick = () => {
-  console.log('查看帖子详情:', props.post.id)
-  router.push(`/post/${props.post.id}`)
+  // 兼容 id 或 ID
+  const postId = props.post.id || props.post.ID
+  console.log('查看帖子详情:', postId)
+  router.push(`/post/${postId}`)
 }
 </script>
 
@@ -109,14 +163,11 @@ const handleCardClick = () => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* 标题样式 - 加粗加大 */
 .post-title {
   font-size: 18px;
   font-weight: 700;
-  text-align: center;
   color: #333;
   margin: 0 0 12px 0;
-  line-height: 1.4;
   padding-bottom: 12px;
   border-bottom: 1px solid #f0f0f0;
 }
@@ -125,7 +176,6 @@ const handleCardClick = () => {
   margin-bottom: 12px;
 }
 
-/* 用户信息样式 */
 .user-info {
   display: flex;
   align-items: center;
@@ -138,6 +188,7 @@ const handleCardClick = () => {
   border-radius: 50%;
   margin-right: 8px;
   object-fit: cover;
+  border: 1px solid #eee;
 }
 
 .user-name {
@@ -146,7 +197,6 @@ const handleCardClick = () => {
   font-size: 14px;
 }
 
-/* 标签容器样式 */
 .tags-container {
   display: flex;
   gap: 8px;
@@ -159,39 +209,16 @@ const handleCardClick = () => {
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
+  border: 1px solid #eee;
 }
 
-.post-category.food {
-  background: #fff0f0;
-  color: #ff4757;
-  border: 1px solid #ff4757;
-}
+.post-category.food { background: #fff0f0; color: #ff4757; border-color: #ff4757; }
+.post-category.sports { background: #f0f8ff; color: #1e90ff; border-color: #1e90ff; }
+.post-category.help { background: #fff8e1; color: #ffa502; border-color: #ffa502; }
+.post-category.trade { background: #f0fff0; color: #2ed573; border-color: #2ed573; }
+.post-category.study { background: #f0f0ff; color: #5352ed; border-color: #5352ed; }
+.post-category.default-tag { background: #f5f5f5; color: #666; border-color: #ddd; }
 
-.post-category.sports {
-  background: #f0f8ff;
-  color: #1e90ff;
-  border: 1px solid #1e90ff;
-}
-
-.post-category.help {
-  background: #fff8e1;
-  color: #ffa502;
-  border: 1px solid #ffa502;
-}
-
-.post-category.trade {
-  background: #f0fff0;
-  color: #2ed573;
-  border: 1px solid #2ed573;
-}
-
-.post-category.study {
-  background: #f0f0ff;
-  color: #5352ed;
-  border: 1px solid #5352ed;
-}
-
-/* 宿舍楼标签样式 */
 .dorm-tag {
   padding: 4px 8px;
   background: #f8f9fa;
@@ -202,25 +229,18 @@ const handleCardClick = () => {
   font-weight: 500;
 }
 
-/* 帖子正文 - 只显示一行（修复兼容性警告） */
 .post-content {
   font-size: 14px;
   color: #666;
   line-height: 1.5;
   margin: 0 0 12px 0;
-  
-  /* 修复：同时定义标准属性和带前缀的属性 */
   display: -webkit-box;
-  display: box;
   -webkit-line-clamp: 1;
-  line-clamp: 1;
   -webkit-box-orient: vertical;
-  box-orient: vertical;
   overflow: hidden;
-  min-height: 21px; /* 保持一行高度 */
+  min-height: 21px;
 }
 
-/* 图片展示样式 */
 .post-images {
   display: flex;
   gap: 8px;
@@ -233,5 +253,42 @@ const handleCardClick = () => {
   border-radius: 6px;
   object-fit: cover;
   flex-shrink: 0;
+  background-color: #f0f0f0;
 }
+
+.limit-tag {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+/* 正在报名 - 绿色 */
+.limit-tag.active {
+  background-color: #52c41a; 
+  border: 1px solid #52c41a;
+}
+
+/* 已结束 - 红色 */
+.limit-tag.expired {
+  background-color: #ff4d4f;
+  border: 1px solid #ff4d4f;
+}
+
+.deadline-info {
+  font-size: 13px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.text-green {
+  color: #52c41a;
+}
+
+.text-red {
+  color: #ff4d4f;
+}
+
+
 </style>

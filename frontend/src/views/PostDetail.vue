@@ -16,7 +16,16 @@
         <h1 class="post-title">{{ post.title }}</h1>
         <div class="post-meta">
           <div class="user-info">
-            <img :src="post.publisheravator" alt="用户头像" class="user-avatar">
+            <img 
+              :src="post.publisheravator" 
+              alt="用户头像" 
+              class="user-avatar"
+              @click.stop="openUserMenu({ 
+                id: post.publisherid, 
+                username: post.publishername, 
+                avatar: post.publisheravator 
+              })"
+            >
             <span class="user-name">{{ post.publishername }}</span>
           </div>
         </div>
@@ -124,7 +133,11 @@
       <!-- 评论列表 -->
       <div class="comments-list">
         <div v-for="comment in comments" :key="comment.id" class="comment-item">
-          <img :src="comment.commenter?.avatarurl" alt="用户头像" class="comment-avatar">
+          <img 
+            :src="comment.commenter?.avatarurl" 
+            class="comment-avatar"
+            @click.stop="openUserMenu(comment.commenter)"
+          >
           <div class="comment-content">
             <div class="comment-header">
               <span class="comment-user">{{ comment.commenter.username }}</span>
@@ -147,7 +160,11 @@
             </div>
             <div v-if="comment.sub_comments && comment.sub_comments.length > 0" class="sub-comments-list">
               <div v-for="sub in comment.sub_comments" :key="sub.id" class="sub-comment-item">
-                <img :src="sub.commenter?.avatarurl" alt="用户头像" class="sub-comment-avatar">
+                <img 
+                    :src="sub.commenter?.avatarurl" 
+                    class="sub-comment-avatar"
+                    @click.stop="openUserMenu(sub.commenter)"
+                  >
                 <div class="sub-comment-header">
                   <span class="sub-user">{{ sub.commenter.username }}</span>
                   <span class="sub-time">{{ formatTime(sub.created_at) }}</span>
@@ -170,6 +187,25 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showUserMenu" class="modal-overlay" @click.self="closeUserMenu">
+      <div class="user-menu-card">
+        <div class="menu-header">
+          <img :src="selectedUser.avatar || selectedUser.avatarurl" class="menu-avatar">
+          <span class="menu-username">{{ selectedUser.username }}</span>
+        </div>
+        <div class="menu-actions">
+          <button class="menu-btn primary" @click="handleViewProfile">
+             🏠 查看主页
+          </button>
+          <button class="menu-btn success" @click="handleContactUser">
+             💬 联系 TA
+          </button>
+        </div>
+        <button class="menu-cancel-btn" @click="closeUserMenu">取消</button>
+      </div>
+    </div>
+
 
     <!-- 图片预览模态框 -->
     <div v-if="showImagePreview" class="image-preview-modal" @click="closeImagePreview">
@@ -213,6 +249,9 @@ const totalComments = ref(0)
 const replyToCommentId = ref(0)
 // 用于存储被回复人的名字（用于界面展示）
 const replyToUser = ref('')
+
+const showUserMenu = ref(false)
+const selectedUser = ref({})
 
 // 获取评论列表
 const fetchComments = async () => {
@@ -503,7 +542,37 @@ const goToChat = (targetUserId) => {
   });
 };
 
+const openUserMenu = (user) => {
+  // 如果是点击自己的头像，可能不需要弹窗，或者跳转自己的主页
+  if (user.id === userStore.currentUserId || user.id === parseInt(userStore.currentUserId)) {
+    return;
+  }
+  selectedUser.value = user
+  showUserMenu.value = true
+}
 
+// 关闭菜单
+const closeUserMenu = () => {
+  showUserMenu.value = false
+  selectedUser.value = {}
+}
+
+// 查看主页
+const handleViewProfile = () => {
+  if (selectedUser.value && selectedUser.value.id) {
+    // 跳转到新的他人主页路由
+    router.push(`/user/${selectedUser.value.id}`)
+  }
+  closeUserMenu()
+}
+
+// 联系TA (复用已有的聊天逻辑)
+const handleContactUser = () => {
+  if (selectedUser.value && selectedUser.value.id) {
+    goToChat(selectedUser.value.id)
+  }
+  closeUserMenu()
+}
 
 
 
@@ -595,6 +664,7 @@ onMounted(() => {
   height: 44px;
   border-radius: 50%;
   object-fit: cover;
+  cursor: pointer;
 }
 
 .user-name {
@@ -851,6 +921,7 @@ onMounted(() => {
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .comment-content {
@@ -1003,6 +1074,7 @@ onMounted(() => {
   object-fit: cover;
   flex-shrink: 0;     /* 防止头像被压缩 */
   margin-top: 2px;    /* 微调垂直对齐 */
+  cursor: pointer;
 }
 .sub-comment-content {
   flex: 1;            /* 占据剩余宽度 */
@@ -1169,4 +1241,96 @@ onMounted(() => {
     background: #ccc;
     cursor: not-allowed;
 }
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center; /* 居中显示，或者 align-items: flex-end 放在底部 */
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s;
+}
+
+.user-menu-card {
+  background: white;
+  width: 80%;
+  max-width: 320px;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  animation: scaleUp 0.2s;
+}
+
+.menu-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.menu-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+  border: 2px solid #f0f0f0;
+}
+
+.menu-username {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.menu-actions {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.menu-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.menu-btn.primary {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.menu-btn.success {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.menu-cancel-btn {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px;
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 </style>

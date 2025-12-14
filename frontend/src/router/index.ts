@@ -21,6 +21,8 @@ const PostPublish = () => import('@/views/PostPublish.vue')
 const LoginIn = () => import('@/views/Login.vue')
 const PersonalHome = () => import('@/views/PersonalHome.vue')
 const ChatPage = () => import('@/views/ChatPage.vue')
+const Messages = () => import('@/views/MessageList.vue')
+const OtherUserProfile = () => import('@/views/OtherUserProfile.vue')
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
@@ -144,10 +146,22 @@ const routes: RouteRecordRaw[] = [
     component: PersonalHome
   },
   {
-    path: '/chat/:id', // :id 是对方的用户ID
+    path: '/chat/:id', 
     name: 'Chat',
     component: ChatPage,
     meta: { title : "私信页" }
+  },
+  {
+    path: '/messages', 
+    name: 'Messages',
+    component: Messages,
+    meta: { title : "消息列表" }
+  },
+  {
+    path: '/user/:id', 
+    name: 'OtherUserProfile',
+    component: OtherUserProfile,
+    meta: { title : "个人主页" }
   }
 ]
 

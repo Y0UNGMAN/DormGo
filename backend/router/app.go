@@ -50,8 +50,12 @@ func App() *gin.Engine {
 		message.GET("/history", controller.GetMessageHistory)
 		//获取未读通知数量
 		message.GET("/unreadcount", controller.GetUnreadCount)
+		//获取未读消息数量
+		message.GET("/unread_count", controller.GetUnreadMessageCount)
 		//已读所有消息
 		message.POST("/read_all", controller.ReadAllNotification)
+		//获取会话列表
+		message.GET("/conversations", controller.GetConversations)
 	}
 
 	post := r.Group("/api/v1/post")

@@ -3,6 +3,12 @@
   <div class="dormgo-home">
     <!-- 顶部栏：搜索框和用户头像 -->
     <div class="top-bar">
+      <div class="message-entry" @click="goToMessageList">
+        <div class="icon-wrapper">
+          <span class="msg-icon">💬</span> <div v-if="totalUnread > 0" class="dot-badge"></div> 
+        </div>
+        <span class="msg-text">私信</span>
+      </div>
       <!-- 搜索框 - 居中 -->
       <div class="search-section">
         <div class="search-container">
@@ -49,7 +55,6 @@
             @click="selectCategory(posttype.typeid)"
           >
             {{ posttype.typename }}
-            <span class="category-count">{{ getCategoryCount(posttype.typeid) }}</span>
           </button>
         </div>
       </div>
@@ -68,7 +73,6 @@
             @click="selectDorm(dorm.dormid)"
           >
             <span class="dorm-name">{{ dorm.dormname }}</span>
-            <span class="post-count">{{ getDormCount(dorm.dormname) }}</span>
           </div>
         </div>
       </div>
@@ -81,7 +85,6 @@
             <span v-if="searchKeyword">搜索: "{{ searchKeyword }}" </span>
             <span v-if="selectedCategory !== 'all'">分类: {{ getCategoryName(selectedCategory) }} </span>
             <span v-if="selectedDorm !== 'all'">宿舍楼: {{ getDormName(selectedDorm) }}</span>
-            <span class="post-count-text">({{ filteredPosts.length }}个结果)</span>
           </span>
           <button class="clear-filters" @click="clearAllFilters">清除筛选</button>
         </div>
@@ -125,12 +128,17 @@
 </template>
 
 <script setup>
-import { ref, computed,onUnmounted ,onMounted } from 'vue'
+import { ref, computed,onUnmounted ,onMounted ,onActivated, onDeactivated} from 'vue'
 import { useRouter } from 'vue-router'
 import Card from '@/components/Card.vue'
 import axios from 'axios'
 import api from '@/api/index.js';
 import { useUserStore } from '@/stores/user';
+
+defineOptions({
+  name: 'DormgoHome'
+})
+
 const userStore = useUserStore();
 const router = useRouter()
 
@@ -147,9 +155,26 @@ const dormList = ref([]);   // 宿舍列表
 const page = ref(1);
 const hasMore = ref(true);
 const isLoading = ref(false);
+const totalUnread = ref(0) // 总未读数
 
 const unreadCount = computed(() => userStore.unreadCount);
 let pollingTimer = null;
+
+const goToMessageList = () => {
+  router.push('/messages') // 记得在 router/index.js 里配这个路由
+}
+// 获取总未读数
+const fetchTotalUnread = async () => {
+    if (!userStore.isLoggedIn) return
+    try {
+        const res = await api.get('/api/v1/message/unread_count')
+        if (res.data.code === 200) {
+            totalUnread.value = res.data.data
+        }
+    } catch (e) {
+        console.error(e)
+    }
+}
 
 const fetchDormList = async() => {    
   try {
@@ -327,26 +352,38 @@ const goToProfile = () => {
   console.log('跳转到个人资料页面')
   router.push('/personalhome')
 }
+onActivated(() => {
+  if (userStore.isLoggedIn && !pollingTimer) {
+      fetchTotalUnread()
+      userStore.fetchUnreadCount();
+      // 重新开启轮询
+      pollingTimer = setInterval(() => {
+          fetchTotalUnread()
+          userStore.fetchUnreadCount();
+      }, 3000); 
+  }
+})
 
+// 4. 将清除逻辑移到 Deactivated (页面隐藏时)
+onDeactivated(() => {
+  if (pollingTimer) {
+    clearInterval(pollingTimer);
+    pollingTimer = null; // 清空变量
+    console.log("暂停首页轮询");
+  }
+})
 // 生命周期
 onMounted(() => {
   fetchPostTypes();
   fetchDormList();
   fetchPostList(true);
-
-  if (userStore.isLoggedIn) {
-      userStore.fetchUnreadCount(); // 先立刻查一次
-      pollingTimer = setInterval(() => {
-          userStore.fetchUnreadCount();
-      }, 5000); 
-  }  
-
   window.addEventListener('scroll', handleScroll);
   
 });
 
 onUnmounted(() => {
   if (pollingTimer) clearInterval(pollingTimer);
+  window.addEventListener('scroll', handleScroll);
 });
 
 </script>
@@ -363,7 +400,7 @@ onUnmounted(() => {
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 20px;
   margin-bottom: 20px;
 }
@@ -373,6 +410,7 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   justify-content: center; /* 新增：水平居中 */
+  padding-right: 40px;
 }
 
 .search-container {
@@ -841,4 +879,39 @@ onUnmounted(() => {
   color: #1890ff;
   font-size: 14px;
 }
+
+.message-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  margin-right: 10px; /* 与搜索框拉开距离 */
+}
+
+.icon-wrapper {
+  position: relative;
+  font-size: 24px;
+}
+
+.msg-icon {
+    /* 也可以换成 svg 或 img */
+    font-size: 22px; 
+}
+
+.dot-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #ff4d4f;
+  border-radius: 50%;
+}
+
+.msg-text {
+  font-size: 10px;
+  color: #666;
+  margin-top: -4px;
+}
+
 </style>
