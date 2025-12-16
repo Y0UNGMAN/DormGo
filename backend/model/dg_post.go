@@ -23,6 +23,7 @@ type DgPost struct {
 	LikeCount         uint       `gorm:"column:like_count" json:"like_count"`
 	Images            []DgImages `gorm:"foreignKey:PostID;references:ID" json:"images"`
 	IsLimited         bool       `gorm:"column:is_limited" json:"is_limited"`
+	IsPinned          bool       `gorm:"column:is_pinned;default:false" json:"is_pinned"`
 	Deadline          *time.Time `gorm:"column:deadline" json:"deadline"`
 	MaxEnrollment     int        `gorm:"column:max_enrollment" json:"max_enrollment"`
 	CurrentEnrollment int        `gorm:"column:current_enrollment" json:"current_enrollment"`
