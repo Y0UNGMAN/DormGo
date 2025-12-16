@@ -1,0 +1,614 @@
+<template>
+  <div class="publish-post">
+    <!-- 返回按钮 -->
+    <div class="back-header">
+      <button class="back-btn" @click="goBack">
+        <span class="back-icon">←</span>
+        返回
+      </button>
+      <h1 class="page-title">发布帖子</h1>
+    </div>
+
+    <!-- 发布表单 -->
+    <div class="publish-form">
+      <!-- 标题输入 -->
+      <div class="form-section">
+        <label class="form-label">标题</label>
+        <input
+          v-model="form.title"
+          type="text"
+          placeholder="请输入帖子标题"
+          class="title-input"
+          maxlength="50"
+        >
+        <div class="char-count">{{ form.title.length }}/50</div>
+      </div>
+
+      <!-- 正文输入 -->
+      <div class="form-section">
+        <label class="form-label">正文</label>
+        <textarea
+          v-model="form.content"
+          placeholder="请输入帖子内容..."
+          class="content-textarea"
+          rows="8"
+          maxlength="1000"
+        ></textarea>
+        <div class="char-count">{{ form.content.length }}/1000</div>
+      </div>
+
+      <!-- 分类选择 -->
+      <div class="form-section">
+        <label class="form-label">分类</label>
+        <div class="category-options">
+          <button
+            v-for="type in types"
+            :key="type.typeid"
+            class="category-option"
+            :class="{ active: form.typeid === type.typeid }"
+            @click="selectCategory(type.typeid)"
+          >
+            <span class="category-name">{{ type.typename }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 宿舍楼选择 -->
+      <div class="form-section">
+        <label class="form-label">宿舍楼号</label>
+        <div class="dorm-options">
+          <button
+            v-for="dorm in dormList"
+            :key="dorm.dormid"
+            class="dorm-option"
+            :class="{ active: form.dormid === dorm.dormid }"
+            @click="selectDorm(dorm.dormid)"
+          >
+            {{ dorm.dormname }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 图片上传 -->
+      <div class="form-section">
+        <label class="form-label">上传图片</label>
+        <div class="upload-section">
+          <!-- 图片预览 -->
+          <div class="image-preview">
+            <div
+              v-for="(image, index) in form.images"
+              :key="index"
+              class="preview-item"
+            >
+              <img :src="image.url" :alt="'图片' + (index + 1)" class="preview-image">
+              <button class="remove-image-btn" @click="removeImage(index)">×</button>
+            </div>
+            
+            <!-- 上传按钮 -->
+            <div
+              v-if="form.images.length < 6"
+              class="upload-btn"
+              @click="triggerFileInput"
+            >
+              <span class="upload-icon">+</span>
+              <span class="upload-text">添加图片</span>
+              <span class="upload-hint">最多6张</span>
+            </div>
+          </div>
+
+          <!-- 隐藏的文件输入 -->
+          <input
+            ref="fileInput"
+            type="file"
+            multiple
+            accept="image/*"
+            class="file-input"
+            @change="handleFileUpload"
+          >
+        </div>
+      </div>
+
+      <!-- 发布按钮 -->
+      <div class="form-actions">
+        <button
+          class="publish-btn"
+          :class="{ disabled: !isFormValid }"
+          :disabled="!isFormValid"
+          @click="handlePublish"
+        >
+          {{ isSubmitting ? '发布中...' : '发布帖子' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import request from '@/utils/request' // 【修改点】引入封装好的 request
+
+const router = useRouter()
+
+// 当前用户信息
+const currentUser = ref({})
+
+// 表单数据
+const form = ref({
+  title: '',
+  content: '',
+  typeid: '',
+  dormid: '',
+  images: [] // 存储图片对象：{ url: string, file: File }
+})
+
+// 状态
+const isSubmitting = ref(false)
+const fileInput = ref(null)
+
+// 分类选项
+const types = ref([])
+const fetchPostTypes = async () => {
+  try {
+    const response = await request.get('/api/v1/post/post_type');
+    types.value = response.data || [];
+  } catch (error) {
+    console.error('获取帖子分类失败:', error);
+  }
+};
+
+// 宿舍楼选项
+const dormList = ref([])
+const fetchDormList = async() => {
+  try {
+    const response = await request.get('/api/v1/post/dorms');
+    dormList.value = response.data || [];
+  } catch (error) {
+    console.error('获取宿舍楼列表失败:', error);
+  }
+};
+
+// 计算属性：表单是否有效
+const isFormValid = computed(() => {
+  return form.value.title.trim() && 
+         form.value.content.trim() && 
+         form.value.typeid && 
+         form.value.dormid
+})
+
+// 选择分类
+const selectCategory = (id) => {
+  form.value.typeid = id
+}
+
+// 选择宿舍楼
+const selectDorm = (id) => {
+  form.value.dormid = id
+}
+
+// 触发文件选择
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
+// 处理文件上传
+const handleFileUpload = (event) => {
+  const files = Array.from(event.target.files)
+  
+  if (form.value.images.length + files.length > 6) {
+    alert('最多只能上传6张图片')
+    return
+  }
+
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) {
+      alert('请上传图片文件')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('图片大小不能超过5MB')
+      return
+    }
+    const url = URL.createObjectURL(file)
+    form.value.images.push({
+      url,
+      file
+    })
+  })
+  event.target.value = ''
+}
+
+// 移除图片
+const removeImage = (index) => {
+  URL.revokeObjectURL(form.value.images[index].url)
+  form.value.images.splice(index, 1)
+}
+
+
+// 发布帖子
+const handlePublish = async () => {
+  if (!isFormValid.value || isSubmitting.value) return
+  isSubmitting.value = true
+
+  try {
+    const formData = new FormData();
+    // 使用当前登录用户的ID
+    formData.append('publisherid', currentUser.value.id);
+    formData.append('dormid', form.value.dormid); 
+    formData.append('typeid', form.value.typeid);
+    formData.append('title', form.value.title);
+    formData.append('content', form.value.content);
+    
+    // 追加图片文件
+    form.value.images.forEach((image) => {
+      formData.append(`images`, image.file);
+    });
+
+    // 【修改点】使用 request 发送 post 请求
+    // 注意：request.ts 中已经移除了默认的 json header，axios 会自动识别 FormData 并设置正确的 Content-Type
+    const res = await request.post('/api/v1/post/create', formData)
+    
+    alert('帖子发布成功！')
+    router.push('/dormgo')
+  } catch (error) {
+    console.error('发布失败:', error)
+    // request.ts 拦截器会处理错误提示
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// 返回上一页
+const goBack = () => {
+  router.back()
+}
+
+// 初始化
+onMounted(() => {
+  // 获取当前用户信息
+  const userStr = localStorage.getItem('userInfo')
+  if (userStr) {
+     currentUser.value = JSON.parse(userStr)
+  }
+  
+  fetchDormList();
+  fetchPostTypes();
+  
+  return () => {
+    form.value.images.forEach(image => {
+      URL.revokeObjectURL(image.url)
+    })
+  }
+})
+</script>
+
+<style scoped>
+.publish-post {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 0;
+}
+
+/* 返回按钮和标题 */
+.back-header {
+  background: white;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.back-btn:hover {
+  background: #f5f5f5;
+  color: #1890ff;
+}
+
+.back-icon {
+  font-size: 18px;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+/* 发布表单 */
+.publish-form {
+  background: white;
+  margin: 20px;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-section {
+  margin-bottom: 32px;
+}
+
+.form-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+/* 标题输入 */
+.title-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.title-input:focus {
+  outline: none;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* 正文输入 */
+.content-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  transition: border-color 0.3s;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+.content-textarea:focus {
+  outline: none;
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* 字符计数 */
+.char-count {
+  text-align: right;
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+}
+
+/* 分类选项 */
+.category-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.category-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.category-option:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.category-option.active {
+  background: #e6f7ff;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.category-icon {
+  font-size: 24px;
+}
+
+.category-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 宿舍楼选项 */
+.dorm-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.dorm-option {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.dorm-option:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.dorm-option.active {
+  background: #e6f7ff;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+/* 图片上传 */
+.upload-section {
+  margin-top: 8px;
+}
+
+.image-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.preview-item {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.remove-image-btn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.upload-btn {
+  width: 100px;
+  height: 100px;
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fafafa;
+}
+
+.upload-btn:hover {
+  border-color: #1890ff;
+  background: #f0f8ff;
+}
+
+.upload-icon {
+  font-size: 24px;
+  color: #666;
+}
+
+.upload-text {
+  font-size: 12px;
+  color: #666;
+}
+
+.upload-hint {
+  font-size: 10px;
+  color: #999;
+}
+
+.file-input {
+  display: none;
+}
+
+/* 发布按钮 */
+.form-actions {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.publish-btn {
+  width: 100%;
+  max-width: 300px;
+  padding: 16px 32px;
+  background: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.publish-btn:hover:not(.disabled) {
+  background: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.publish-btn.disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .publish-form {
+    margin: 12px;
+    padding: 16px;
+  }
+  
+  .back-header {
+    padding: 12px 16px;
+  }
+  
+  .category-options {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .dorm-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .image-preview {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+</style>
