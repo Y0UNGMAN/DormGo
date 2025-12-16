@@ -1,61 +1,39 @@
 <template>
   <div class="app-container">
-    <el-row :gutter="20" class="data-panel">
-      <el-col :xs="12" :sm="12" :lg="6" v-for="(item, index) in statCards" :key="index">
+    <el-row :gutter="20" class="stat-cards">
+      <el-col :span="6" v-for="(item, index) in statCards" :key="index">
         <el-card shadow="hover" :body-style="{ padding: '20px' }">
-          <div class="stat-card-content">
-            <div class="stat-icon" :class="item.class">
-              <el-icon><component :is="item.icon" /></el-icon>
-            </div>
-            <div class="stat-info">
+          <div class="stat-content">
+            <div class="stat-text">
               <div class="stat-label">{{ item.label }}</div>
               <div class="stat-num">{{ item.value }}</div>
-              <div class="stat-trend" :class="item.trend >= 0 ? 'up' : 'down'">
-                同比 {{ Math.abs(item.trend) }}% 
-                <span>{{ item.trend >= 0 ? '↑' : '↓' }}</span>
-              </div>
             </div>
+            <el-icon class="stat-icon" :size="40" :color="item.color"><component :is="item.icon" /></el-icon>
           </div>
         </el-card>
       </el-col>
     </el-row>
 
     <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="12" :xs="24">
-        <el-card shadow="hover" class="chart-card">
-          <template #header><span>用户增长趋势</span></template>
-          <div class="chart-wrapper">
-            <canvas id="userGrowthChart"></canvas>
-          </div>
+      <el-col :span="16">
+        <el-card shadow="never">
+          <template #header>
+            <div class="chart-header">
+              <span>数据趋势 (近7天)</span>
+            </div>
+          </template>
+          <div id="lineChart" style="width: 100%; height: 350px;"></div>
         </el-card>
       </el-col>
-      <el-col :span="12" :xs="24">
-        <el-card shadow="hover" class="chart-card">
-          <template #header><span>内容发布统计</span></template>
-          <div class="chart-wrapper">
-            <canvas id="contentChart"></canvas>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <el-row style="margin-top: 20px;">
-      <el-col :span="24">
-        <el-card shadow="hover">
-          <template #header><span>楼栋住户分布</span></template>
-          <el-table :data="dormUserDistribution" border stripe>
-            <el-table-column prop="dorm_name" label="楼栋名称" width="180" />
-            <el-table-column prop="user_count" label="住户数量" width="120" sortable />
-            <el-table-column label="占比情况">
-              <template #default="{ row }">
-                <el-progress 
-                  :percentage="row.percentage" 
-                  :stroke-width="15" 
-                  :color="customColorMethod"
-                />
-              </template>
-            </el-table-column>
-          </el-table>
+      
+      <el-col :span="8">
+        <el-card shadow="never">
+          <template #header>
+            <div class="chart-header">
+              <span>内容构成</span>
+            </div>
+          </template>
+          <div id="pieChart" style="width: 100%; height: 350px;"></div>
         </el-card>
       </el-col>
     </el-row>
@@ -63,123 +41,98 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from 'vue'
-import axios from 'axios'
-import Chart from 'chart.js/auto'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted, computed, nextTick } from 'vue'
+import request from '@/utils/request'
 import { User, OfficeBuilding, DocumentCopy, Warning } from '@element-plus/icons-vue'
+import * as echarts from 'echarts' // 需要 npm install echarts
 
-// 数据源
 const stats = ref({
-  totalUsers: 0, userTrend: 0,
-  totalDorms: 0, dormTrend: 0,
-  totalContents: 0, contentTrend: 0,
-  totalViolations: 0, violationTrend: 0
+  totalUsers: 0, totalDorms: 0, totalContents: 0, totalViolations: 0
 })
-const dormUserDistribution = ref([])
-let userChartInst = null
-let contentChartInst = null
+const chartData = ref({
+  dates: [],
+  users: [],
+  posts: [],
+  pie: []
+})
 
-// 计算属性生成卡片配置
 const statCards = computed(() => [
-  { label: '总用户数', value: stats.value.totalUsers, trend: stats.value.userTrend, icon: User, class: 'icon-blue' },
-  { label: '总楼栋数', value: stats.value.totalDorms, trend: stats.value.dormTrend, icon: OfficeBuilding, class: 'icon-green' },
-  { label: '内容总数', value: stats.value.totalContents, trend: stats.value.contentTrend, icon: DocumentCopy, class: 'icon-purple' },
-  { label: '违规记录', value: stats.value.totalViolations, trend: stats.value.violationTrend, icon: Warning, class: 'icon-red' },
+  { label: '总用户数', value: stats.value.totalUsers, icon: User, color: '#409EFF' },
+  { label: '总楼栋数', value: stats.value.totalDorms, icon: OfficeBuilding, color: '#67C23A' },
+  { label: '内容总数', value: stats.value.totalContents, icon: DocumentCopy, color: '#E6A23C' },
+  { label: '违规记录', value: stats.value.totalViolations, icon: Warning, color: '#F56C6C' },
 ])
 
-const customColorMethod = (percentage) => {
-  if (percentage < 30) return '#909399'
-  if (percentage < 70) return '#e6a23c'
-  return '#67c23a'
-}
-
-onMounted(() => {
-  fetchData()
-})
-
-onUnmounted(() => {
-  if (userChartInst) userChartInst.destroy()
-  if (contentChartInst) contentChartInst.destroy()
+onMounted(async () => {
+  await fetchData()
+  initCharts()
 })
 
 const fetchData = async () => {
   try {
-    const token = localStorage.getItem('adminToken')
-    const res = await axios.get('/api/v1/admin/statistics', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const data = res.data
-    
-    // 填充数据
+    const res = await request.get('/api/v1/admin/statistics')
     stats.value = {
-      totalUsers: data.total_users, userTrend: data.user_trend,
-      totalDorms: data.total_dorms, dormTrend: data.dorm_trend,
-      totalContents: data.total_contents, contentTrend: data.content_trend,
-      totalViolations: data.total_violations, violationTrend: data.violation_trend
+      totalUsers: res.total_users,
+      totalDorms: res.total_dorms,
+      totalContents: res.total_contents,
+      totalViolations: res.total_violations
     }
-    dormUserDistribution.value = data.dorm_user_distribution
-    
-    // 初始化图表
-    initCharts(data)
-  } catch (e) {
-    ElMessage.error('数据加载失败')
-  }
+    chartData.value = {
+      dates: res.dates || [],
+      users: res.users_trend_data || [],
+      posts: res.posts_trend_data || [],
+      pie: res.pie_data || []
+    }
+  } catch (e) { console.error(e) }
 }
 
-const initCharts = (data) => {
-  // 用户图表
-  const ctxUser = document.getElementById('userGrowthChart')
-  userChartInst = new Chart(ctxUser, {
-    type: 'line',
-    data: {
-      labels: data.user_growth_dates,
-      datasets: [{
-        label: '新增用户',
-        data: data.user_growth_data,
-        borderColor: '#409EFF',
-        backgroundColor: 'rgba(64, 158, 255, 0.1)',
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  })
-
-  // 内容图表
-  const ctxContent = document.getElementById('contentChart')
-  contentChartInst = new Chart(ctxContent, {
-    type: 'bar',
-    data: {
-      labels: data.content_dates,
-      datasets: [
-        { label: '帖子', data: data.post_data, backgroundColor: '#409EFF' },
-        { label: '评论', data: data.comment_data, backgroundColor: '#67C23A' }
+const initCharts = () => {
+  nextTick(() => {
+    // 1. 折线图
+    const lineChart = echarts.init(document.getElementById('lineChart'))
+    lineChart.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['活跃用户', '新增内容'] },
+      xAxis: { type: 'category', data: chartData.value.dates },
+      yAxis: { type: 'value' },
+      series: [
+        { name: '活跃用户', type: 'line', data: chartData.value.users, smooth: true, color: '#409EFF' },
+        { name: '新增内容', type: 'line', data: chartData.value.posts, smooth: true, color: '#E6A23C' }
       ]
-    },
-    options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+    })
+
+    // 2. 饼图
+    const pieChart = echarts.init(document.getElementById('pieChart'))
+    pieChart.setOption({
+      tooltip: { trigger: 'item' },
+      legend: { bottom: '5%', left: 'center' },
+      series: [
+        {
+          name: '内容分布',
+          type: 'pie',
+          radius: ['40%', '70%'],
+          avoidLabelOverlap: false,
+          itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+          label: { show: false, position: 'center' },
+          emphasis: { label: { show: true, fontSize: 20, fontWeight: 'bold' } },
+          data: chartData.value.pie
+        }
+      ]
+    })
+
+    // 响应式
+    window.addEventListener('resize', () => {
+      lineChart.resize()
+      pieChart.resize()
+    })
   })
 }
 </script>
 
 <style scoped>
 .app-container { padding: 20px; }
-.stat-card-content { display: flex; align-items: center; }
-.stat-icon { 
-  font-size: 48px; margin-right: 20px; padding: 10px; border-radius: 8px;
-}
-.stat-info { flex: 1; }
+.stat-content { display: flex; justify-content: space-between; align-items: center; }
 .stat-label { color: #909399; font-size: 14px; }
-.stat-num { font-size: 24px; font-weight: bold; color: #303133; margin: 5px 0; }
-.stat-trend { font-size: 12px; display: flex; align-items: center; }
-.stat-trend.up { color: #67c23a; }
-.stat-trend.down { color: #f56c6c; }
-
-/* 颜色类 */
-.icon-blue { color: #409EFF; background: #ecf5ff; }
-.icon-green { color: #67c23a; background: #f0f9eb; }
-.icon-purple { color: #a0cfff; background: #ecf5ff; }
-.icon-red { color: #f56c6c; background: #fef0f0; }
-
-.chart-wrapper { height: 300px; position: relative; }
+.stat-num { font-size: 24px; font-weight: bold; margin-top: 5px; }
+.chart-header { font-weight: bold; color: #303133; }
 </style>

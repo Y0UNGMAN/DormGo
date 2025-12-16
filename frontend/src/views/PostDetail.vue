@@ -1,17 +1,14 @@
-<!-- src/views/PostDetail.vue -->
 <template>
   <div class="post-detail">
     <!-- 返回按钮 -->
     <div class="back-header">
       <button class="back-btn" @click="goBack">
-        <span class="back-icon">←</span>
-        返回
+        <span class="back-icon">←</span> 返回
       </button>
     </div>
 
     <!-- 帖子内容 -->
     <div class="post-content">
-      <!-- 标题区域 -->
       <div class="title-section">
         <h1 class="post-title">{{ post.title }}</h1>
         <div class="post-meta">
@@ -31,14 +28,9 @@
         </div>
       </div>
 
-      <!-- 标签区域 -->
       <div class="tags-section">
-        <span class="post-category" :class="post.typeid">
-          {{ post.Type?.typename }}
-        </span>
-        <span class="dorm-tag">
-          {{ post.Dorm?.dormname }}
-        </span>
+        <span class="post-category" :class="post.typeid">{{ post.Type?.typename }}</span>
+        <span class="dorm-tag">{{ post.Dorm?.dormname }}</span>
       </div>
 
       <div v-if="post.is_limited" class="activity-card" :class="{ 'expired': isExpired }">
@@ -71,13 +63,11 @@
       <!-- 正文内容 -->
       <div class="content-section">
         <p class="post-content-text">{{ post.content }}</p>
-        
-        <!-- 图片展示 -->
         <div v-if="post.images && post.images.length > 0" class="post-images">
           <img 
-            v-for="(image, index) in post.images" 
-            :key="index" 
-            :src="image.image_url" 
+            v-for="(image, index) in post.images"
+            :key="index"
+            :src="image.image_url"
             :alt="'图片' + (index + 1)"
             class="detail-image"
             @click="previewImage(index)"
@@ -85,12 +75,11 @@
         </div>
       </div>
 
-      <!-- 使用独立的统计组件 -->
       <PostStats
         :view-count="post.view_count"
         :comment-count="post.comment_count"
         :like-count="post.like_count"
-        :time="post.updated_at"
+        :time="formatTime(post.updated_at)"
       />
     </div>
 
@@ -108,9 +97,9 @@
 
     <!-- 评论区 -->
     <div class="comments-section">
-      <h3 class="comments-title">评论 ({{ comments.length }})</h3>
-      
-      <!-- 评论输入 -->
+      <h3 class="comments-title">评论 ({{ post.comment_count }})</h3>
+
+      <!-- 评论输入框 -->
       <div class="comment-input-section">
         <img :src="currentUser?.avatarurl" alt="用户头像" class="current-user-avatar">
         <div class="comment-input-container">
@@ -124,8 +113,12 @@
             class="comment-input"
             rows="3"
           ></textarea>
-          <button class="submit-comment-btn" @click="submitComment" :disabled="!newComment.trim()">
-            发布评论
+          <button
+            class="submit-comment-btn"
+            @click="submitComment"
+            :disabled="!newComment.trim() || isSubmitting"
+          >
+            {{ isSubmitting ? '发布中...' : (replyingToComment ? '回复' : '发布评论') }}
           </button>
         </div>
       </div>
@@ -145,19 +138,17 @@
             </div>
             <p class="comment-text">{{ comment.content }}</p>
             <div class="comment-actions">
-              <!-- <button class="comment-action-btn" @click="likeComment(comment.id)">
+              <button class="comment-action-btn" @click.stop="likeComment(comment.id)">
                 <span class="action-icon">❤️</span>
                 <span class="action-text">{{ comment.likeCount || 0 }}</span>
-              </button> -->
-              <button class="comment-action-btn">
-                <span class="action-icon">❤️</span>
-                <span class="action-text">赞</span>
               </button>
               <button class="comment-action-btn" @click="replyComment(comment)">
                 <span class="action-icon">↩️</span>
                 <span class="action-text">回复</span>
               </button>
             </div>
+
+            <!-- 子评论列表 -->
             <div v-if="comment.sub_comments && comment.sub_comments.length > 0" class="sub-comments-list">
               <div v-for="sub in comment.sub_comments" :key="sub.id" class="sub-comment-item">
                 <img 
@@ -171,7 +162,7 @@
                 </div>
                 <p class="sub-text">
                   <span v-if="sub.reply_to_user?.username" class="reply-target">
-                    回复 @{{ sub.reply_to_user.username }}: 
+                    回复 @{{ sub.reply_to_user.username }}:
                   </span>
                   {{ sub.content }}
                 </p>
@@ -211,15 +202,16 @@
     <div v-if="showImagePreview" class="image-preview-modal" @click="closeImagePreview">
       <div class="modal-content">
         <button class="close-modal-btn" @click="closeImagePreview">×</button>
-        <img :src="post.images[currentImageIndex]" alt="预览图片" class="preview-image">
+        <img :src="post.images[currentImageIndex].image_url" class="preview-image">
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import request from '@/utils/request'
 import PostStats from '@/components/PostStats.vue'
 import axios from 'axios'
 import api from '@/api/index.ts';
@@ -229,19 +221,26 @@ const userStore = useUserStore();
 const route = useRoute()
 const router = useRouter()
 
-// 帖子数据
-const post = ref({})
+// 帖子信息
+const post = ref({ comment_count: 0, like_count: 0, view_count: 0 })
 const isLiked = ref(false)
 const newComment = ref('')
 const showImagePreview = ref(false)
 const currentImageIndex = ref(0)
+const isSubmitting = ref(false)
+
+// 回复状态
+const replyingToComment = ref(null)
+const replyToCommentId = ref(null)
+const replyToTargetUser = ref(null)
+const expandedComments = reactive(new Set())
 
 // 直接从 Store 中获取当前用户信息，它是响应式的
 const currentUser = computed(() => userStore.currentUser)
 const currentUserId = computed(() => userStore.currentUserId)
 
 
-// 评论数据
+// 评论列表
 const comments = ref([])
 const totalComments = ref(0)
 
@@ -465,9 +464,7 @@ const submitComment = async () => {
 // 点赞评论
 const likeComment = (commentId) => {
   const comment = comments.value.find(c => c.id === commentId)
-  if (comment) {
-    comment.likeCount = (comment.likeCount || 0) + 1
-  }
+  if (comment) comment.likeCount = (comment.likeCount || 0) + 1
 }
 
 // 回复评论
@@ -493,28 +490,20 @@ const cancelReply = () => {
   newComment.value = ''
 }
 
-// 预览图片
+// 图片预览
 const previewImage = (index) => {
   currentImageIndex.value = index
   showImagePreview.value = true
 }
+const closeImagePreview = () => showImagePreview.value = false
 
-// 关闭图片预览
-const closeImagePreview = () => {
-  showImagePreview.value = false
-}
-
-// 时间格式化工具函数
+// 时间格式化
 const formatTime = (timeStr) => {
   if (!timeStr) return ''
   const date = new Date(timeStr)
-  // 转换为本地时间格式：2025/11/28 12:04
   return date.toLocaleString('zh-CN', {
-    year: 'numeric', 
-    month: '2-digit', 
-    day: '2-digit', 
-    hour: '2-digit', 
-    minute: '2-digit'
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit'
   })
 }
 
@@ -584,13 +573,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ========== 原样保留并略微格式化你的样式 ========== */
 .post-detail {
   min-height: 100vh;
   background: #f5f5f5;
   padding: 0;
 }
-
-/* 返回按钮 */
 .back-header {
   background: white;
   padding: 16px 20px;
@@ -599,7 +587,6 @@ onMounted(() => {
   top: 0;
   z-index: 100;
 }
-
 .back-btn {
   display: flex;
   align-items: center;
@@ -612,30 +599,17 @@ onMounted(() => {
   padding: 8px 0;
   transition: color 0.3s;
 }
+.back-btn:hover { color: #1890ff; }
+.back-icon { font-size: 18px; }
 
-.back-btn:hover {
-  color: #1890ff;
-}
-
-.back-icon {
-  font-size: 18px;
-}
-
-/* 帖子内容 - 移除所有居中 */
 .post-content {
   background: white;
   margin: 0;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: left; /* 确保文本左对齐 */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  text-align: left;
 }
-
-/* 标题区域 */
-.title-section {
-  margin-bottom: 20px;
-  text-align: left; /* 标题左对齐 */
-}
-
+.title-section { margin-bottom: 20px; text-align: left; }
 .post-title {
   font-size: 24px;
   font-weight: 700;
@@ -675,187 +649,52 @@ onMounted(() => {
 
 /* 标签区域 */
 .tags-section {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  text-align: left; /* 标签左对齐 */
-  justify-content: flex-start; /* 确保标签从左边开始 */
+  display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; text-align:left; justify-content:flex-start;
 }
-
-.post-category {
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.post-category.food {
-  background: #fff0f0;
-  color: #ff4757;
-  border: 1px solid #ff4757;
-}
-
-.post-category.sports {
-  background: #f0f8ff;
-  color: #1e90ff;
-  border: 1px solid #1e90ff;
-}
-
-.post-category.help {
-  background: #fff8e1;
-  color: #ffa502;
-  border: 1px solid #ffa502;
-}
-
-.post-category.trade {
-  background: #f0fff0;
-  color: #2ed573;
-  border: 1px solid #2ed573;
-}
-
-.post-category.study {
-  background: #f0f0ff;
-  color: #5352ed;
-  border: 1px solid #5352ed;
-}
-
+.post-category { padding:4px 8px; border-radius:6px; font-size:12px; font-weight:500; }
 .dorm-tag {
-  padding: 6px 12px;
-  background: #f8f9fa;
-  color: #666;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  padding:6px 12px; background:#f8f9fa; color:#666; border:1px solid #e9ecef; border-radius:6px;
+  font-size:14px; font-weight:500;
 }
+.content-section { margin-bottom:24px; text-align:left; }
+.post-content-text { font-size:16px; color:#333; line-height:1.8; margin:0 0 24px 0; white-space:pre-wrap; text-align:left; }
 
-/* 正文内容 */
-.content-section {
-  margin-bottom: 24px;
-  text-align: left; /* 正文内容左对齐 */
-}
-
-.post-content-text {
-  font-size: 16px;
-  color: #333;
-  line-height: 1.8;
-  margin: 0 0 24px 0;
-  white-space: pre-wrap;
-  text-align: left; /* 确保正文文本左对齐 */
-}
-
-/* 图片展示 */
 .post-images {
-  display: grid;
+  display:grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-top: 16px;
-  justify-items: start; /* 图片从左边开始排列 */
+  gap:12px; margin-top:16px; justify-items:start;
 }
-
 .detail-image {
-  width: 100%;
-  height: 200px;
-  border-radius: 8px;
-  object-fit: cover;
-  cursor: pointer;
-  transition: transform 0.3s ease;
+  width:100%; height:200px; border-radius:8px; object-fit:cover; cursor:pointer; transition:transform 0.3s ease;
 }
+.detail-image:hover { transform:scale(1.02); }
 
-.detail-image:hover {
-  transform: scale(1.02);
-}
-
-/* 操作按钮 */
 .action-buttons {
-  display: flex;
-  gap: 12px;
-  padding: 20px;
-  background: white;
-  margin-top: 20px;
-  text-align: left; /* 操作按钮区域左对齐 */
+  display:flex; gap:12px; padding:20px; background:white; margin-top:20px; text-align:left;
 }
-
 .action-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 20px; border:none;
+  border-radius:8px; font-size:16px; font-weight:500; cursor:pointer; transition:all 0.3s ease;
 }
+.like-btn { background:#f5f5f5; color:#666; border:1px solid #e8e8e8; }
+.like-btn:hover { background:#fff0f0; color:#ff4757; border-color:#ff4757; }
+.like-btn.liked { background:#fff0f0; color:#ff4757; border-color:#ff4757; }
+.contact-btn { background:#1890ff; color:white; }
+.contact-btn:hover { background:#40a9ff; }
 
-.like-btn {
-  background: #f5f5f5;
-  color: #666;
-  border: 1px solid #e8e8e8;
-}
-
-.like-btn:hover {
-  background: #fff0f0;
-  color: #ff4757;
-  border-color: #ff4757;
-}
-
-.like-btn.liked {
-  background: #fff0f0;
-  color: #ff4757;
-  border-color: #ff4757;
-}
-
-.contact-btn {
-  background: #1890ff;
-  color: white;
-}
-
-.contact-btn:hover {
-  background: #40a9ff;
-}
-
-/* 评论区 - 移除居中 */
 .comments-section {
-  background: white;
-  margin: 20px 0 0 0;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: left; /* 评论区左对齐 */
+  background:white; margin:20px 0 0 0; padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.1); text-align:left;
 }
-
-.comments-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 20px 0;
-  text-align: left; /* 评论标题左对齐 */
+.comments-title { font-size:20px; font-weight:600; color:#333; margin:0 0 20px 0; text-align:left; }
+.comment-input-section { display:flex; gap:16px; margin-bottom:24px; text-align:left; }
+.current-user-avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.comment-input-container { flex:1; text-align:left; }
+.reply-target-tip {
+  display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#e6f7ff;
+  border-radius:6px 6px 0 0; border:1px solid #91d5ff; border-bottom:none; font-size:14px; color:#1890ff;
 }
-
-/* 评论输入 */
-.comment-input-section {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
-  text-align: left; /* 评论输入左对齐 */
-}
-
-.current-user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.comment-input-container {
-  flex: 1;
-  text-align: left; /* 评论输入容器左对齐 */
-}
+.cancel-reply-btn { background:none; border:none; color:#1890ff; font-size:16px; cursor:pointer; opacity:0.7; padding:0 4px; }
+.cancel-reply-btn:hover { opacity:1; }
 
 .comment-input {
   width: 100%;
@@ -956,69 +795,35 @@ onMounted(() => {
   text-align: left; /* 评论文本左对齐 */
 }
 
-.comment-actions {
-  display: flex;
-  gap: 16px;
-  text-align: left; /* 评论操作左对齐 */
-}
-
+.comment-actions { display:flex; gap:16px; text-align:left; }
 .comment-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  font-size: 12px;
-  color: #999;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.3s;
+  display:flex; align-items:center; gap:4px; background:none; border:none; font-size:12px; color:#999;
+  cursor:pointer; padding:4px 8px; border-radius:4px; transition:all 0.3s;
 }
+.comment-action-btn:hover { background:#f5f5f5; color:#666; }
 
-.comment-action-btn:hover {
-  background: #f5f5f5;
-  color: #666;
-}
+.sub-comments-list { background:#f9f9f9; padding:12px; border-radius:8px; margin-top:12px; }
+.sub-comment-item { margin-bottom:10px; border-bottom:1px dashed #eee; padding-bottom:10px; text-align:left; }
+.sub-comment-item:last-child { margin-bottom:0; border-bottom:none; padding-bottom:0; }
+.sub-comment-header { display:flex; justify-content:space-between; margin-bottom:4px; }
+.sub-user { font-size:13px; font-weight:600; color:#666; }
+.sub-time { font-size:12px; color:#bbb; }
+.sub-text { font-size:13px; color:#444; margin:0; text-align:left; }
+.reply-target { color:#1890ff; font-weight:500; margin-right:4px; }
+.sub-comments-footer { display:flex; justify-content:flex-start; gap:12px; margin-top:8px; padding-top:8px; }
+.toggle-comments-btn { background:none; border:none; color:#1890ff; font-size:12px; cursor:pointer; padding:4px 0; transition:opacity 0.3s; }
+.toggle-comments-btn:hover { opacity:0.8; }
+.reply-sub-btn { color:#666; border-left:1px solid #e8e8e8; padding-left:12px; }
 
-/* 图片预览模态框 */
 .image-preview-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8);
+  display:flex; align-items:center; justify-content:center; z-index:1000;
 }
-
-.modal-content {
-  position: relative;
-  max-width: 90%;
-  max-height: 90%;
-}
-
+.modal-content { position:relative; max-width:90%; max-height:90%; }
 .close-modal-btn {
-  position: absolute;
-  top: -40px;
-  right: 0;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 8px;
+  position:absolute; top:-40px; right:0; background:none; border:none; color:white; font-size:24px; cursor:pointer; padding:8px;
 }
-
-.preview-image {
-  max-width: 100%;
-  max-height: 80vh;
-  object-fit: contain;
-  border-radius: 8px;
-}
+.preview-image { max-width:100%; max-height:80vh; object-fit:contain; border-radius:8px; }
 
 /* 响应式设计 */
 @media (max-width: 768px) {

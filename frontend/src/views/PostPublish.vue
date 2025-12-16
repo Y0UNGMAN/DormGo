@@ -1,4 +1,3 @@
-<!-- src/views/PublishPost.vue -->
 <template>
   <div class="publish-post">
     <!-- 返回按钮 -->
@@ -216,8 +215,6 @@ const fetchDormList = async() => {
   }
 };
 
-
-
 // 计算属性：表单是否有效
 const isFormValid = computed(() => {
   return form.value.title.trim() && 
@@ -245,40 +242,31 @@ const triggerFileInput = () => {
 const handleFileUpload = (event) => {
   const files = Array.from(event.target.files)
   
-  // 检查图片数量限制
   if (form.value.images.length + files.length > 6) {
     alert('最多只能上传6张图片')
     return
   }
 
   files.forEach(file => {
-    // 检查文件类型
     if (!file.type.startsWith('image/')) {
       alert('请上传图片文件')
       return
     }
-
-    // 检查文件大小（限制为5MB）
     if (file.size > 5 * 1024 * 1024) {
       alert('图片大小不能超过5MB')
       return
     }
-
-    // 创建预览URL
     const url = URL.createObjectURL(file)
     form.value.images.push({
       url,
       file
     })
   })
-
-  // 清空文件输入，允许重复选择相同文件
   event.target.value = ''
 }
 
 // 移除图片
 const removeImage = (index) => {
-  // 释放URL对象
   URL.revokeObjectURL(form.value.images[index].url)
   form.value.images.splice(index, 1)
 }
@@ -329,11 +317,10 @@ const handlePublish = async () => {
     console.log('创建帖子响应:', res.data);
     // 显示成功提示
     alert('帖子发布成功！')
-    // 跳转回首页
     router.push('/dormgo')
   } catch (error) {
     console.error('发布失败:', error)
-    alert('发布失败，请重试')
+    // request.ts 拦截器会处理错误提示
   } finally {
     isSubmitting.value = false
   }
@@ -344,11 +331,17 @@ const goBack = () => {
   router.back()
 }
 
-// 清理URL对象
+// 初始化
 onMounted(() => {
+  // 获取当前用户信息
+  const userStr = localStorage.getItem('userInfo')
+  if (userStr) {
+     currentUser.value = JSON.parse(userStr)
+  }
+  
   fetchDormList();
   fetchPostTypes();
-  // 组件卸载时清理所有创建的URL对象
+  
   return () => {
     form.value.images.forEach(image => {
       URL.revokeObjectURL(image.url)

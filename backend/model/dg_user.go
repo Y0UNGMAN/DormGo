@@ -11,8 +11,8 @@ import (
 
 type DgUser struct {
 	ID        uint      `gorm:"primarykey;AUTO_INCREMENT" json:"id"`
-	UserID    uint      `gorm:"column:user_id;"json:"userid"`
-	StudentId string    `gorm:"column:studentid;type:varchar(20);"json:"studentid"`
+	UserID    uint      `gorm:"column:user_id;" json:"userid"`
+	StudentId string    `gorm:"column:studentid;type:varchar(20);" json:"studentid"`
 	Username  string    `gorm:"column:username;type:varchar(50);" json:"username"`
 	Password  string    `gorm:"column:password;type:varchar(255);" json:"password"`
 	Avatar    string    `gorm:"column:avatar;type:varchar(255);" json:"avatarurl"`
@@ -23,10 +23,13 @@ type DgUser struct {
 	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
+// 注册请求参数
 type RegisterRequest struct {
 	Username   string `json:"username" binding:"required"`
+	StudentId  string `json:"student_id" binding:"required"` // 【新增】学号字段
 	Password   string `json:"password" binding:"required"`
 	RePassword string `json:"re_password" binding:"required"`
+	DormId     uint   `json:"dorm_id"`
 }
 
 type LoginRequest struct {
@@ -77,13 +80,9 @@ func Login(username, password string) (*DgUser, error) {
 		}
 		return nil, err // 数据库连接等其他错误
 	}
-	// 步骤 2: 验证密码
-	// 注意参数顺序：
-	// 参数 1 (hashedPassword): 数据库里存的加密字符串 (user.Password)
-	// 参数 2 (password): 用户输入的明文密码 (password)
+	// 验证密码
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		// 如果 err 不为空，说明密码比对失败
 		return nil, errors.New("密码错误")
 	}
 	// 登录成功，返回用户对象

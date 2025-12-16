@@ -125,3 +125,33 @@ func GetUserInfoPublic(c *gin.Context) {
 		},
 	})
 }
+
+func AdminLogin(c *gin.Context) {
+	p := new(model.LoginRequest)
+	if err := c.ShouldBindJSON(p); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "请求参数有误",
+		})
+		return
+	}
+
+	token, admin, err := logic.AdminLogin(p)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    400,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
+		"message": "Admin Login Success",
+		"token":   token,
+		"data": gin.H{
+			"avatar":   admin.Avatar,
+			"nickname": admin.Username,
+		},
+	})
+}

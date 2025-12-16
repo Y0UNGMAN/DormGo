@@ -80,6 +80,20 @@ func Init() (err error) {
 	} else {
 		println("创建PostLike表成功")
 	}
+	// 在 Init() 函数中添加以下代码：
+
+	err = DB.AutoMigrate(&DgNotice{})
+	if err != nil {
+		println("创建Notice表失败")
+	}
+	err = DB.AutoMigrate(&DgViolation{})
+	if err != nil {
+		println("创建Violation表失败")
+	}
+	err = DB.AutoMigrate(&DgSensitiveWord{})
+	if err != nil {
+		println("创建SensitiveWord表失败")
+	}
 	//创建cmtlike表
 	err = DB.AutoMigrate(&DgCmtLike{})
 	if err != nil {

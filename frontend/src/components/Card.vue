@@ -148,14 +148,8 @@ const handleCardClick = () => {
 
 <style scoped>
 .card {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #e8e8e8;
+  background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); cursor: pointer; transition: all 0.3s ease; border: 1px solid #e8e8e8;
 }
 
 .card:hover {
@@ -171,10 +165,16 @@ const handleCardClick = () => {
   padding-bottom: 12px;
   border-bottom: 1px solid #f0f0f0;
 }
+.card-content { margin-bottom: 12px; }
+.user-info { display: flex; align-items: center; margin-bottom: 12px; }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; margin-right: 8px; object-fit: cover; }
+.user-name { font-weight: 500; color: #666; font-size: 14px; }
 
-.card-content {
-  margin-bottom: 12px;
-}
+.tags-container { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.post-category { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; background: #f4f4f5; color: #909399; }
+.post-category.trade { background: #f0fff0; color: #2ed573; border: 1px solid #2ed573; }
+.post-category.help { background: #fff8e1; color: #ffa502; border: 1px solid #ffa502; }
+.post-category.sports { background: #f0f8ff; color: #1e90ff; border: 1px solid #1e90ff; }
 
 .user-info {
   display: flex;

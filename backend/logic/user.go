@@ -21,9 +21,11 @@ func SignUp(p *model.RegisterRequest) error {
 	userID := utils.GetID()
 
 	var user = &model.DgUser{
-		UserID:   uint(userID), // 注意：确保数据库 UserID 是 uint64 或足够大
-		Username: p.Username,
-		Password: p.Password,
+		UserID:    uint(userID),
+		Username:  p.Username,
+		Password:  p.Password,
+		DormId:    p.DormId,
+		Avatar:    "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
 	}
 
 	// 3 保存进数据库

@@ -23,8 +23,13 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch">查询</el-button>
           <el-button @click="resetSearch">重置</el-button>
-          <!-- 批量操作入口 -->
-          <el-button type="danger" @click="handleBatchBan" :disabled="!selectedIds.length">批量封禁</el-button>
+          <el-button 
+            type="danger" 
+            @click="handleBatchBan" 
+            :disabled="!selectedIds.length"
+          >
+            批量封禁
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -98,7 +103,6 @@
       </div>
     </el-card>
 
-    <!-- 信用分调整弹窗 -->
     <UserCreditAdjust v-model="creditDialogVisible" :user-info="currentUser" @success="fetchUserList" />
   </div>
 </template>
@@ -108,7 +112,6 @@ import { ref, onMounted, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Edit } from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { batchUpdateUserStatus } from '@/utils/batch-operation'
 import UserCreditAdjust from '@/components/UserCreditAdjust.vue'
 
 const userList = ref([])
@@ -129,7 +132,7 @@ onMounted(() => fetchUserList())
 const fetchUserList = async () => {
   loading.value = true
   try {
-    const res = await request.get('/v1/admin/users', { params: { ...pageInfo, ...searchForm } })
+    const res = await request.get('/api/v1/admin/users', { params: { ...pageInfo, ...searchForm } })
     userList.value = res.list || []
     total.value = res.total || 0
   } catch (e) { console.error(e) } 
@@ -155,23 +158,44 @@ const handleSelectionChange = (val) => {
   selectedIds.value = val.map(item => item.id)
 }
 
+// 【修改点2】实现批量封禁逻辑，并添加确认弹窗
 const handleBatchBan = async () => {
+  if (!selectedIds.value.length) return
+
   try {
-    await batchUpdateUserStatus(selectedIds.value, 'disabled')
+    await ElMessageBox.confirm(
+      `确定要批量封禁选中的 ${selectedIds.value.length} 位用户吗？`,
+      '警告',
+      { 
+        type: 'warning',
+        confirmButtonText: '确定', // 明确设置为“确定”
+        cancelButtonText: '取消'
+      }
+    )
+
+    await request.put('/api/v1/admin/users/batch/status', { ids: selectedIds.value, status: 'disabled' })
+    ElMessage.success('操作成功')
     fetchUserList()
-  } catch (e) {}
+  } catch (e) {
+    if (e !== 'cancel') console.error(e)
+  }
 }
 
+// 【修改点3】修改单体封禁/解封的确认按钮文案
 const handleStatusChange = (user) => {
   const isBanning = user.status === 'normal'
   return ElMessageBox.confirm(
     `确定要${isBanning ? '封禁' : '解封'}该用户吗？`,
     '提示',
-    { type: 'warning' }
+    { 
+      type: 'warning',
+      confirmButtonText: '确定', // 明确设置为“确定”
+      cancelButtonText: '取消'
+    }
   ).then(async () => {
     try {
       const newStatus = isBanning ? 'disabled' : 'normal'
-      await request.put(`/v1/admin/users/${user.id}/status`, { status: newStatus })
+      await request.put(`/api/v1/admin/users/${user.id}/status`, { status: newStatus })
       ElMessage.success('操作成功')
       return true
     } catch (e) { return false }
@@ -184,15 +208,13 @@ const openCreditAdjust = (user) => {
 }
 
 const handleView = (user) => {
-  ElMessage.info('查看用户详情开发中') // 实际应弹出详情 Drawer
+  ElMessage.info('查看用户详情功能开发中')
 }
 
 const handleTags = async (user) => {
-  // 模拟获取标签
   try {
-    const res = await request.get(`/v1/user/${user.id}/tags`)
-    const tags = res.tags || []
-    ElMessageBox.alert(tags.join(', ') || '暂无标签', '用户兴趣标签')
+    // 模拟标签数据
+    ElMessageBox.alert('暂无标签数据', '用户兴趣标签', { confirmButtonText: '确定' })
   } catch (e) {}
 }
 </script>
