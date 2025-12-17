@@ -6,8 +6,12 @@ export interface UserInfo {
   id: number;
   username: string;
   avatarurl: string;
-  token: string;
   dormid : number;
+}
+export interface AdminInfo {
+  id: number;
+  username: string;
+  avatar: string;
 }
 
 export const useUserStore = defineStore('user', {
@@ -17,6 +21,8 @@ export const useUserStore = defineStore('user', {
     token: localStorage.getItem('token') || null,
     userInfo: JSON.parse(localStorage.getItem('userInfo') || 'null') as UserInfo | null,
     unreadCount: 0,
+    adminToken: localStorage.getItem('adminToken') || null,
+    adminInfo: JSON.parse(localStorage.getItem('adminInfo') || 'null') as AdminInfo | null,
   }),
   
   getters: {
@@ -26,6 +32,9 @@ export const useUserStore = defineStore('user', {
     currentUser: (state) => state.userInfo,
     // 获取用户 ID
     currentUserId: (state) => state.userInfo?.id,
+
+    isAdminLoggedIn: (state) => !!state.adminToken,
+    currentAdmin: (state) => state.adminInfo,
   },
   
   actions: {
@@ -48,6 +57,23 @@ export const useUserStore = defineStore('user', {
       localStorage.removeItem('token');
       localStorage.removeItem('userInfo');
       // 刷新页面或重定向到登录页
+    },
+    setAdminLogin(token: string, admin: AdminInfo) {
+      // 更新 Pinia 状态
+      this.adminToken = token;
+      this.adminInfo = admin;
+      
+      // 保持对旧代码的兼容：写入指定的 key
+      localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminInfo', JSON.stringify(admin));
+    },
+
+    adminLogout() {
+      this.adminToken = null;
+      this.adminInfo = null;
+      
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminInfo');
     },
 
     async fetchUnreadCount() {

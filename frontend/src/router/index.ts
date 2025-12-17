@@ -5,7 +5,6 @@ const AdminLayout = () => import('@/components/AdminLayout.vue')
 // === 公共视图 (改为引用 Components 中的 Login) ===
 const Login = () => import('@/components/Login.vue')
 // === 用户侧视图 ===
-const DormgoHome = () => import('@/views/DormgoHome.vue')
 const PersonalHome = () => import('@/views/PersonalHome.vue')
 // === 帖子相关视图 ===
 const PostPublish = () => import('@/views/PostPublish.vue')
@@ -23,32 +22,40 @@ const SensitiveWordManage = () => import('@/views/SensitiveWordManage.vue')
 const PostTypeConfig = () => import('@/views/PostTypeConfig.vue')
 const ResetPwd = () => import('@/views/ResetPwd.vue')
 const DormGoHome = () => import('@/views/DormGoHome.vue')
-const LoginIn = () => import('@/views/Login.vue')
+const LoginIn = () => import('@/views/LoginIn.vue')
 const ChatPage = () => import('@/views/ChatPage.vue')
 const Messages = () => import('@/views/MessageList.vue')
 const OtherUserProfile = () => import('@/views/OtherUserProfile.vue')
 
 const routes: RouteRecordRaw[] = [
+  {
+    path: '/loginin',
+    name: 'LoginIn',
+    meta: { title: '登录' },
+    component: LoginIn
+  },
+
+
   // 1. 认证路由 (Login Route)
   {
-    path: '/login',
+    path: '/',
     name: 'Login',
     component: Login,
     meta: { title: '欢迎登录 - 寝友Go' }
   },
 
   // 2. 根路径重定向
-  {
-    path: '/',
-    // 修复：将未使用的参数 to 改为 _to 以避免 TS 6133 警告
-    redirect: (_to) => {
-      const adminToken = localStorage.getItem('adminToken')
-      const userToken = localStorage.getItem('userToken')
-      if (adminToken) return '/admin/statistics'
-      if (userToken) return '/dormgo'
-      return '/login'
-    }
-  },
+  // {
+  //   path: '/',
+  //   // 修复：将未使用的参数 to 改为 _to 以避免 TS 6133 警告
+  //   redirect: (_to) => {
+  //     const adminToken = localStorage.getItem('adminToken')
+  //     const userToken = localStorage.getItem('userToken')
+  //     if (adminToken) return '/admin/statistics'
+  //     if (userToken) return '/dormgo'
+  //     return '/LoginIn'
+  //   }
+  // },
 
   // 5. 管理员侧路由 (Admin Routes)
   {

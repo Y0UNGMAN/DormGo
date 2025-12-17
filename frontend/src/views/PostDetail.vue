@@ -216,6 +216,7 @@ import PostStats from '@/components/PostStats.vue'
 import axios from 'axios'
 import api from '@/api/index.ts';
 import { useUserStore } from '@/stores/user'
+import { computed } from 'vue'
 const userStore = useUserStore();
 
 const route = useRoute()
@@ -231,7 +232,6 @@ const isSubmitting = ref(false)
 
 // 回复状态
 const replyingToComment = ref(null)
-const replyToCommentId = ref(null)
 const replyToTargetUser = ref(null)
 const expandedComments = reactive(new Set())
 

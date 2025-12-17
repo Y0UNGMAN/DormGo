@@ -52,7 +52,6 @@
             @click="selectCategory('all')"
           >
             全部
-             <span class="category-count">{{ posts.length }}</span>
           </button>
           <button
             v-for="posttype in postTypes"
@@ -330,7 +329,7 @@ const clearAllFilters = () => {
 
 // 路由跳转
 const handlePublish = () => {
-  router.push('/post/publish')
+  router.push('/publish')
 }
 
 const goToProfile = () => {

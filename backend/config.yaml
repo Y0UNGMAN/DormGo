@@ -12,7 +12,7 @@ mysql:
   host: "127.0.0.1"
   port: 3306
   user: "root"
-  password: "Han.1234"
+  password: "123456"
   dbname: "dormgo_db"
 redis:
   host: "127.0.0.1"

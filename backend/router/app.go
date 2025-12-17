@@ -27,6 +27,7 @@ func App() *gin.Engine {
 		userAuth.PUT("/profile", controller.UpdateUserProfile)
 		userAuth.GET("/login-info", controller.GetLoginInfo)
 		userAuth.POST("/reset-pwd", controller.ResetPassword)
+		userAuth.GET("/info", controller.GetUserInfoPublic)
 	}
 
 	authPost := r.Group("/api/v1/post")

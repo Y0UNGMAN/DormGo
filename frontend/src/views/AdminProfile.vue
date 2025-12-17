@@ -126,7 +126,6 @@ const formRef = ref(null)
 
 onMounted(() => {
   fetchAdminProfile()
-  fetchLoginInfo()
 })
 
 const fetchAdminProfile = async () => {

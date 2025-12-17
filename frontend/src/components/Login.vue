@@ -123,9 +123,14 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Lock, School, ArrowRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import request from '@/utils/request'
+import api from '@/api/index'
+// 1. 引入 Pinia Store
+import { useUserStore } from '@/stores/user';
 
 const router = useRouter()
+// 2. 初始化 Store
+const userStore = useUserStore();
+
 const authFormRef = ref(null)
 const loading = ref(false)
 
@@ -136,9 +141,9 @@ const dormList = ref([])
 
 const formData = reactive({
   username: '',
-  studentId: '', // 【新增】学号字段
   password: '',
   confirmPassword: '',
+  studentId: '', // 补充定义 studentId
   dormId: ''
 })
 
@@ -166,11 +171,7 @@ const formRules = computed(() => {
     password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
   }
   
-  // 仅在用户注册模式下校验
   if (identity.value === 'user' && !isLoginMode.value) {
-    // 【新增】学号校验规则
-    rules.studentId = [{ required: true, message: '请输入学号', trigger: 'blur' }]
-    
     rules.confirmPassword = [
       { required: true, message: '请确认密码', trigger: 'blur' },
       { 
@@ -195,8 +196,8 @@ onMounted(() => {
 
 const fetchDormList = async () => {
   try {
-    const res = await request.get('/api/v1/post/dorms')
-    dormList.value = res.data || []
+    const res = await api.get('/api/v1/post/dorms')
+    dormList.value = res.data.data || []
   } catch (error) {
     console.error('获取宿舍列表失败', error)
   }
@@ -221,80 +222,88 @@ const handleSubmit = async () => {
     if (valid) {
       loading.value = true
       try {
-        // === 管理员登录 ===
+        // === 管理员登录 (保持独立逻辑，不走UserStore) ===
         if (identity.value === 'admin') {
-          const res = await request.post('/api/v1/admin/login', {
+          const res = await api.post('/api/v1/admin/login', {
             username: formData.username,
             password: formData.password
           })
 
-          if (res.code === 200) {
-            ElMessage.success('管理员登录成功')
-            localStorage.setItem('adminToken', res.token)
-            localStorage.removeItem('userToken')
-            
-            const adminInfo = { 
-              nickname: formData.username, 
-              avatar: res.data?.avatar || 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+          if (res.data.code === 200) { // 注意：res结构需根据拦截器确认，这里假设axios返回包含data
+             // 兼容直接返回data或res.data的情况
+             const responseData = res.data || res;
+            const adminToken = responseData.token;
+            const adminInfoObj = { 
+              username: formData.username, 
+              // 处理头像：后端有就用后端的，没有就用默认图
+              avatar: responseData.data?.avatar || 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+              // 如果后端返回了 id，也可以加上
+              id: responseData.data?.id
             }
-            localStorage.setItem('adminInfo', JSON.stringify(adminInfo))
-            
+            userStore.setAdminLogin(adminToken, adminInfoObj);
+            userStore.logout();
+            ElMessage.success('管理员登录成功')
             router.push('/admin/statistics')
           } else {
-            ElMessage.error(res.message || '登录失败')
+            ElMessage.error(res.data?.message || '登录失败')
           }
         } 
-        // === 普通用户操作 ===
+        // === 普通用户操作 (接入 Pinia) ===
         else {
           if (isLoginMode.value) {
             // -- 登录 --
-            const res = await request.post('/api/v1/user/login', {
+            const res = await api.post('/api/v1/user/login', {
               username: formData.username,
               password: formData.password
             })
             
-            if (res.code === 200) {
+            if (res.data.code === 200) {
+              const token = res.data.token;
+              const backendUser = res.data.user || {};
+
+              // 3. 构建符合 Store 定义的 User 对象
+              // 注意：user.ts 接口定义包含 id, username, avatarurl, dormid
+              const userInfoObj = {
+                id: backendUser.id || 0,
+                username: backendUser.username || formData.username,
+                avatarurl: backendUser.avatarurl || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
+                dormid: backendUser.dormid || 0,
+                // 如果需要把 token 也放在 userInfo 里（根据 user.ts 的 Interface），这里加上
+                token: token
+              };
+
+              // 4. 调用 Pinia Action 更新状态
+              // setLogin 会自动处理 state 更新和 localStorage 持久化
+              userStore.setLogin(token, userInfoObj);
+              
               ElMessage.success('登录成功')
-              localStorage.setItem('userToken', res.token)
-              localStorage.removeItem('adminToken')
-              
-              // 【关键修正】：从后端返回的 res.data 中获取真实的数据库 id
-              // 确保后端 controller/user.go 已经修改为返回 user 对象
-              const serverData = res.data || {}
-              
-              const userInfo = { 
-                name: serverData.username || formData.username, 
-                // 如果后端还没改好返回空，这里至少保证有个 fallback，但强烈建议后端返回正确ID
-                id: serverData.id || 0, 
-                avatarurl: serverData.avatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
-              } 
-              
-              localStorage.setItem('userInfo', JSON.stringify(userInfo))
-              
               router.push('/dormgo')
             } else {
-              ElMessage.error(res.message || '登录失败')
+              ElMessage.error(res.data.message || '登录失败')
             }
           } else {
             // -- 注册 --
-            const res = await request.post('/api/v1/user/signup', {
-              username: formData.username,      // 用户名
-              student_id: formData.studentId,   // 【新增】学号提交
+            const res = await api.post('/api/v1/user/signup', {
+              username: formData.username,
               password: formData.password,
               re_password: formData.confirmPassword,
               dorm_id: Number(formData.dormId)
             })
             
-            if (res.code === 200) {
-              ElMessage.success('注册成功，请登录')
+            if (res.data.code === 200) {
+              ElMessage.success('注册成功，请立即登录')
               isLoginMode.value = true
+              // 自动填充用户名
+              formData.password = ''
+              formData.confirmPassword = ''
             } else {
-              ElMessage.error(res.message || '注册失败')
+              ElMessage.error(res.data.message || '注册失败')
             }
           }
         }
       } catch (error) {
         console.error(error)
+        ElMessage.error(error.response?.data?.message || '网络连接失败')
       } finally {
         loading.value = false
       }
@@ -304,6 +313,7 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
+/* 样式保持不变，直接复用原文件的样式 */
 .login-container {
   height: 100vh;
   width: 100%;
