@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -154,4 +156,21 @@ func AdminLogin(c *gin.Context) {
 			"nickname": admin.Username,
 		},
 	})
+}
+
+func GetCurrentUserId(c *gin.Context) (uint, error) {
+	var userId uint = 0
+	if v, exists := c.Get(middleware.CtxUserIDKey); exists {
+		if uid, ok := v.(uint); ok {
+			userId = uid
+		} else if uidInt, ok := v.(int); ok {
+			userId = uint(uidInt)
+		} else {
+			fmt.Printf("UserID type mismatch in Context. Got: %T\n", v)
+		}
+	} else {
+		fmt.Println("UserID not found in context")
+		return userId, errors.New("UserID not found in context")
+	}
+	return userId, nil
 }

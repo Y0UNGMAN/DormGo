@@ -45,6 +45,12 @@ func App() *gin.Engine {
 		authPost.GET("/view/:id", controller.GetPostDetail)
 		//报名
 		authPost.POST("/signup", controller.PostSignup)
+		//收藏
+		authPost.POST("/favorite", controller.PostFavorite)
+		//取消收藏
+		authPost.POST("/cancel_favorite", controller.CancelPostFavorite)
+		// 获取收藏列表
+		authPost.GET("/my_favorites", controller.GetMyFavorites)
 	}
 
 	message := r.Group("api/v1/message")

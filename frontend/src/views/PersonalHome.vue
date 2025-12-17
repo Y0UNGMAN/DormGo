@@ -132,8 +132,8 @@ const currentUser = computed(() => userStore.currentUser);
 
 // 我的帖子列表
 const myPosts = ref([])
-// 我的收藏列表 (模拟数据)
-const likedPosts = ref([])
+// 我的收藏列表 
+const favoritePosts = ref([])
 
 const notifications = ref([]);
 const showModal = ref(false);
@@ -168,6 +168,8 @@ watch(activeTab, async (newVal) => {
       await fetchNotifications();
       await api.post('/api/v1/message/read_all');
       userStore.clearUnread();
+    }else if (newVal === 'likes') { // 假设你把"我的收藏"tab的值设为 likes
+       await fetchFavoritePosts();
     }
 })
 
@@ -215,8 +217,27 @@ const fetchMyPosts = async () => {
 
 // 计算当前显示的列表
 const displayPosts = computed(() => {
-  return activeTab.value === 'posts' ? myPosts.value : likedPosts.value
+  if (activeTab.value === 'posts') return myPosts.value
+  if (activeTab.value === 'likes') return favoritePosts.value // 返回收藏数据
+  return []
 })
+
+const fetchFavoritePosts = async () => {
+    try {
+        // 调用后端接口
+        const res = await api.get('/api/v1/post/my_favorites');
+        if (res.data.code === 200) {
+            favoritePosts.value = res.data.data || [];
+        }
+    } catch (error) {
+        console.error('获取收藏失败', error);
+    }
+}
+
+
+
+
+
 
 onMounted(() => {
   fetchMyPosts()

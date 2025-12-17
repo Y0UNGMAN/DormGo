@@ -120,5 +120,11 @@ func Init() (err error) {
 	} else {
 		println("创建Notification表成功")
 	}
+	err = DB.AutoMigrate(&DgFavorite{})
+	if err != nil {
+		println("创建Favorite表失败")
+	} else {
+		println("创建Favorite表成功")
+	}
 	return
 }

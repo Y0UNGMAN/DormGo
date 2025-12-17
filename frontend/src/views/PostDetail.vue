@@ -89,6 +89,10 @@
         <span class="btn-icon">{{ isLiked ? '❤️' : '🤍' }}</span>
         <span class="btn-text">{{ isLiked ? '已点赞' : '点赞' }}</span>
       </button>
+      <button class="action-btn fav-btn" :class="{ favorited: isFavorited }" @click="toggleFavorite">
+        <span class="btn-icon">{{ isFavorited ? '★' : '☆' }}</span>
+        <span class="btn-text">{{ isFavorited ? '已收藏' : '收藏' }}</span>
+      </button>
       <button class="action-btn contact-btn" @click="contactUser">
         <span class="btn-icon">💬</span>
         <span class="btn-text">联系TA</span>
@@ -252,6 +256,8 @@ const replyToUser = ref('')
 const showUserMenu = ref(false)
 const selectedUser = ref({})
 
+const isFavorited = ref(false)
+
 // 获取评论列表
 const fetchComments = async () => {
   const postId = route.params.id
@@ -288,6 +294,7 @@ const fetchPost = async () =>{
     if(response.data && response.data.data){
       post.value = response.data.data
       isLiked.value = response.data.isliked
+      isFavorited.value = response.data.isFavorited
       console.log('帖子数据:', post.value);
       console.log('当前用户是否点赞:', isLiked.value);
     }
@@ -564,6 +571,35 @@ const handleContactUser = () => {
 }
 
 
+const toggleFavorite = async () => {
+    if (!userStore.isLoggedIn) {
+        alert("请先登录");
+        return;
+    }
+    const postId = parseInt(route.params.id);
+    const payload = { post_id: postId };
+    
+    try {
+        let res;
+        if (isFavorited.value) {
+            // 取消收藏
+            res = await api.post('/api/v1/post/cancel_favorite', payload);
+        } else {
+            // 添加收藏
+            res = await api.post('/api/v1/post/favorite', payload);
+        }
+        
+        if (res.data.code === 200) {
+            isFavorited.value = !isFavorited.value;
+            alert(isFavorited.value ? "收藏成功" : "已取消收藏");
+        } else {
+            alert(res.data.msg);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("操作失败");
+    }
+}
 
 // 初始化
 onMounted(() => {
@@ -1136,6 +1172,22 @@ onMounted(() => {
 @keyframes scaleUp {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+.fav-btn {
+    background: #f5f5f5; 
+    color: #666; 
+    border: 1px solid #e8e8e8;
+}
+.fav-btn:hover {
+    background: #fffbe6; 
+    color: #faad14; 
+    border-color: #faad14;
+}
+.fav-btn.favorited {
+    background: #fffbe6; 
+    color: #faad14; 
+    border-color: #faad14;
 }
 
 </style>

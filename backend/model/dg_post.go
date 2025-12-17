@@ -35,6 +35,7 @@ type ApiPostDetail struct {
 	PublisherName   string `json:"publishername"`
 	PublisherAvator string `json:"publisheravator"`
 	IsSignedUp      bool   `json:"is_signed_up"`
+	IsFavorited     bool   `json:"is_favorited"`
 	*DgPost
 }
 

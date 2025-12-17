@@ -7,11 +7,11 @@ import (
 )
 
 // 获取post 信息 和 发布者user（只有name） 信息
-func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, error) {
+func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, bool, error) {
 	post, err := model.GetPostDetail(id)
 	if err != nil {
 		fmt.Println("GetPostDetail error: ", err)
-		return nil, false, err
+		return nil, false, false, err
 	}
 	go func() {
 		_ = model.AddViewCount(post.ID)
@@ -22,15 +22,16 @@ func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, error) {
 	user, err := model.GetUserById(int(publisherId))
 	if err != nil {
 		fmt.Println("GetUserById error: ", err)
-		return nil, false, err
+		return nil, false, false, err
 	}
 
 	isLiked, err := model.CheckIsLiked(uint(id), usrId)
 	if err != nil {
 		fmt.Println("IsLiked error: ", err)
-		return nil, false, err
+		return nil, false, false, err
 	}
-
+	isFavorited := false
+	isFavorited, err = model.CheckFavoriteExist(usrId, uint(id))
 	isSignedUp := false
 	if post.IsLimited {
 		var err error
@@ -49,7 +50,7 @@ func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, error) {
 		DgPost:          post,
 	}
 
-	return postDetail, isLiked, nil
+	return postDetail, isLiked, isFavorited, nil
 
 }
 

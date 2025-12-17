@@ -287,6 +287,7 @@ const handleSubmit = async () => {
               username: formData.username,
               password: formData.password,
               re_password: formData.confirmPassword,
+              student_id:formData.studentId,
               dorm_id: Number(formData.dormId)
             })
             

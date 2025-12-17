@@ -23,6 +23,7 @@ func SignUp(p *model.RegisterRequest) error {
 	var user = &model.DgUser{
 		UserID:    uint(userID),
 		Username:  p.Username,
+		StudentId: p.StudentId,
 		Password:  p.Password,
 		DormId:    p.DormId,
 		Avatar:    "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
