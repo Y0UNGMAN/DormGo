@@ -68,6 +68,7 @@ func PostCreate(c *gin.Context) {
 		IsLimited:     isLimited,
 		MaxEnrollment: maxEnrollment,
 		Deadline:      deadline,
+		Status:        "normal",
 	}
 
 	err = logic.CreatePost(post)

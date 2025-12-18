@@ -134,6 +134,8 @@ func App() *gin.Engine {
 		adminAuth.GET("/notices", controller.GetNoticeList)
 		adminAuth.POST("/notices", controller.CreateNotice)
 		adminAuth.DELETE("/notices/:id", controller.DeleteNotice)
+		//管理员发通知
+		adminAuth.POST("/send_notification", controller.SendSystemNotification)
 
 		// 违规处理
 		adminAuth.GET("/violations", controller.GetViolationList)

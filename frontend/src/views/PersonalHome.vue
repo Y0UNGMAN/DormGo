@@ -57,20 +57,57 @@
         </button>
       </div>
       <div v-if="activeTab === 'notifications'" class="notification-list">
-        <div v-for="note in notifications" :key="note.id" class="notification-item" @click="showApplicantInfo(note)">
-          <img :src="note.sender.avatarurl" class="note-avatar">
+        <div v-for="note in notifications" :key="note.id" class="notification-item" @click="handleNoteClick(note)">
+          <img :src="note.sender?.avatarurl || defaultAvatar" class="note-avatar">
+
+
           <div class="note-content">
-            <p class="note-text">
-              <span class="highlight">{{ note.sender.username }}</span> {{ note.content }}
-              <span class="highlight">《{{ note.post.title }}》</span>
-            </p>
+            <template v-if="note.type === 'system'">
+              <p class="note-text">
+                <span class="highlight" style="color: #ff4d4f">【系统通知】</span> 
+                {{ note.content }}
+              </p>
+            </template>
+
+            <template v-else-if="note.type === 'signup'">
+              <p class="note-text">
+                <span class="highlight">{{ note.sender?.username }}</span> 
+                {{ note.content }}
+                <span v-if="note.post" class="highlight">《{{ note.post.title }}》</span>
+              </p>
+            </template>
             <span class="note-time">{{ formatTime(note.created_at) }}</span>
+      
           </div>
-          <button class="check-btn">查看详情</button>
+
+
+          <button v-if="note.type === 'signup'" class="check-btn" @click="showApplicantInfo(note)">
+            查看用户
+          </button>
+          
+          <button v-if="note.type === 'system'" class="check-btn primary" @click="showSystemDetail(note)">
+            查看全文
+          </button>
         </div>
+
         <div v-if="notifications.length === 0" class="empty-state">
            <div class="empty-emoji">🔕</div>
            <p>暂时没有新通知</p>
+        </div>
+      </div>
+      <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+      </div>
+
+      <div v-if="showSystemModal" class="modal-overlay" @click.self="showSystemModal = false">
+        <div class="modal-card system-modal">
+          <h3 class="modal-title">系统通知</h3>
+          <div class="modal-body">
+            <p>{{ currentSystemNote.content }}</p>
+          </div>
+          <div class="modal-footer">
+            <span class="modal-time">{{ formatTime(currentSystemNote.created_at) }}</span>
+            <button class="close-btn" @click="showSystemModal = false">关闭</button>
+          </div>
         </div>
       </div>
 
@@ -138,7 +175,13 @@ const favoritePosts = ref([])
 const notifications = ref([]);
 const showModal = ref(false);
 const currentApplicant = ref({}); // 当前点击的那个报名通知对象
+const showSystemModal = ref(false)
+const currentSystemNote = ref({})
 
+const showSystemDetail = (note) => {
+  currentSystemNote.value = note
+  showSystemModal.value = true
+}
 // 获取通知
 const fetchNotifications = async () => {
     try {
@@ -155,7 +198,18 @@ const showApplicantInfo = (note) => {
     currentApplicant.value = note; // 这里存的是整个 notification 对象
     showModal.value = true;
 }
-
+const handleNoteClick = (note) => {
+  // 如果是系统通知，点击可能不需要弹窗，或者只是标记已读
+  if (note.type === 'system') {
+    return; // 系统通知暂时不支持点击交互
+  }
+  
+  // 如果是报名通知，显示详情
+  if (note.type === 'signup') {
+    currentApplicant.value = note;
+    showModal.value = true;
+  }
+}
 const goToChat = (targetUserId) => {
     router.push({ 
         name: 'Chat', 
@@ -610,4 +664,12 @@ onMounted(() => {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+.system-badge { color: #ff4d4f; font-weight: bold; margin-right: 5px; }
+
+.system-modal { text-align: left; }
+.modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; color: #333; }
+.modal-body { font-size: 15px; line-height: 1.6; color: #444; min-height: 80px; white-space: pre-wrap; }
+.modal-footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px; }
+.modal-time { font-size: 12px; color: #999; }
 </style>

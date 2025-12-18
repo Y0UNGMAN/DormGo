@@ -12,6 +12,10 @@
           class="user-avatar"
         >
         <span class="user-name">{{ post.publishername || post.User?.username || '未知用户' }}</span>
+
+        <span v-if="post.is_pinned" class="tag-badge pinned">置顶</span>
+        
+        <span v-if="isAdminPost" class="tag-badge official">官方</span>
       </div>
 
       <div class="tags-container">
@@ -27,7 +31,6 @@
           {{ isExpired ? '已结束' : '正在报名' }}
         </span>
       </div>
-      
       
       <div v-if="post.is_limited" class="deadline-info" :class="{ 'text-red': isExpired, 'text-green': !isExpired }">
         ⏰ 截止时间: {{ formatDetailTime(post.deadline) }}
@@ -61,7 +64,10 @@ import { useRouter } from 'vue-router'
 import PostStats from '@/components/PostStats.vue'
 
 const router = useRouter()
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png' // 默认头像
+const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png' 
+
+// 定义管理员的 ID，方便后续修改（例如改成 100 或其他）
+const ADMIN_USER_ID = 10; 
 
 const props = defineProps({
   post: {
@@ -71,13 +77,19 @@ const props = defineProps({
   }
 })
 
+// 计算是否是管理员发布的帖子
+const isAdminPost = computed(() => {
+  // 确保类型转换一致，防止 "1" !== 1 的问题
+  return parseInt(props.post.publisherid) === ADMIN_USER_ID;
+})
+
 // 计算是否过期
 const isExpired = computed(() => {
   if (!props.post.deadline) return false
   return new Date() > new Date(props.post.deadline)
 })
 
-// 详细时间格式化 (用于截止时间)
+// 详细时间格式化
 const formatDetailTime = (timeStr) => {
   if (!timeStr) return ''
   const date = new Date(timeStr)
@@ -86,32 +98,24 @@ const formatDetailTime = (timeStr) => {
   })
 }
 
-
-// 修改重点：处理图片逻辑
+// 处理图片逻辑 (兼容字符串和数组对象)
 const processedImages = computed(() => {
   const imgs = props.post.images
   if (!imgs) return []
 
-  // 情况1：如果是数组 (后端返回的新格式)
   if (Array.isArray(imgs)) {
     if (imgs.length === 0) return []
-
-    // 判断数组里面是字符串还是对象
-    // 如果是对象（你提供的数据格式），需要提取 image_url
+    // 如果是对象数组 [{image_url: '...'}, ...]
     if (typeof imgs[0] === 'object' && imgs[0] !== null) {
-      // 1. 拷贝数组防止影响原数据
-      // 2. 按 order 字段排序 (确保图片顺序正确)
-      // 3. 提取 image_url
       return [...imgs]
         .sort((a, b) => a.order - b.order)
         .map(item => item.image_url)
     }
-
-    // 如果本身就是字符串数组 ['url1', 'url2']，直接返回
+    // 如果已经是字符串数组
     return imgs
   }
 
-  // 情况2：如果是字符串 "url1,url2" (兼容旧格式)
+  // 如果是逗号分隔的字符串
   if (typeof imgs === 'string') {
     return imgs.split(',')
   }
@@ -119,19 +123,20 @@ const processedImages = computed(() => {
   return []
 })
 
-// 简单的分类样式映射
+// 分类样式映射
 const getCategoryClass = (typeid) => {
   const classMap = {
     1: 'food',   
     2: 'sports', 
     3: 'help',   
     4: 'trade',  
-    5: 'study'   
+    5: 'study',
+    99: 'official' // 假设99是系统公告，给个特殊样式
   }
   return classMap[typeid] || 'default-tag'
 }
 
-// 时间格式化
+// 简单日期格式化
 const formatTime = (timeStr) => {
   if (!timeStr) return ''
   const date = new Date(timeStr)
@@ -139,9 +144,7 @@ const formatTime = (timeStr) => {
 }
 
 const handleCardClick = () => {
-  // 兼容 id 或 ID
   const postId = props.post.id || props.post.ID
-  console.log('查看帖子详情:', postId)
   router.push(`/post/${postId}`)
 }
 </script>
@@ -150,6 +153,7 @@ const handleCardClick = () => {
 .card {
   background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); cursor: pointer; transition: all 0.3s ease; border: 1px solid #e8e8e8;
+  text-align: left;
 }
 
 .card:hover {
@@ -166,16 +170,8 @@ const handleCardClick = () => {
   border-bottom: 1px solid #f0f0f0;
 }
 .card-content { margin-bottom: 12px; }
-.user-info { display: flex; align-items: center; margin-bottom: 12px; }
-.user-avatar { width: 32px; height: 32px; border-radius: 50%; margin-right: 8px; object-fit: cover; }
-.user-name { font-weight: 500; color: #666; font-size: 14px; }
 
-.tags-container { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.post-category { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; background: #f4f4f5; color: #909399; }
-.post-category.trade { background: #f0fff0; color: #2ed573; border: 1px solid #2ed573; }
-.post-category.help { background: #fff8e1; color: #ffa502; border: 1px solid #ffa502; }
-.post-category.sports { background: #f0f8ff; color: #1e90ff; border: 1px solid #1e90ff; }
-
+/* 用户信息栏 */
 .user-info {
   display: flex;
   align-items: center;
@@ -197,6 +193,32 @@ const handleCardClick = () => {
   font-size: 14px;
 }
 
+/* 标签通用样式 */
+.tag-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px; /* 标签之间的间距 */
+  font-weight: bold;
+  color: white;
+  line-height: 1.4;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 置顶标签：红色 */
+.pinned {
+  background-color: #ff4d4f; 
+  box-shadow: 0 2px 4px rgba(255, 77, 79, 0.3);
+}
+
+/* 官方标签：蓝色 */
+.official {
+  background-color: #1890ff; 
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3);
+}
+
+/* 标签容器（分类、宿舍等） */
 .tags-container {
   display: flex;
   gap: 8px;
@@ -212,11 +234,13 @@ const handleCardClick = () => {
   border: 1px solid #eee;
 }
 
+/* 不同分类的颜色 */
 .post-category.food { background: #fff0f0; color: #ff4757; border-color: #ff4757; }
 .post-category.sports { background: #f0f8ff; color: #1e90ff; border-color: #1e90ff; }
 .post-category.help { background: #fff8e1; color: #ffa502; border-color: #ffa502; }
 .post-category.trade { background: #f0fff0; color: #2ed573; border-color: #2ed573; }
 .post-category.study { background: #f0f0ff; color: #5352ed; border-color: #5352ed; }
+.post-category.official { background: #e6f7ff; color: #1890ff; border-color: #1890ff; } /* 官方公告分类样式 */
 .post-category.default-tag { background: #f5f5f5; color: #666; border-color: #ddd; }
 
 .dorm-tag {
@@ -235,7 +259,7 @@ const handleCardClick = () => {
   line-height: 1.5;
   margin: 0 0 12px 0;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 21px;
@@ -264,17 +288,8 @@ const handleCardClick = () => {
   color: white;
 }
 
-/* 正在报名 - 绿色 */
-.limit-tag.active {
-  background-color: #52c41a; 
-  border: 1px solid #52c41a;
-}
-
-/* 已结束 - 红色 */
-.limit-tag.expired {
-  background-color: #ff4d4f;
-  border: 1px solid #ff4d4f;
-}
+.limit-tag.active { background-color: #52c41a; border: 1px solid #52c41a; }
+.limit-tag.expired { background-color: #ff4d4f; border: 1px solid #ff4d4f; }
 
 .deadline-info {
   font-size: 13px;
@@ -282,13 +297,6 @@ const handleCardClick = () => {
   font-weight: 500;
 }
 
-.text-green {
-  color: #52c41a;
-}
-
-.text-red {
-  color: #ff4d4f;
-}
-
-
+.text-green { color: #52c41a; }
+.text-red { color: #ff4d4f; }
 </style>

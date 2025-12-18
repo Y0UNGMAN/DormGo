@@ -11,7 +11,7 @@ import (
 
 // GetUserProfile 获取个人资料
 func GetUserProfile(c *gin.Context) {
-	uid, _ := GetCurrentUser(c) // 假设 user.go 里已定义此辅助函数
+	uid, _ := GetCurrentUser(c) // 假设 user_con.go 里已定义此辅助函数
 	user, err := model.GetUserById(int(uid))
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 400, "msg": "用户不存在"})

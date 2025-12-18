@@ -34,7 +34,7 @@ func GetPostDetail(c *gin.Context) {
 	} else {
 		fmt.Println("UserID not found in context")
 	}
-	data, isliked, isFavorited, err := logic.GetPostDetail(id, userId)
+	data, isliked, ispinned, isFavorited, err := logic.GetPostDetail(id, userId)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(400, gin.H{
@@ -49,6 +49,7 @@ func GetPostDetail(c *gin.Context) {
 		"data":        data,
 		"isliked":     isliked,
 		"isFavorited": isFavorited,
+		"is_pinned":   ispinned,
 	})
 
 }

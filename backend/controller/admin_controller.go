@@ -1,12 +1,13 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/Y0UNGMAN/DormGo/backend/logic"
 	"github.com/Y0UNGMAN/DormGo/backend/model"
+	myredis "github.com/Y0UNGMAN/DormGo/backend/redis"
 	"github.com/Y0UNGMAN/DormGo/backend/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -166,8 +167,14 @@ func GetContentList(c *gin.Context) {
 	if keyword != "" {
 		query = query.Where("title LIKE ? OR content LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
 	}
-	if status != "" && status != "all" {
-		query = query.Where("status = ?", status)
+
+	if status == "canceled" {
+		// 1. 如果前端选了“违规/撤销”Tab，只查违规的
+		query = query.Where("status = ?", "canceled")
+	} else {
+		// 2. 如果前端选了“全部”Tab (status=all)，只查【非违规】的
+		// 这样“全部”里就不会出现已经删除的帖子了，操作完会自动消失
+		query = query.Where("status != ?", "canceled")
 	}
 
 	query.Count(&total)
@@ -212,6 +219,10 @@ func AuditContent(c *gin.Context) {
 	}
 	c.ShouldBindJSON(&req)
 	model.DB.Model(&model.DgPost{}).Where("id = ?", id).Update("status", req.Status)
+
+	cacheKey := fmt.Sprintf("dormgo:posts:page:%d:size:%d", 1, 10)
+	myredis.GetClient().Del(cacheKey)
+
 	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "操作成功"})
 }
 
@@ -222,6 +233,9 @@ func BatchAuditContent(c *gin.Context) {
 	}
 	c.ShouldBindJSON(&req)
 	model.DB.Model(&model.DgPost{}).Where("id IN ?", req.IDs).Update("status", req.Status)
+	cacheKey := fmt.Sprintf("dormgo:posts:page:%d:size:%d", 1, 10)
+	myredis.GetClient().Del(cacheKey)
+
 	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "批量操作成功"})
 }
 
@@ -236,6 +250,10 @@ func TogglePostPin(c *gin.Context) {
 		return
 	}
 	model.DB.Model(&model.DgPost{}).Where("id = ?", id).Update("is_pinned", req.IsPinned)
+	cacheKey := fmt.Sprintf("dormgo:posts:page:%d:size:%d", 1, 10)
+	myredis.GetClient().Del(cacheKey)
+	fmt.Printf("🗑️ [管理员置顶操作] 缓存已清除: %s\n", cacheKey)
+
 	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "操作成功"})
 }
 
@@ -244,7 +262,11 @@ func AdminCreatePost(c *gin.Context) {
 	title := c.PostForm("title")
 	content := c.PostForm("content")
 	typeId, _ := strconv.Atoi(c.PostForm("typeid"))
-
+	isPinned := c.PostForm("is_pinned") == "true"
+	if title == "" || content == "" {
+		c.JSON(400, gin.H{"code": 400, "msg": "标题和内容不能为空"})
+		return
+	}
 	var postImages []model.DgImages
 	form, err := c.MultipartForm()
 	if err == nil {
@@ -255,27 +277,27 @@ func AdminCreatePost(c *gin.Context) {
 		}
 	}
 
+	officialUserID := uint(10)
 	post := &model.DgPost{
 		Title:       title,
 		Content:     content,
-		PublisherId: 1, // 假设1号用户为管理员关联ID
+		PublisherId: officialUserID,
 		DormId:      1,
 		TypeId:      uint(typeId),
 		Status:      "normal",
-		IsPinned:    true,
+		IsPinned:    isPinned,
 		Images:      postImages,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
-
-	if c.PostForm("is_pinned") == "true" {
-		post.IsPinned = true
-	} else if c.PostForm("is_pinned") == "false" {
-		post.IsPinned = false
-	}
-
-	if err := logic.CreatePost(post); err != nil {
-		c.JSON(500, gin.H{"msg": "发布失败"})
+	if err := model.CreatePost(post); err != nil {
+		c.JSON(500, gin.H{"code": 500, "msg": "发布失败: " + err.Error()})
 		return
 	}
+	cacheKey := fmt.Sprintf("dormgo:posts:page:%d:size:%d", 1, 10)
+	myredis.GetClient().Del(cacheKey)
+	fmt.Printf("🗑️ [管理员] 缓存已清除: %s\n", cacheKey)
+
 	c.JSON(200, gin.H{"code": 200, "msg": "发布成功"})
 }
 
@@ -415,6 +437,97 @@ func GetPostTypesAdmin(c *gin.Context) {
 		list = append(list, gin.H{"id": t.TypeId, "name": t.TypeName})
 	}
 	c.JSON(http.StatusOK, gin.H{"list": list})
+}
+
+func SendSystemNotification(c *gin.Context) {
+	// 1. 定义请求参数
+	var req struct {
+		TargetType  string `json:"target_type"`  // "all" (全体) 或 "specific" (指定)
+		TargetValue string `json:"target_value"` // 学号 (如果选了指定)
+		Content     string `json:"content"`      // 通知内容
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"code": 400, "msg": "参数错误"})
+		return
+	}
+	noticeTitle := "系统通知"
+	historyNotice := model.DgNotice{
+		Title:     noticeTitle, // 默认标题
+		Content:   req.Content,
+		Target:    req.TargetType,
+		TargetID:  req.TargetValue,
+		Publisher: "管理员", // 或者从 Token 获取当前管理员名字
+		CreatedAt: time.Now(),
+	}
+	if err := model.DB.Create(&historyNotice).Error; err != nil {
+		c.JSON(500, gin.H{"code": 500, "msg": "保存历史记录失败"})
+		return
+	}
+
+	// 2. 设定官方发送者 ID (确保数据库 dg_users 表里有 id=10 的用户，头像设为官方Logo)
+	const OfficialSenderID = 10
+
+	// 3. 准备通知模板
+	baseNotification := model.DgNotification{
+		SenderID:  OfficialSenderID,
+		Type:      "system", // 【关键】标记为系统通知，前端据此区分展示样式
+		Content:   req.Content,
+		PostID:    0, // 系统通知不关联帖子，设为 0
+		IsRead:    false,
+		CreatedAt: time.Now(),
+	}
+
+	// 4. 根据类型发送
+	if req.TargetType == "all" {
+		// --- 群发逻辑 ---
+		var users []model.DgUser
+		// 只查 ID，性能优化
+		if err := model.DB.Select("id").Find(&users).Error; err != nil {
+			c.JSON(500, gin.H{"code": 500, "msg": "查询用户失败"})
+			return
+		}
+
+		var notifications []model.DgNotification
+		for _, u := range users {
+			if u.ID == OfficialSenderID {
+				continue
+			} // 不发给自己
+
+			note := baseNotification
+			note.ReceiverID = u.ID
+			notifications = append(notifications, note)
+		}
+
+		// 批量插入 (GORM V2 API)
+		if len(notifications) > 0 {
+			// 分批写入，防止一次性插入过多导致数据库报错
+			if err := model.DB.CreateInBatches(notifications, 100).Error; err != nil {
+				c.JSON(500, gin.H{"code": 500, "msg": "群发失败"})
+				return
+			}
+		}
+
+	} else if req.TargetType == "specific" {
+		// --- 单发逻辑 ---
+		var targetUser model.DgUser
+		if err := model.DB.Where("studentid = ?", req.TargetValue).First(&targetUser).Error; err != nil {
+			c.JSON(404, gin.H{"code": 404, "msg": "未找到该学号用户"})
+			return
+		}
+
+		note := baseNotification
+		note.ReceiverID = targetUser.ID
+		if err := model.DB.Create(&note).Error; err != nil {
+			c.JSON(500, gin.H{"code": 500, "msg": "发送失败"})
+			return
+		}
+	} else {
+		c.JSON(400, gin.H{"code": 400, "msg": "无效的发送类型"})
+		return
+	}
+
+	c.JSON(200, gin.H{"code": 200, "msg": "通知已推送到用户中心"})
 }
 
 func UpdateBasicConfig(c *gin.Context)    { c.JSON(200, gin.H{"code": 200}) }

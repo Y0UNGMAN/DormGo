@@ -16,11 +16,11 @@ type CachedPostsData struct {
 }
 
 // 获取post 信息 和 发布者user（只有name） 信息
-func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, bool, error) {
+func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, bool, bool, error) {
 	post, err := model.GetPostDetail(id)
 	if err != nil {
 		fmt.Println("GetPostDetail error: ", err)
-		return nil, false, false, err
+		return nil, false, false, false, err
 	}
 	go func() {
 		viewKey := fmt.Sprintf("dormgo:post:view_inc:%d", post.ID)
@@ -52,13 +52,13 @@ func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, bool, error)
 	user, err := model.GetUserById(int(publisherId))
 	if err != nil {
 		fmt.Println("GetUserById error: ", err)
-		return nil, false, false, err
+		return nil, false, false, false, err
 	}
 
 	isLiked, err := model.CheckIsLiked(uint(id), usrId)
 	if err != nil {
 		fmt.Println("IsLiked error: ", err)
-		return nil, false, false, err
+		return nil, false, false, false, err
 	}
 	isFavorited := false
 	isFavorited, err = model.CheckFavoriteExist(usrId, uint(id))
@@ -70,7 +70,7 @@ func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, bool, error)
 			fmt.Println("CheckSignedUp error:", err)
 		}
 	}
-
+	IsPinned := post.IsPinned
 	publisherName := user.Username
 	publisherAvatar := user.Avatar
 	postDetail := &model.ApiPostDetail{
@@ -80,7 +80,7 @@ func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, bool, error)
 		DgPost:          post,
 	}
 
-	return postDetail, isLiked, isFavorited, nil
+	return postDetail, isLiked, isFavorited, IsPinned, nil
 
 }
 

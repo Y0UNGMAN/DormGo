@@ -76,7 +76,7 @@ func GetPostByDorm(dormid int) ([]*DgPost, error) {
 func GetPosts(page int, pageSize int) ([]*DgPost, int64, error) {
 	posts := make([]*DgPost, 0)
 	var total int64
-	err := DB.Model(&DgPost{}).Count(&total).Error
+	err := DB.Model(&DgPost{}).Where("status = ?", "normal").Count(&total).Error
 	if err != nil {
 		return nil, 0, err
 	}
@@ -84,7 +84,8 @@ func GetPosts(page int, pageSize int) ([]*DgPost, int64, error) {
 	err = DB.Preload("Images").
 		Preload("Dorm").
 		Preload("Type").
-		Order("created_at desc"). // <--- 关键：时间倒序
+		Where("status = ?", "normal").
+		Order("is_pinned desc, created_at desc"). // <--- 关键：时间倒序
 		Offset(offset).
 		Limit(pageSize). // <--- 关键：限制数量
 		Find(&posts).Error
