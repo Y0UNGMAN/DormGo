@@ -27,13 +27,28 @@
       <!-- 正文输入 -->
       <div class="form-section">
         <label class="form-label">正文</label>
-        <textarea
-          v-model="form.content"
-          placeholder="请输入帖子内容..."
-          class="content-textarea"
-          rows="8"
-          maxlength="1000"
-        ></textarea>
+
+
+        <div class="textarea-wrapper">
+          <textarea
+            v-model="form.content"
+            placeholder="请输入帖子内容... (试试点击右下角的 AI 润色)"
+            class="content-textarea"
+            rows="8"
+            maxlength="1000"
+          ></textarea>
+          <button 
+            class="ai-polish-btn" 
+            @click.prevent="handleAiPolish" 
+            :disabled="isAiLoading || !form.content"
+            title="让 AI 帮你写得更吸引人"
+          >
+            <span v-if="!isAiLoading">✨ AI 帮我润色</span>
+            <span v-else>🤖 正在思考...</span>
+          </button>
+        </div>
+  
+
         <div class="char-count">{{ form.content.length }}/1000</div>
       </div>
 
@@ -69,6 +84,7 @@
         </div>
       </div>
 
+      <!-- 报名信息选择 -->
       <div class="form-section">
         <div class="limit-switch-container">
           <label class="form-label">限时/报名</label>
@@ -97,6 +113,7 @@
           </div>
         </div>
       </div>
+
       <!-- 图片上传 -->
       <div class="form-section">
         <label class="form-label">上传图片</label>
@@ -144,7 +161,10 @@
           :disabled="!isFormValid"
           @click="handlePublish"
         >
-          {{ isSubmitting ? '发布中...' : '发布帖子' }}
+          <span v-if="!isSubmitting">发布帖子</span>
+          <span v-else class="loading-text">
+            <i class="loading-icon">↻</i> 安全检测中...
+          </span>
         </button>
       </div>
     </div>
@@ -174,7 +194,8 @@ const form = ref({
   deadline: '',
   maxEnrollment: 0
 })
-
+// AI Loading 状态
+const isAiLoading = ref(false)
 // 状态
 const isSubmitting = ref(false)
 const fileInput = ref(null)
@@ -282,7 +303,7 @@ const handlePublish = async () => {
 
   if (!userStore.isLoggedIn) {
         alert("请先登录才能发布帖子！")
-        router.push('/loginin') 
+        router.push('/') 
         return
     }
   if (form.value.isLimited) {
@@ -315,16 +336,59 @@ const handlePublish = async () => {
       }
     })
     console.log('创建帖子响应:', res.data);
-    // 显示成功提示
-    alert('帖子发布成功！')
-    router.push('/dormgo')
+    if (res.data.code === 200) {
+      alert('发布成功！')
+      router.push('/dormgo')
+    } else {
+      // 这里会显示 "内容审核未通过: xxx"
+      alert(res.data.msg || "发布失败")
+    }
+    
   } catch (error) {
-    console.error('发布失败:', error)
+    console.error('网络崩溃:', error)
+    alert("网络连接异常")
     // request.ts 拦截器会处理错误提示
   } finally {
     isSubmitting.value = false
   }
 }
+
+const handleAiPolish = async () => {
+  // 简单校验
+  if (!form.value.content || form.value.content.trim().length < 2) {
+    alert("请至少写几个字，AI 才能帮你润色哦~")
+    return
+  }
+
+  isAiLoading.value = true
+  try {
+    // 调用我们在后端新写的接口
+    const res = await api.post('/api/v1/post/ai_polish', 
+    {
+      content: form.value.content
+    },
+    {
+        timeout: 30000 // 设置为 60000 毫秒 (60秒)，给 AI 足够的思考时间
+    }
+  )
+    
+    if (res.data.code === 200) {
+      // 成功！用 AI 的结果覆盖当前内容
+      form.value.content = res.data.data
+    } else {
+      alert(res.data.msg || "润色失败，请稍后再试")
+    }
+  } catch (err) {
+    console.error("AI 接口调用失败:", err)
+    alert("网络开小差了，AI 暂时无法连接")
+  } finally {
+    isAiLoading.value = false
+  }
+}
+
+
+
+
 
 // 返回上一页
 const goBack = () => {
@@ -441,6 +505,7 @@ onMounted(() => {
 .content-textarea {
   width: 100%;
   padding: 12px 16px;
+  padding-bottom: 40px;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
   font-size: 14px;
@@ -743,5 +808,60 @@ onMounted(() => {
 @keyframes slideDown {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.textarea-wrapper {
+  position: relative;
+}
+
+.ai-polish-btn {
+  position: absolute;
+  bottom: 15px; /* 距离底部 */
+  right: 15px;  /* 距离右侧 */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 紫色渐变 */
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(118, 75, 162, 0.3);
+  transition: all 0.3s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-polish-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(118, 75, 162, 0.4);
+}
+
+.ai-polish-btn:disabled {
+  background: #d9d9d9;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 新增：发布按钮 Loading 动画 */
+.loading-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loading-icon {
+  display: inline-block;
+  font-style: normal;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

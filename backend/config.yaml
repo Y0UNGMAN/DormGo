@@ -24,3 +24,7 @@ oss:
   AccessKeySecret: "RoxP14nB40icFjiw5vTrIPcdedbvow"
   BucketName: "dorm-go"
   BaseURL : "https://dorm-go.oss-cn-guangzhou.aliyuncs.com"
+api:
+  ApiUrl: "https://api.deepseek.com/chat/completions"
+  ApiKey: "sk-e57a0276599e4f14a941e0b79e94cc0f"
+  ApiModel: "deepseek-chat"

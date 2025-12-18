@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -72,13 +73,13 @@ func PostCreate(c *gin.Context) {
 	err = logic.CreatePost(post)
 	if err != nil {
 		fmt.Println(err)
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"code": 400,
-			"msg":  "创建帖子失败",
+			"msg":  err.Error(),
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  "Create Success",
 	})

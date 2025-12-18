@@ -20,3 +20,7 @@ func Init() (err error) {
 	_, err = rdb.Ping().Result()
 	return
 }
+
+func GetClient() *redis.Client {
+	return rdb
+}

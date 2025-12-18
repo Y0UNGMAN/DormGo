@@ -214,3 +214,29 @@ func CheckIsSignedUp(postID uint, userID uint) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+func UpdateLikeCount(postID uint, delta int) error {
+	// 使用 GORM 的 gorm.Expr 进行原子更新
+	// SQL: UPDATE dg_posts SET like_count = like_count + delta WHERE id = postID
+	err := DB.Model(&DgPost{}).
+		Where("id = ?", postID).
+		UpdateColumn("like_count", gorm.Expr("like_count + ?", delta)).Error
+
+	if err != nil {
+		fmt.Printf("UpdateLikeCount error: %v, postID: %d, delta: %d\n", err, postID, delta)
+		return err
+	}
+	return nil
+}
+
+func UpdateViewCount(postID uint, delta int) error {
+	err := DB.Model(&DgPost{}).
+		Where("id = ?", postID).
+		UpdateColumn("view_count", gorm.Expr("view_count + ?", delta)).Error
+
+	if err != nil {
+		fmt.Printf("UpdateViewCount error: %v, postID: %d, delta: %d\n", err, postID, delta)
+		return err
+	}
+	return nil
+}

@@ -51,6 +51,8 @@ func App() *gin.Engine {
 		authPost.POST("/cancel_favorite", controller.CancelPostFavorite)
 		// 获取收藏列表
 		authPost.GET("/my_favorites", controller.GetMyFavorites)
+		//润色接口
+		authPost.POST("/ai_polish", controller.PolishContent)
 	}
 
 	message := r.Group("api/v1/message")
