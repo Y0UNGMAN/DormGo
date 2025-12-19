@@ -423,10 +423,12 @@ func AddSensitiveWord(c *gin.Context) {
 	var w model.DgSensitiveWord
 	c.ShouldBindJSON(&w)
 	model.DB.Create(&w)
+	utils.WordFilter.AddWord(w.Word)
 	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "添加成功"})
 }
 func DeleteSensitiveWord(c *gin.Context) {
 	model.DB.Delete(&model.DgSensitiveWord{}, c.Param("id"))
+	utils.UpdateFilter()
 	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "删除成功"})
 }
 func GetPostTypesAdmin(c *gin.Context) {

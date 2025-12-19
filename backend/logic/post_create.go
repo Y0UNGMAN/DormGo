@@ -7,9 +7,26 @@ import (
 	"github.com/Y0UNGMAN/DormGo/backend/ai"
 	"github.com/Y0UNGMAN/DormGo/backend/model"
 	myredis "github.com/Y0UNGMAN/DormGo/backend/redis"
+	"github.com/Y0UNGMAN/DormGo/backend/utils"
 )
 
 func CreatePost(post *model.DgPost) (err error) {
+	if utils.WordFilter != nil {
+		// 1. 检查标题
+		if found, first := utils.WordFilter.FindIn(post.Title); found {
+			fmt.Printf("标题包含敏感词: %s\n", first)
+			return fmt.Errorf("包含敏感词")
+		}
+		// 2. 检查内容
+		if found, first := utils.WordFilter.FindIn(post.Content); found {
+			fmt.Printf("内容包含敏感词: %s\n", first)
+			return fmt.Errorf("包含敏感词")
+		}
+	} else {
+		// 防御性编程：如果过滤器未初始化，打印警告但允许放行（或选择报错）
+		fmt.Println("⚠️ Warning: Sensitive WordFilter is nil")
+	}
+
 	fullContent := fmt.Sprintf("标题：%s\n内容：%s", post.Title, post.Content)
 	isSafe, reason, err := ai.CheckContentSafety(fullContent)
 	if err != nil {

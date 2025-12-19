@@ -35,11 +35,16 @@ func main() {
 		fmt.Printf("init redis failed, err:%v\n", err)
 		return
 	}
-	//5.注册路由
+	//5
+	//自动导入敏感词
+	utils.SeedAllSensitiveWords()
+	// 初始化敏感词库
+	utils.InitSensitiveFilter()
+	//6.注册路由
 	r := router.App()
 
-	//6. 启动定时任务
+	//7. 启动定时任务
 	task.InitSyncTask()
-	//7.启动服务
+	//8.启动服务
 	r.Run(":8080")
 }
