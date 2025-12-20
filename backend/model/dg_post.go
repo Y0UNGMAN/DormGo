@@ -34,6 +34,7 @@ type DgPost struct {
 type ApiPostDetail struct {
 	PublisherName   string `json:"publishername"`
 	PublisherAvator string `json:"publisheravator"`
+	PublisherIntro  string `json:"publisherintro"`
 	IsSignedUp      bool   `json:"is_signed_up"`
 	IsFavorited     bool   `json:"is_favorited"`
 	*DgPost
@@ -213,4 +214,20 @@ func CheckIsSignedUp(postID uint, userID uint) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+// GetPostsByUserID 根据用户ID获取该用户发布的所有帖子
+func GetPostsByUserID(userID int) ([]*DgPost, error) {
+	posts := make([]*DgPost, 0)
+	err := DB.Where("publisherid=?", userID).
+		Preload("Images").
+		Preload("Dorm").
+		Preload("Type").
+		Order("created_at desc").
+		Find(&posts).Error
+	if err != nil {
+		fmt.Println("get user posts error: ", err)
+		return nil, err
+	}
+	return posts, nil
 }

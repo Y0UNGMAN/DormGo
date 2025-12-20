@@ -6,19 +6,22 @@
     
     <div class="card-content">
       <div class="user-info">
-        <img 
-          :src="post.publisheravator || post.User?.avatarurl || defaultAvatar" 
-          alt="用户头像" 
+        <img
+          :src="displayAvatar(post)"
+          alt="用户头像"
           class="user-avatar"
-        >
-        <span class="user-name">{{ post.publishername || post.User?.username || '未知用户' }}</span>
+        />
+        <div class="user-meta">
+          <span class="user-name">{{ post.publishername || post.User?.username || '未知用户' }}</span>
+          <span v-if="displayIntro(post)" class="user-intro">{{ displayIntro(post) }}</span>
+        </div>
       </div>
 
       <div class="tags-container">
         <span class="post-category" :class="getCategoryClass(post.typeid)">
           {{ post.Type?.typename || post.PostType?.typename || '未分类' }}
         </span>
-        
+
         <span class="dorm-tag">
           {{ post.Dorm?.dormname || '未知宿舍' }}
         </span>
@@ -59,6 +62,7 @@
 import { defineProps, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import PostStats from '@/components/PostStats.vue'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png' // 默认头像
@@ -70,6 +74,20 @@ const props = defineProps({
     default: () => ({})
   }
 })
+
+const userStore = useUserStore()
+
+const displayAvatar = (post) => {
+  const pid = post?.publisherid || post?.PublisherId
+  if (pid && userStore.currentUser && pid === userStore.currentUser.userid) {
+    return post?.publisheravator || userStore.userInfo?.avatarurl || post?.User?.avatarurl || defaultAvatar
+  }
+  return post?.publisheravator || post?.User?.avatarurl || defaultAvatar
+}
+
+const displayIntro = (post) => {
+  return post?.publisherintro || post?.User?.intro || ''
+}
 
 // 计算是否过期
 const isExpired = computed(() => {

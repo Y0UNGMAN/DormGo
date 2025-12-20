@@ -7,6 +7,7 @@ export interface UserInfo {
   username: string;
   avatarurl: string;
   dormid : number;
+  intro?: string;
 }
 export interface AdminInfo {
   id: number;
@@ -39,7 +40,7 @@ export const useUserStore = defineStore('user', {
   
   actions: {
     // 登录成功时调用
-    setLogin(token: string, user: { id: number,  username: string, avatarurl: string  , dormid : number}) {
+    setLogin(token: string, user: { id: number,  username: string, avatarurl: string, dormid : number, intro?: string}) {
       this.token = token;
       this.userInfo = user as UserInfo;
       

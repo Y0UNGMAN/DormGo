@@ -8,6 +8,8 @@ import (
 
 func App() *gin.Engine {
 	r := gin.Default()
+	// 提供本地静态资源服务，支持 UploadAvatar 回退到本地保存的文件访问
+	r.Static("/static", "./static")
 	r.Use(middleware.Cors())
 	r.GET("/ping", controller.Ping)
 	r.GET("/", controller.Ping)
@@ -28,7 +30,18 @@ func App() *gin.Engine {
 		userAuth.GET("/login-info", controller.GetLoginInfo)
 		userAuth.POST("/reset-pwd", controller.ResetPassword)
 		userAuth.GET("/info", controller.GetUserInfoPublic)
+		userAuth.GET("/stats", controller.GetUserStats)
+		userAuth.GET("/coins", controller.GetUserCoins)
+		userAuth.POST("/upload/avatar", controller.UploadAvatar)
 	}
+
+	// 宿舍列表（用于用户选择）
+	dorm := r.Group("/api/v1/dorm")
+	{
+		dorm.GET("/list", controller.GetDormList)
+	}
+
+	
 
 	authPost := r.Group("/api/v1/post")
 	authPost.Use(middleware.JWTAuthMiddleware())
@@ -85,6 +98,8 @@ func App() *gin.Engine {
 		post.GET("/:dormid", controller.GetPostByDorm)
 		//获取所有帖子列表
 		post.GET("/posts", controller.GetPosts)
+		//获取指定用户的帖子
+		post.GET("/user_posts", controller.GetUserPosts)
 		//获取点赞情况
 		post.GET("like", controller.PostLike)
 		//获取评论

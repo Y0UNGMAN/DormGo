@@ -16,6 +16,7 @@ type DgUser struct {
 	Username  string    `gorm:"column:username;type:varchar(50);" json:"username"`
 	Password  string    `gorm:"column:password;type:varchar(255);" json:"password"`
 	Avatar    string    `gorm:"column:avatar;type:varchar(255);" json:"avatarurl"`
+	Intro     string    `gorm:"column:intro;type:varchar(255);" json:"intro"`
 	Email     string    `gorm:"column:email;type:varchar(255);" json:"email"`
 	DormId    uint      `gorm:"column:dormid" json:"dormid"`
 	Dorm      DgDorm    `gorm:"foreignkey:DormId;references:DormId" `

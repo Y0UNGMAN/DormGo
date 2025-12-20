@@ -10,10 +10,10 @@
       <div class="user-info-card">
         <div class="avatar-container">
           <img :src="currentUser.avatarurl" alt="头像" class="large-avatar" />
-          <div class="edit-avatar-badge">📷</div>
+          <div class="edit-avatar-badge" @click="goToPage('/profile/detail')">📷</div>
         </div>
         <h2 class="user-name">{{ currentUser.username }}</h2>
-        <p class="user-bio">暂无个性签名...</p>
+        <p class="user-bio">{{ userBio || '暂无个性签名...' }}</p>
         
         <div class="user-stats">
           <div class="stat-item">
@@ -21,15 +21,36 @@
             <span class="stat-label">发布</span>
           </div>
           <div class="stat-item">
-            <span class="stat-num">12</span>
+            <span class="stat-num">{{ totalLikes }}</span>
             <span class="stat-label">获赞</span>
           </div>
           <div class="stat-item">
-            <span class="stat-num">5</span>
+            <span class="stat-num">{{ favoritePosts.length }}</span>
             <span class="stat-label">收藏</span>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- 功能入口区 -->
+    <div class="function-grid">
+      <div class="function-item" @click="goToPage('/profile/coins')">
+        <div class="function-icon">🪙</div>
+        <span class="function-text">寝友币</span>
+      </div>
+      <div class="function-item" @click="goToPage('/profile/detail')">
+        <div class="function-icon">📌</div>
+        <span class="function-text">详细资料</span>
+      </div>
+      <div class="function-item" @click="goToPage('/profile/rules')">
+        <div class="function-icon">📖</div>
+        <span class="function-text">社区规范</span>
+      </div>
+      <div class="function-item" @click="goToPage('/contact-us')">
+        <div class="function-icon">📞</div>
+        <span class="function-text">联系我们</span>
+      </div>
+
     </div>
 
     <div class="profile-content">
@@ -116,7 +137,7 @@
 
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed , watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Card from '@/components/Card.vue' // 复用你的卡片组件
@@ -129,6 +150,17 @@ const activeTab = ref('posts') // posts 或 likes
 const unreadCount = computed(() => userStore.unreadCount);
 // 用户信息
 const currentUser = computed(() => userStore.currentUser);
+const currentUserId = computed(() => userStore.currentUserId);
+
+// 用户个性签名
+const userBio = ref('')
+// 获赞总数
+const totalLikes = ref(0)
+
+// 页面跳转
+const goToPage = (path: string) => {
+  router.push(path)
+}
 
 // 我的帖子列表
 const myPosts = ref([])
@@ -192,26 +224,17 @@ const handleLogout = () => {
 
 
 const fetchMyPosts = async () => {
-  // 这里应该调用 API 获取当前用户的帖子
-  // 模拟数据:
   try {
-     // 假设后端接口是 /api/v1/post/user_posts?uid=xxx
-     // const res = await axios.get(...)
-     
-     // 暂时使用空数组或模拟数据
-     myPosts.value = [
-       {
-         id: 101,
-         title: '【转让】大四毕业出一辆捷安特山地车',
-         content: '骑了两年，车况良好，海韵苑自取...',
-         typeid: 1, // 交易
-         Dorm: { dormname: '海韵苑' },
-         User: { username: currentUser.value.username },
-         created_at: '2023-10-20'
-       }
-     ]
+    // 调用后端接口获取当前用户的帖子
+    const res = await api.get('/api/v1/post/user_posts', {
+      params: { user_id: currentUserId.value }
+    });
+    
+    if (res.data.code === 200) {
+      myPosts.value = res.data.data || [];
+    }
   } catch (error) {
-    console.error('获取个人帖子失败', error)
+    console.error('获取个人帖子失败', error);
   }
 }
 
@@ -227,7 +250,8 @@ const fetchFavoritePosts = async () => {
         // 调用后端接口
         const res = await api.get('/api/v1/post/my_favorites');
         if (res.data.code === 200) {
-            favoritePosts.value = res.data.data || [];
+      console.log('my_favorites API 返回：', res.data.data);
+      favoritePosts.value = res.data.data || [];
         }
     } catch (error) {
         console.error('获取收藏失败', error);
@@ -241,7 +265,27 @@ const fetchFavoritePosts = async () => {
 
 onMounted(() => {
   fetchMyPosts()
+  fetchFavoritePosts()
+  fetchUserStats()
 })
+
+// 获取用户统计数据
+const fetchUserStats = async () => {
+  try {
+    const res = await api.get('/api/v1/user/stats')
+    if (res.data.code === 200) {
+      totalLikes.value = res.data.data?.total_likes || 0
+      userBio.value = res.data.data?.bio || ''
+    }
+  } catch (error) {
+    console.error('获取用户统计失败', error)
+    // 如果 API 失败，尝试从 store 中获取用户信息
+    const user = userStore.currentUser
+    if (user && user.intro) {
+      userBio.value = user.intro
+    }
+  }
+}
 </script>
 
 <style scoped>
@@ -282,7 +326,7 @@ onMounted(() => {
 
 /* 头部信息 */
 .profile-header {
-  background: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 30px 20px;
   margin-bottom: 12px;
   text-align: center;
@@ -305,7 +349,8 @@ onMounted(() => {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #f0f0f0;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .edit-avatar-badge {
@@ -327,13 +372,14 @@ onMounted(() => {
 
 .user-name {
   font-size: 20px;
-  color: #333;
+  color: white;
   margin: 0 0 4px 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .user-bio {
   font-size: 13px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 20px;
 }
 
@@ -352,13 +398,50 @@ onMounted(() => {
 .stat-num {
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: white;
 }
 
 .stat-label {
   font-size: 12px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.85);
   margin-top: 4px;
+}
+
+/* 功能入口区 */
+.function-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: white;
+  margin: 0 12px 12px;
+  border-radius: 12px;
+  padding: 20px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.function-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.function-item:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+}
+
+.function-icon {
+  font-size: 28px;
+}
+
+.function-text {
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
 }
 
 /* 内容区域 */

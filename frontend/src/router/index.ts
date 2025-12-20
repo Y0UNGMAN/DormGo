@@ -9,6 +9,8 @@ const PersonalHome = () => import('@/views/PersonalHome.vue')
 // === 帖子相关视图 ===
 const PostPublish = () => import('@/views/PostPublish.vue')
 const PostDetail = () => import('@/views/PostDetail.vue')
+// === 联系我们 ===
+const ContactUs = () => import('@/views/ContactUs.vue')
 // === 管理员侧视图 ===
 const Statistics = () => import('@/views/Statistics.vue')
 const AdminProfile = () => import('@/views/AdminProfile.vue')
@@ -26,6 +28,10 @@ const LoginIn = () => import('@/views/LoginIn.vue')
 const ChatPage = () => import('@/views/ChatPage.vue')
 const Messages = () => import('@/views/MessageList.vue')
 const OtherUserProfile = () => import('@/views/OtherUserProfile.vue')
+// 用户个人中心子页面
+const UserDetail = () => import('@/views/UserDetail.vue')
+const CoinFlow = () => import('@/views/CoinFlow.vue')
+const CommunityRules = () => import('@/views/CommunityRules.vue')
 
 const routes: RouteRecordRaw[] = [
   {
@@ -194,7 +200,33 @@ const routes: RouteRecordRaw[] = [
     name: 'OtherUserProfile',
     component: OtherUserProfile,
     meta: { title : "个人主页" }
-  }
+  },
+  // 用户个人中心子页面
+  {
+    path: '/profile/detail',
+    name: 'UserDetail',
+    component: UserDetail,
+    meta: { title: '详细资料' }
+  },
+  {
+    path: '/profile/coins',
+    name: 'CoinFlow',
+    component: CoinFlow,
+    meta: { title: '寝友币' }
+  },
+  {
+    path: '/profile/rules',
+    name: 'CommunityRules',
+    component: CommunityRules,
+    meta: { title: '社区规范' }
+  },
+  {
+    path: '/contact-us',
+    name: 'ContactUs',
+    component: ContactUs,
+    meta: { title: '联系我们' }
+  },
+
 ]
 
 const router = createRouter({
