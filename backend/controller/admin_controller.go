@@ -6,44 +6,77 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Y0UNGMAN/DormGo/backend/logic"
 	"github.com/Y0UNGMAN/DormGo/backend/model"
 	myredis "github.com/Y0UNGMAN/DormGo/backend/redis"
 	"github.com/Y0UNGMAN/DormGo/backend/utils"
 	"github.com/gin-gonic/gin"
 )
 
+// backend/controller/admin_controller.go
+
 // ================= 1. 数据统计 (首页) =================
 
 func AdminStatistics(c *gin.Context) {
-	var totalUsers, totalPosts, totalComments, totalViolations int64
+	var totalUsers, totalPosts, totalComments, totalViolations, totalDorms int64
 
-	// 统计真实数据库数据
+	// 1. 基础数据统计 (查询真实数据库)
+	// 使用 model.DB 对各个模型进行计数
 	model.DB.Model(&model.DgUser{}).Count(&totalUsers)
 	model.DB.Model(&model.DgPost{}).Count(&totalPosts)
 	model.DB.Model(&model.DgComment{}).Count(&totalComments)
 	model.DB.Model(&model.DgViolation{}).Count(&totalViolations)
+	model.DB.Model(&model.DgDorm{}).Count(&totalDorms)
 
-	// 模拟趋势数据
+	// 2. 帖子分类统计 (关键修复部分)
+	var types []model.DgType
+	// 查询所有存在的板块类型
+	if err := model.DB.Find(&types).Error; err != nil {
+		fmt.Println("查询板块类型失败:", err)
+	}
+
+	var typeNames []string
+	var typeCounts []int64
+
+	for _, t := range types {
+		var count int64
+
+		// 【关键修改】:
+		// 根据 backend/model/dg_post.go 的定义: TypeId uint `gorm:"column:typeid" ...`
+		// 这里的 Where 条件必须显式指定 "typeid = ?"。
+		// 如果不指定或写成 "type_id"，GORM 会找不到列导致统计结果为 0。
+		model.DB.Model(&model.DgPost{}).Where("typeid = ?", t.TypeId).Count(&count)
+
+		typeNames = append(typeNames, t.TypeName)
+		typeCounts = append(typeCounts, count)
+	}
+
+	// 3. 返回数据给前端
 	c.JSON(http.StatusOK, gin.H{
+		// 顶部卡片数据
 		"total_users":      totalUsers,
-		"total_dorms":      12, // 可查库
+		"total_dorms":      totalDorms,
 		"total_contents":   totalPosts + totalComments,
 		"total_violations": totalViolations,
 
-		// 图表数据 (模拟)
-		"dates":            []string{"周一", "周二", "周三", "周四", "周五", "周六", "周日"},
-		"users_trend_data": []int{12, 18, 25, 30, 45, 50, 60},
-		"posts_trend_data": []int{5, 8, 12, 15, 20, 18, 25},
+		// 饼图数据 (内容构成)
 		"pie_data": []gin.H{
 			{"value": totalPosts, "name": "帖子"},
 			{"value": totalComments, "name": "评论"},
-			{"value": totalViolations, "name": "违规"},
+			{"value": totalViolations, "name": "违规记录"},
 		},
+
+		// 柱状图数据 (帖子板块分布)
+		// type_names: ["失物招领", "二手交易", ...]
+		// type_values: [12, 5, ...]
+		"type_names":  typeNames,
+		"type_values": typeCounts,
 	})
 }
 
 // ================= 2. 用户管理 =================
 
+// GetUserList 获取用户列表（修复后）
 func GetUserList(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
@@ -54,14 +87,15 @@ func GetUserList(c *gin.Context) {
 
 	query := model.DB.Model(&model.DgUser{}).Preload("Dorm")
 
-	// 搜索逻辑：学号 或 昵称
+	// 搜索逻辑：学号 或 用户名(Username)
 	if keyword != "" {
 		query = query.Where("username LIKE ? OR studentid LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
 	}
 
 	query.Count(&total)
 
-	err := query.Offset((page - 1) * pageSize).Limit(pageSize).Find(&users).Error
+	// 【关键修改】: 修改排序为 ID 从小到大 (id asc)
+	err := query.Order("id asc").Offset((page - 1) * pageSize).Limit(pageSize).Find(&users).Error
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"list": []interface{}{}, "total": 0})
 		return
@@ -76,18 +110,41 @@ func GetUserList(c *gin.Context) {
 
 		list = append(list, gin.H{
 			"id":           u.ID,
-			"student_id":   u.StudentId, // 统一使用学号
-			"nickname":     u.Username,
+			"student_id":   u.StudentId, // 学号
+			"nickname":     u.Username,  // 用户名
 			"avatar":       u.Avatar,
 			"dorm_name":    dormName,
-			"credit_score": 5.0,      // 默认信用分
-			"status":       "normal", // 默认状态
+			"status":       u.Status,      // 【关键修复】返回真实状态 (1:正常, 2:封禁)
+			"credit_score": u.CreditScore, // 使用真实信用分
+			"created_at":   u.CreatedAt,
 		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{"list": list, "total": total})
 }
 
+// BanUserHandler 封禁用户接口
+func BanUserHandler(c *gin.Context) {
+	var req struct {
+		UserID int64 `json:"user_id" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "参数错误", "error": err.Error()})
+		return
+	}
+
+	// 调用 Logic 层 (使用独立函数调用，无需实例化结构体)
+	if err := logic.BanUser(req.UserID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  "用户封禁成功",
+	})
+}
 func UpdateUserStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "状态已更新"})
 }
@@ -312,34 +369,58 @@ func GetAdminProfile(c *gin.Context) {
 		return
 	}
 
+	// 简介默认为空时显示默认文案，但不存入库
+	intro := admin.Intro
+	if intro == "" {
+		intro = "系统超级管理员"
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"data": gin.H{
 			"id":         admin.ID,
 			"nickname":   admin.Username,
 			"avatar":     admin.Avatar,
-			"student_id": "ADMIN", // 管理员无学号，显示 ADMIN
+			"student_id": "ADMIN",
 			"dorm_name":  "管理中心",
-			"intro":      "系统超级管理员",
+			"intro":      intro, // 返回真实简介
 		},
 	})
 }
 
 func UpdateAdminProfile(c *gin.Context) {
 	adminId, _ := c.Get("UserID")
-	var req struct {
-		Nickname string `json:"nickname"`
-		Avatar   string `json:"avatar"`
+
+	// 1. 获取文本参数 (multipart/form-data)
+	nickname := c.PostForm("nickname")
+	intro := c.PostForm("intro")
+
+	updates := map[string]interface{}{}
+
+	if nickname != "" {
+		updates["username"] = nickname
 	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"msg": "参数错误"})
-		return
+	// 允许简介为空，或者更新为新值
+	updates["intro"] = intro
+
+	// 2. 处理头像文件上传
+	file, err := c.FormFile("avatar")
+	if err == nil {
+		// 如果有文件上传，则进行上传处理
+		// utils.UploadFile 需确保存在，通常在 utils/oss.go 中
+		url, uploadErr := utils.UploadFile(file, "admin_avatar")
+		if uploadErr != nil {
+			c.JSON(500, gin.H{"code": 500, "msg": "头像上传失败"})
+			return
+		}
+		updates["avatar"] = url
 	}
 
-	model.DB.Model(&model.DgAdmin{}).Where("id = ?", adminId).Updates(map[string]interface{}{
-		"username": req.Nickname,
-		"avatar":   req.Avatar,
-	})
+	// 3. 更新数据库
+	if err := model.DB.Model(&model.DgAdmin{}).Where("id = ?", adminId).Updates(updates).Error; err != nil {
+		c.JSON(500, gin.H{"code": 500, "msg": "更新失败"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "更新成功"})
 }
@@ -433,12 +514,69 @@ func DeleteSensitiveWord(c *gin.Context) {
 }
 func GetPostTypesAdmin(c *gin.Context) {
 	var types []model.DgType
-	model.DB.Find(&types)
+	if err := model.DB.Find(&types).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "查询失败"})
+		return
+	}
 	var list []gin.H
 	for _, t := range types {
 		list = append(list, gin.H{"id": t.TypeId, "name": t.TypeName})
 	}
 	c.JSON(http.StatusOK, gin.H{"list": list})
+}
+
+// CreatePostType 创建分类
+func CreatePostType(c *gin.Context) {
+	var req struct {
+		Name string `json:"name" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "参数错误"})
+		return
+	}
+
+	newType := model.DgType{
+		TypeName: req.Name,
+	}
+	if err := model.DB.Create(&newType).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "创建失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "创建成功"})
+}
+
+// UpdatePostType 更新分类名称
+func UpdatePostType(c *gin.Context) {
+	id := c.Param("id")
+	var req struct {
+		Name string `json:"name" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "参数错误"})
+		return
+	}
+
+	// 更新数据库
+	if err := model.DB.Model(&model.DgType{}).Where("typeid = ?", id).Update("typename", req.Name).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "更新失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "更新成功"})
+}
+
+// DeletePostType 删除分类
+func DeletePostType(c *gin.Context) {
+	id := c.Param("id")
+
+	// 物理删除
+	if err := model.DB.Delete(&model.DgType{}, "typeid = ?", id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "删除失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "删除成功"})
 }
 
 func SendSystemNotification(c *gin.Context) {
@@ -532,10 +670,5 @@ func SendSystemNotification(c *gin.Context) {
 	c.JSON(200, gin.H{"code": 200, "msg": "通知已推送到用户中心"})
 }
 
-func UpdateBasicConfig(c *gin.Context)    { c.JSON(200, gin.H{"code": 200}) }
-func UpdateSecurityConfig(c *gin.Context) { c.JSON(200, gin.H{"code": 200}) }
 func UpdateSensitiveWord(c *gin.Context)  { c.JSON(200, gin.H{"code": 200}) }
-func CreatePostType(c *gin.Context)       { c.JSON(200, gin.H{"code": 200}) }
-func UpdatePostType(c *gin.Context)       { c.JSON(200, gin.H{"code": 200}) }
 func UpdatePostTypeStatus(c *gin.Context) { c.JSON(200, gin.H{"code": 200}) }
-func DeletePostType(c *gin.Context)       { c.JSON(200, gin.H{"code": 200}) }

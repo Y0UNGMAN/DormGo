@@ -114,6 +114,7 @@ func App() *gin.Engine {
 		adminAuth.PUT("/users/:id/status", controller.UpdateUserStatus)
 		adminAuth.PUT("/users/batch/status", controller.BatchUpdateUserStatus)
 		adminAuth.PUT("/users/:id/credit", controller.UpdateUserCredit)
+		adminAuth.POST("/users/ban", controller.BanUserHandler)
 
 		// 楼栋管理
 		adminAuth.GET("/dorms", controller.GetDormListAdmin)
@@ -142,8 +143,14 @@ func App() *gin.Engine {
 		adminAuth.PUT("/violations/:id/process", controller.ProcessViolation)
 
 		// 系统配置
-		adminAuth.PUT("/config/basic", controller.UpdateBasicConfig)
-		adminAuth.PUT("/config/security", controller.UpdateSecurityConfig)
+		// 获取分类列表 (新增)
+		adminAuth.GET("/config/types", controller.GetPostTypesAdmin)
+		// 创建分类
+		adminAuth.POST("/config/types", controller.CreatePostType)
+		// 更新分类
+		adminAuth.PUT("/config/types/:id", controller.UpdatePostType)
+		// 删除分类
+		adminAuth.DELETE("/config/types/:id", controller.DeletePostType)
 
 		// 敏感词
 		adminAuth.GET("/config/sensitive-words", controller.GetSensitiveWords)
@@ -151,11 +158,6 @@ func App() *gin.Engine {
 		adminAuth.PUT("/config/sensitive-words/:id", controller.UpdateSensitiveWord)
 		adminAuth.DELETE("/config/sensitive-words/:id", controller.DeleteSensitiveWord)
 
-		// 互助类型
-		adminAuth.POST("/config/types", controller.CreatePostType)
-		adminAuth.PUT("/config/types/:id", controller.UpdatePostType)
-		adminAuth.PUT("/config/types/:id/status", controller.UpdatePostTypeStatus)
-		adminAuth.DELETE("/config/types/:id", controller.DeletePostType)
 	}
 	return r
 }

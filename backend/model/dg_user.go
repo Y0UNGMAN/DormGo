@@ -10,23 +10,25 @@ import (
 )
 
 type DgUser struct {
-	ID        uint      `gorm:"primarykey;AUTO_INCREMENT" json:"id"`
-	UserID    uint      `gorm:"column:user_id;" json:"userid"`
-	StudentId string    `gorm:"column:studentid;type:varchar(20);" json:"studentid"`
-	Username  string    `gorm:"column:username;type:varchar(50);" json:"username"`
-	Password  string    `gorm:"column:password;type:varchar(255);" json:"password"`
-	Avatar    string    `gorm:"column:avatar;type:varchar(255);" json:"avatarurl"`
-	Email     string    `gorm:"column:email;type:varchar(255);" json:"email"`
-	DormId    uint      `gorm:"column:dormid" json:"dormid"`
-	Dorm      DgDorm    `gorm:"foreignkey:DormId;references:DormId" `
-	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+	ID          uint      `gorm:"primarykey;AUTO_INCREMENT" json:"id"`
+	UserID      uint      `gorm:"column:user_id;" json:"userid"`
+	StudentId   string    `gorm:"column:studentid;type:varchar(20);" json:"studentid"`
+	Username    string    `gorm:"column:username;type:varchar(50);" json:"username"`
+	Password    string    `gorm:"column:password;type:varchar(255);" json:"password"`
+	Avatar      string    `gorm:"column:avatar;type:varchar(255);" json:"avatarurl"`
+	Email       string    `gorm:"column:email;type:varchar(255);" json:"email"`
+	DormId      uint      `gorm:"column:dormid" json:"dormid"`
+	Dorm        DgDorm    `gorm:"foreignkey:DormId;references:DormId" `
+	Status      int       `gorm:"column:status;default:1" json:"status"`               // 1:正常 2:封禁
+	CreditScore int       `gorm:"column:credit_score;default:100" json:"credit_score"` // 信用分
+	CreatedAt   time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedAt   time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
 // 注册请求参数
 type RegisterRequest struct {
 	Username   string `json:"username" binding:"required"`
-	StudentId  string `json:"student_id" binding:"required"` // 【新增】学号字段
+	StudentId  string `json:"student_id" binding:"required"`
 	Password   string `json:"password" binding:"required"`
 	RePassword string `json:"re_password" binding:"required"`
 	DormId     uint   `json:"dorm_id"`
@@ -85,6 +87,13 @@ func Login(username, password string) (*DgUser, error) {
 	if err != nil {
 		return nil, errors.New("密码错误")
 	}
+
+	// 【新增】验证账号状态
+	// 假设 1 为正常状态，非 1 (如 2) 则禁止登录
+	if user.Status != 1 {
+		return nil, errors.New("账号已封禁，请联系管理员")
+	}
+
 	// 登录成功，返回用户对象
 	return &user, nil
 }

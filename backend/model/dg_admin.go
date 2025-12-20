@@ -11,6 +11,7 @@ type DgAdmin struct {
 	Username string `gorm:"column:username;type:varchar(50);" json:"username"`
 	Password string `gorm:"column:password;type:varchar(255);" json:"password"`
 	Avatar   string `gorm:"column:avatar;type:varchar(255);" json:"avatar_url"`
+	Intro    string `gorm:"column:intro;type:varchar(255);" json:"intro"`
 }
 
 // LoginAdmin 管理员登录验证 (明文比对版)

@@ -11,7 +11,7 @@
           <div class="profile-header">
             <div class="avatar-container">
               <el-avatar :size="100" :src="profileForm.avatar || defaultAvatar" class="user-avatar" />
-              </div>
+            </div>
             <div class="user-name">{{ profileForm.nickname || '管理员' }}</div>
             <div class="user-role">超级管理员</div>
           </div>
@@ -61,11 +61,29 @@
                   <el-input v-model="profileForm.nickname" :disabled="!isEditMode" />
                 </el-form-item>
               </el-col>
+              
               <el-col :span="24">
-                <el-form-item label="头像URL">
-                  <el-input v-model="profileForm.avatar" :disabled="!isEditMode" placeholder="请输入图片链接" />
+                <el-form-item label="头像设置">
+                  <div class="upload-wrapper">
+                    <el-upload
+                      class="avatar-uploader"
+                      action="#"
+                      :auto-upload="false"
+                      :show-file-list="false"
+                      :on-change="handleFileChange"
+                      :disabled="!isEditMode"
+                    >
+                      <img v-if="profileForm.avatar" :src="profileForm.avatar" class="avatar-preview" />
+                      <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+                      
+                      <template #tip v-if="isEditMode">
+                        <div class="el-upload__tip">点击图片更换头像，支持 JPG/PNG 格式</div>
+                      </template>
+                    </el-upload>
+                  </div>
                 </el-form-item>
               </el-col>
+
               <el-col :span="24">
                 <el-form-item label="个人简介">
                   <el-input 
@@ -99,13 +117,14 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import request from '@/utils/request' // 使用封装的 request
+import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
-import { User, OfficeBuilding, Edit } from '@element-plus/icons-vue'
+import { User, OfficeBuilding, Edit, Plus } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
 const isEditMode = ref(false)
+const avatarFile = ref(null) // 暂存上传的文件
 
 const profileForm = reactive({
   studentId: '',
@@ -130,14 +149,13 @@ onMounted(() => {
 
 const fetchAdminProfile = async () => {
   try {
-    // 修改为 admin 专属接口
     const res = await request.get('/api/v1/admin/profile')
     const data = res.data
     profileForm.studentId = data.student_id
     profileForm.dormName = data.dorm_name
     profileForm.nickname = data.nickname
     profileForm.intro = data.intro || ''
-    profileForm.avatar = data.avatar || ''
+    profileForm.avatar = data.avatar || defaultAvatar
   } catch (error) {
     console.error(error)
   }
@@ -145,7 +163,16 @@ const fetchAdminProfile = async () => {
 
 const toggleEditMode = (val) => {
   isEditMode.value = val
-  if (!val) fetchAdminProfile() 
+  if (!val) {
+    fetchAdminProfile() // 取消时还原数据
+    avatarFile.value = null
+  }
+}
+
+// 处理文件选择，本地预览
+const handleFileChange = (file) => {
+  avatarFile.value = file.raw
+  profileForm.avatar = URL.createObjectURL(file.raw)
 }
 
 const handleSave = async () => {
@@ -153,22 +180,34 @@ const handleSave = async () => {
   await formRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        await request.put('/api/v1/admin/profile', {
-          nickname: profileForm.nickname,
-          intro: profileForm.intro,
-          avatar: profileForm.avatar
+        // 使用 FormData 构建 multipart/form-data 请求
+        const formData = new FormData()
+        formData.append('nickname', profileForm.nickname)
+        formData.append('intro', profileForm.intro)
+        
+        if (avatarFile.value) {
+          formData.append('avatar', avatarFile.value)
+        }
+
+        await request.put('/api/v1/admin/profile', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         })
         
         // 更新本地存储显示的头像和名字
         const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || '{}')
         adminInfo.nickname = profileForm.nickname
-        adminInfo.avatar = profileForm.avatar
+        // 如果后端返回了新头像URL最好，这里暂时用本地的或者不更新localStorage的avatar
+        // 实际上重新拉取profile即可
         localStorage.setItem('adminInfo', JSON.stringify(adminInfo))
         
         ElMessage.success('保存成功')
         isEditMode.value = false
+        avatarFile.value = null
+        fetchAdminProfile() // 重新获取最新数据
       } catch (error) {
-        // request.ts 已处理错误提示
+        console.error(error)
       }
     }
   })
@@ -198,4 +237,36 @@ const goToResetPwd = () => router.push('/admin/reset-pwd')
 .security-item { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
 .security-text h4 { margin: 0 0 5px 0; color: #303133; }
 .security-text p { margin: 0; color: #909399; font-size: 13px; }
+
+/* 头像上传样式 */
+.avatar-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: border-color 0.3s;
+}
+.avatar-uploader:hover {
+  border-color: #409EFF;
+}
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 100px;
+  height: 100px;
+  line-height: 100px;
+  text-align: center;
+}
+.avatar-preview {
+  width: 100px;
+  height: 100px;
+  display: block;
+  object-fit: cover;
+}
 </style>
