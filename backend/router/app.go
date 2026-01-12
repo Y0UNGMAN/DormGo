@@ -41,13 +41,13 @@ func App() *gin.Engine {
 		dorm.GET("/list", controller.GetDormList)
 	}
 
-	
-
 	authPost := r.Group("/api/v1/post")
 	authPost.Use(middleware.JWTAuthMiddleware())
 	{
 		//发帖
 		authPost.POST("/create", controller.PostCreate)
+		//删帖
+		authPost.DELETE("/:id", controller.DeletePost)
 		//对帖子点赞
 		authPost.POST("/postlike", controller.PostLike)
 		//取消点赞

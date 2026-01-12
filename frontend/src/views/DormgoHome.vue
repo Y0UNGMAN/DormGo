@@ -1,12 +1,16 @@
 <template>
   <div class="dormgo-home">
     <!-- 顶部栏：搜索框和用户头像 -->
+     <div class="bg-animation">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+    </div>
     <div class="top-bar">
       <div class="message-entry" @click="goToMessageList">
         <div class="icon-wrapper">
           <span class="msg-icon">💬</span> <div v-if="totalUnread > 0" class="dot-badge"></div> 
         </div>
-        <span class="msg-text">私信</span>
       </div>
       <!-- 搜索框 - 居中 -->
       <div class="search-section">
@@ -373,9 +377,20 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 漂亮的紫蓝渐变 */
+  --primary-color: #764ba2; /* 纯紫色用于文字 */
+  --bg-color: #f3f5f9; /* 极淡的紫灰色背景 */
+}
+
 .dormgo-home {
   min-height: 100vh;
-  background: #f5f5f5;
+  /* 1. 修改背景色：不再是纯灰，而是带一点点紫调的灰，或者保留浅灰 */
+  background: #f8f9fc; 
+  /* 2. 添加一个顶部的装饰性渐变背景块，不用把整个页面填满 */
+  background-image: linear-gradient(135deg, #7637b1 0%, #8ec5fc 100%);
+  background-size: 100% 250px; /* 只显示在顶部 250px */
+  background-repeat: no-repeat;
   padding: 20px;
   position: relative;
 }
@@ -386,7 +401,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  /* 稍微增加一点内边距，让它看起来更像一个Header */
+  padding: 10px 0; 
 }
 
 /* 搜索框样式 - 居中 */
@@ -445,7 +462,7 @@ onUnmounted(() => {
 
 .search-btn {
   padding: 12px 24px;
-  background: #1890ff;
+  background: #764ba2;
   color: white;
   border: none;
   border-radius: 8px;
@@ -456,7 +473,7 @@ onUnmounted(() => {
 }
 
 .search-btn:hover {
-  background: #40a9ff;
+  background: #5d3b82;
 }
 
 /* 用户头像样式 */
@@ -480,20 +497,44 @@ onUnmounted(() => {
   background: #f5f5f5; border: 1px solid #e8e8e8; border-radius: 20px;
   font-size: 13px; color: #666; cursor: pointer; transition: all 0.3s ease;
 }
-.filter-btn:hover { background: #e6f7ff; border-color: #1890ff; color: #1890ff; }
-.filter-btn.active { background: #1890ff; border-color: #1890ff; color: white; }
+.filter-btn:hover {
+  background: #f3eefc; /* 悬停时变为极淡的紫色 */
+  border-color: #764ba2;
+  color: #764ba2;
+}
+.filter-btn.active {
+  background: #764ba2; /* 激活时变为紫色 */
+  border-color: #764ba2;
+  color: white;
+  box-shadow: 0 4px 10px rgba(118, 75, 162, 0.3); /* 添加柔和阴影 */
+}
 .category-count { background: rgba(255, 255, 255, 0.3); padding: 1px 6px; border-radius: 10px; font-size: 11px; }
 .filter-btn:not(.active) .category-count { background: #e8e8e8; color: #666; }
 
 /* 发布按钮 */
 .publish-fab {
-  position: fixed; bottom: 30px; right: 30px; display: flex; align-items: center; gap: 8px;
-  padding: 16px 24px; background: #1890ff; color: white; border: none; border-radius: 50px;
-  font-size: 16px; font-weight: 600; cursor: pointer;
-  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.3); transition: all 0.3s ease; z-index: 1000;
+  position: fixed; 
+  bottom: 30px; 
+  right: 30px; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px;
+  padding: 16px 24px; 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white; 
+  border: none; 
+  border-radius: 50px;
+  font-size: 16px; 
+  font-weight: 600; 
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(118, 75, 162, 0.4); /* 紫色阴影 */
+  transition: all 0.3s ease; 
+  z-index: 1000;
 }
-.publish-fab:hover { background: #40a9ff; transform: translateY(-2px); }
-
+.publish-fab:hover {
+  transform: translateY(-4px) scale(1.02); /* 悬浮效果增强 */
+  box-shadow: 0 12px 24px rgba(118, 75, 162, 0.5);
+}
 /* 主内容区 */
 .main-content { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; }
 .sidebar {
@@ -507,19 +548,55 @@ onUnmounted(() => {
   border-radius: 8px; cursor: pointer; transition: all 0.3s ease;
 }
 .dorm-item:hover { background: #f5f5f5; }
-.dorm-item.active { background: #e6f7ff; color: #1890ff; }
+.dorm-item.active {
+  background: #f3eefc; /* 淡紫色背景 */
+  color: #764ba2;      /* 紫色文字 */
+  border-right: 3px solid #764ba2; /* 右侧加一个紫色条，更有设计感 */
+  border-radius: 8px 0 0 8px; /* 修改圆角 */
+}
 .post-count { background: #f0f0f0; color: #666; padding: 2px 6px; border-radius: 10px; font-size: 11px; }
-.dorm-item.active .post-count { background: #1890ff; color: white; }
+.dorm-item.active .post-count {
+  background: #764ba2;
+}
 
 /* 帖子区域 */
 .posts-area { flex: 1; min-width: 0; }
 .filter-status {
-  display: flex; justify-content: space-between; align-items: center;
-  background: #e6f7ff; border: 1px solid #91d5ff; border-radius: 8px;
-  padding: 12px 16px; margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* 背景改为淡紫色 */
+  background: #f9f0ff; 
+  /* 边框改为紫色 */
+  border: 1px solid #d3adf7; 
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  /* 增加一点阴影让它浮起来 */
+  box-shadow: 0 2px 8px rgba(118, 75, 162, 0.05);
 }
-.status-text { color: #1890ff; font-size: 14px; }
-.clear-filters { background: none; border: 1px solid #1890ff; color: #1890ff; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+.status-text {
+  /* 文字改为深紫色 */
+  color: #722ed1; 
+  font-size: 14px;
+  font-weight: 500;
+}
+.clear-filters {
+  background: white;
+  /* 边框和文字改为紫色 */
+  border: 1px solid #722ed1; 
+  color: #722ed1; 
+  padding: 4px 12px;
+  border-radius: 15px; /* 胶囊圆角更好看 */
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.clear-filters:hover {
+  background: #722ed1;
+  color: white;
+  box-shadow: 0 2px 8px rgba(114, 46, 209, 0.3);
+}
 .posts-container { display: flex; flex-direction: column; gap: 16px; }
 
 /* 已显示所有帖子的提示 */

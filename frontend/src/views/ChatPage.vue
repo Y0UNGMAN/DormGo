@@ -6,7 +6,6 @@
       </button>
       <div class="header-info">
         <span class="target-name">{{ targetUser.username || '加载中...' }}</span>
-        <span class="target-status" v-if="targetUser.id">在线</span>
       </div>
       <button class="menu-btn">...</button>
     </div>

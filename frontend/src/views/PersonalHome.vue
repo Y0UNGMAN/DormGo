@@ -9,10 +9,10 @@
     <div class="profile-header">
       <div class="user-info-card">
         <div class="avatar-container">
-          <img :src="currentUser.avatarurl" alt="头像" class="large-avatar" />
+          <img :src="currentUser?.avatarurl || defaultAvatar" alt="头像" class="large-avatar" />
           <div class="edit-avatar-badge" @click="goToPage('/profile/detail')">📷</div>
         </div>
-        <h2 class="user-name">{{ currentUser.username }}</h2>
+        <h2 class="user-name">{{ currentUser?.username || '未登录' }}</h2>
         <p class="user-bio">{{ userBio || '暂无个性签名...' }}</p>
         
         <div class="user-stats">
@@ -32,7 +32,6 @@
       </div>
     </div>
 
-    <!-- 功能入口区 -->
     <div class="function-grid">
       <div class="function-item" @click="goToPage('/profile/coins')">
         <div class="function-icon">🪙</div>
@@ -50,7 +49,6 @@
         <div class="function-icon">📞</div>
         <span class="function-text">联系我们</span>
       </div>
-
     </div>
 
     <div class="profile-content">
@@ -77,10 +75,10 @@
           我的通知 <span v-if="unreadCount > 0" class="badge"></span>
         </button>
       </div>
+
       <div v-if="activeTab === 'notifications'" class="notification-list">
         <div v-for="note in notifications" :key="note.id" class="notification-item" @click="handleNoteClick(note)">
           <img :src="note.sender?.avatarurl || defaultAvatar" class="note-avatar">
-
 
           <div class="note-content">
             <template v-if="note.type === 'system'">
@@ -98,15 +96,13 @@
               </p>
             </template>
             <span class="note-time">{{ formatTime(note.created_at) }}</span>
-      
           </div>
 
-
-          <button v-if="note.type === 'signup'" class="check-btn" @click="showApplicantInfo(note)">
+          <button v-if="note.type === 'signup'" class="check-btn" @click.stop="showApplicantInfo(note)">
             查看用户
           </button>
           
-          <button v-if="note.type === 'system'" class="check-btn primary" @click="showSystemDetail(note)">
+          <button v-if="note.type === 'system'" class="check-btn primary" @click.stop="showSystemDetail(note)">
             查看全文
           </button>
         </div>
@@ -116,17 +112,15 @@
            <p>暂时没有新通知</p>
         </div>
       </div>
-      <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
-      </div>
 
       <div v-if="showSystemModal" class="modal-overlay" @click.self="showSystemModal = false">
         <div class="modal-card system-modal">
           <h3 class="modal-title">系统通知</h3>
           <div class="modal-body">
-            <p>{{ currentSystemNote.content }}</p>
+            <p>{{ currentSystemNote?.content }}</p>
           </div>
           <div class="modal-footer">
-            <span class="modal-time">{{ formatTime(currentSystemNote.created_at) }}</span>
+            <span class="modal-time">{{ formatTime(currentSystemNote?.created_at) }}</span>
             <button class="close-btn" @click="showSystemModal = false">关闭</button>
           </div>
         </div>
@@ -134,14 +128,22 @@
 
       <div class="list-container" v-if="activeTab !== 'notifications'">
         <div v-if="displayPosts.length > 0" class="post-list">
-          <Card 
+          <div 
             v-for="post in displayPosts" 
             :key="post.id" 
-            :post="post" 
-            class="profile-post-card"
-          />
-        </div>
-        
+            class="post-wrapper"
+          >
+            <Card :post="post" class="profile-post-card" />
+            
+            <button 
+              v-if="activeTab === 'posts'" 
+              class="delete-btn" 
+              @click.stop="handleDeletePost(post.id)"
+            >
+              删除
+            </button>
+          </div>
+          </div>
         <div v-else class="empty-state">
           <div class="empty-emoji">🍃</div>
           <p>这里空空如也</p>
@@ -149,17 +151,18 @@
         </div>
       </div>
     </div>
+
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
       <div class="modal-card">
         <h3>报名者信息</h3>
-        <div class="applicant-info" v-if="currentApplicant.sender">
-          <img :src="currentApplicant.sender.avatarurl" class="large-avatar">
+        <div class="applicant-info" v-if="currentApplicant?.sender">
+          <img :src="currentApplicant.sender.avatarurl || defaultAvatar" class="large-avatar">
           <p>姓名：{{ currentApplicant.sender.username }}</p>
-          <p>学号：{{ currentApplicant.sender.studentid }}</p>
+          <p>学号：{{ currentApplicant.sender.studentid || '未填写' }}</p>
           <p>宿舍：{{ currentApplicant.sender.dorm?.dormname || '未知' }}</p>
         </div>
         <div class="modal-actions">
-          <button class="contact-btn" @click="goToChat(currentApplicant.sender.id)">
+          <button class="contact-btn" @click="goToChat(currentApplicant?.sender?.id)">
             点击联系 (私信)
           </button>
           <button class="close-btn" @click="showModal = false">关闭</button>
@@ -167,104 +170,101 @@
       </div>
     </div>
   </div>
-
-  
-
-
-
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed , watch } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
-import Card from '@/components/Card.vue' // 复用你的卡片组件
-import axios from 'axios'
-import { useUserStore } from '@/stores/user';
-import api from '@/api/index.ts';
-const userStore = useUserStore(); 
+import Card from '@/components/Card.vue' 
+import { useUserStore } from '@/stores/user'
+import api from '@/api/index'
+
+// --- 1. 类型定义 (Interfaces) ---
+
+// 宿舍类型
+interface Dorm {
+  dormname: string;
+}
+
+// 用户类型
+interface User {
+  id: number;
+  username: string;
+  avatarurl: string;
+  studentid?: string;
+  intro?: string; // 对应 bio
+  dorm?: Dorm;
+}
+
+// 简化的帖子类型 (根据 Card 组件需求)
+interface Post {
+  id: number;
+  title: string;
+  content?: string;
+  [key: string]: any; // 允许其他字段
+}
+
+// 通知类型
+interface Notification {
+  id: number;
+  type: 'system' | 'signup';
+  content: string;
+  created_at: string;
+  sender?: User;
+  post?: { title: string };
+  is_read?: boolean;
+}
+
+// 统计数据响应结构
+interface UserStats {
+  total_likes: number;
+  bio: string;
+}
+
+// 通用 API 响应结构
+interface ApiResponse<T> {
+  code: number;
+  data: T;
+  msg: string;
+}
+
+// --- 2. 状态与初始化 ---
+
 const router = useRouter()
-const activeTab = ref('posts') // posts 或 likes
-const unreadCount = computed(() => userStore.unreadCount);
-// 用户信息
-const currentUser = computed(() => userStore.currentUser);
-const currentUserId = computed(() => userStore.currentUserId);
+const userStore = useUserStore()
 
-// 用户个性签名
-const userBio = ref('')
-// 获赞总数
-const totalLikes = ref(0)
+const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
-// 页面跳转
+// 使用具体的类型定义 tab
+type TabType = 'posts' | 'likes' | 'notifications';
+const activeTab = ref<TabType>('posts')
+
+const unreadCount = computed<number>(() => userStore.unreadCount || 0)
+const currentUser = computed<User | null>(() => userStore.currentUser as User | null)
+const currentUserId = computed<number>(() => userStore.currentUserId || 0)
+
+// 用户数据
+const userBio = ref<string>('')
+const totalLikes = ref<number>(0)
+
+// 列表数据 (指定为数组类型)
+const myPosts = ref<Post[]>([])
+const favoritePosts = ref<Post[]>([])
+const notifications = ref<Notification[]>([])
+
+// 弹窗状态与数据
+const showModal = ref(false)
+const showSystemModal = ref(false)
+
+// currentApplicant 可能是 Notification，也可能是 null (或者使用 Partial<Notification> 初始化为空对象)
+const currentApplicant = ref<Partial<Notification>>({}) 
+const currentSystemNote = ref<Partial<Notification>>({})
+
+// --- 3. 方法定义 (Functions) ---
+
 const goToPage = (path: string) => {
   router.push(path)
-}
-
-// 我的帖子列表
-const myPosts = ref([])
-// 我的收藏列表 
-const favoritePosts = ref([])
-
-const notifications = ref([]);
-const showModal = ref(false);
-const currentApplicant = ref({}); // 当前点击的那个报名通知对象
-const showSystemModal = ref(false)
-const currentSystemNote = ref({})
-
-const showSystemDetail = (note) => {
-  currentSystemNote.value = note
-  showSystemModal.value = true
-}
-// 获取通知
-const fetchNotifications = async () => {
-    try {
-        const res = await api.get('/api/v1/message/notifications');
-        if(res.data.code === 200) {
-            notifications.value = res.data.data;
-        }
-    } catch (err) {
-        console.error("获取通知失败", err);
-    }
-}
-
-const showApplicantInfo = (note) => {
-    currentApplicant.value = note; // 这里存的是整个 notification 对象
-    showModal.value = true;
-}
-const handleNoteClick = (note) => {
-  // 如果是系统通知，点击可能不需要弹窗，或者只是标记已读
-  if (note.type === 'system') {
-    return; // 系统通知暂时不支持点击交互
-  }
-  
-  // 如果是报名通知，显示详情
-  if (note.type === 'signup') {
-    currentApplicant.value = note;
-    showModal.value = true;
-  }
-}
-const goToChat = (targetUserId) => {
-    router.push({ 
-        name: 'Chat', 
-        params: { id: targetUserId }
-    });
-}
-
-watch(activeTab, async (newVal) => {
-    if(newVal === 'notifications') {
-      await fetchNotifications();
-      await api.post('/api/v1/message/read_all');
-      userStore.clearUnread();
-    }else if (newVal === 'likes') { // 假设你把"我的收藏"tab的值设为 likes
-       await fetchFavoritePosts();
-    }
-})
-
-const formatTime = (timeStr) => {
-  if (!timeStr) return ''
-  const date = new Date(timeStr)
-  return date.toLocaleString('zh-CN', {
-    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
-  })
 }
 
 const goHome = () => {
@@ -272,77 +272,174 @@ const goHome = () => {
 }
 
 const handleLogout = () => {
-  userStore.logout();
-  router.push('/');
+  userStore.logout()
+  router.push('/')
 }
 
+const formatTime = (timeStr?: string): string => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+  })
+}
 
-const fetchMyPosts = async () => {
+// 获取通知
+const fetchNotifications = async () => {
   try {
-    // 调用后端接口获取当前用户的帖子
-    const res = await api.get('/api/v1/post/user_posts', {
-      params: { user_id: currentUserId.value }
-    });
-    
+    // 显式指定 API 返回类型
+    const res = await api.get<ApiResponse<Notification[]>>('/api/v1/message/notifications')
     if (res.data.code === 200) {
-      myPosts.value = res.data.data || [];
+      notifications.value = res.data.data
     }
-  } catch (error) {
-    console.error('获取个人帖子失败', error);
+  } catch (err) {
+    console.error("获取通知失败", err)
   }
 }
 
-// 计算当前显示的列表
-const displayPosts = computed(() => {
-  if (activeTab.value === 'posts') return myPosts.value
-  if (activeTab.value === 'likes') return favoritePosts.value // 返回收藏数据
-  return []
-})
+const handleDeletePost = async (postId: number) => {
+  try {
+    // 1. 确认弹窗
+    await ElMessageBox.confirm(
+      '确定要删除这条帖子吗？删除后无法恢复。',
+      '提示',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
 
-const fetchFavoritePosts = async () => {
-    try {
-        // 调用后端接口
-        const res = await api.get('/api/v1/post/my_favorites');
-        if (res.data.code === 200) {
-      console.log('my_favorites API 返回：', res.data.data);
-      favoritePosts.value = res.data.data || [];
-        }
-    } catch (error) {
-        console.error('获取收藏失败', error);
+    // 2. 调用 API (根据后端路由 /api/v1/post/:id)
+    const res = await api.delete(`/api/v1/post/${postId}`)
+
+    if (res.data.code === 200) {
+      ElMessage.success('删除成功')
+      
+      // 3. 更新本地列表（不用刷新页面）
+      myPosts.value = myPosts.value.filter(p => p.id !== postId)
+      
+      // 可选：更新统计数据
+      fetchUserStats()
+    } else {
+      ElMessage.error(res.data.msg || '删除失败')
     }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error(error)
+      ElMessage.error('操作失败')
+    }
+  }
 }
 
+// 显示报名者详情
+const showApplicantInfo = (note: Notification) => {
+  currentApplicant.value = note
+  showModal.value = true
+}
 
+// 显示系统通知详情
+const showSystemDetail = (note: Notification) => {
+  currentSystemNote.value = note
+  showSystemModal.value = true
+}
 
+// 处理点击通知条目
+const handleNoteClick = (note: Notification) => {
+  if (note.type === 'system') {
+    // 系统通知可以在这里做逻辑，比如直接查看
+    // showSystemDetail(note); 
+    return
+  }
+  
+  if (note.type === 'signup') {
+    currentApplicant.value = note
+    showModal.value = true
+  }
+}
 
+const goToChat = (targetUserId?: number) => {
+  if (!targetUserId) return
+  router.push({ 
+    name: 'Chat', 
+    params: { id: targetUserId.toString() }
+  })
+}
 
+// 获取我的帖子
+const fetchMyPosts = async () => {
+  try {
+    const res = await api.get<ApiResponse<Post[]>>('/api/v1/post/user_posts', {
+      params: { user_id: currentUserId.value }
+    })
+    
+    if (res.data.code === 200) {
+      myPosts.value = res.data.data || []
+    }
+  } catch (error) {
+    console.error('获取个人帖子失败', error)
+  }
+}
 
-onMounted(() => {
-  fetchMyPosts()
-  fetchFavoritePosts()
-  fetchUserStats()
-})
+// 获取收藏
+const fetchFavoritePosts = async () => {
+  try {
+    const res = await api.get<ApiResponse<Post[]>>('/api/v1/post/my_favorites')
+    if (res.data.code === 200) {
+      console.log('my_favorites API 返回：', res.data.data)
+      favoritePosts.value = res.data.data || []
+    }
+  } catch (error) {
+    console.error('获取收藏失败', error)
+  }
+}
 
-// 获取用户统计数据
+// 获取用户统计
 const fetchUserStats = async () => {
   try {
-    const res = await api.get('/api/v1/user/stats')
+    const res = await api.get<ApiResponse<UserStats>>('/api/v1/user/stats')
     if (res.data.code === 200) {
       totalLikes.value = res.data.data?.total_likes || 0
       userBio.value = res.data.data?.bio || ''
     }
   } catch (error) {
     console.error('获取用户统计失败', error)
-    // 如果 API 失败，尝试从 store 中获取用户信息
-    const user = userStore.currentUser
-    if (user && user.intro) {
-      userBio.value = user.intro
+    // 降级策略
+    if (currentUser.value && currentUser.value.intro) {
+      userBio.value = currentUser.value.intro
     }
   }
 }
+
+// 计算属性：根据 Tab 显示不同列表
+const displayPosts = computed<Post[]>(() => {
+  if (activeTab.value === 'posts') return myPosts.value
+  if (activeTab.value === 'likes') return favoritePosts.value
+  return []
+})
+
+// --- 4. 生命周期与监听 ---
+
+watch(activeTab, async (newVal) => {
+  if (newVal === 'notifications') {
+    await fetchNotifications()
+    // 标记已读
+    await api.post('/api/v1/message/read_all')
+    userStore.clearUnread() // 假设 store 有这个 action
+  } else if (newVal === 'likes') {
+    await fetchFavoritePosts()
+  }
+})
+
+onMounted(() => {
+  fetchMyPosts()
+  fetchFavoritePosts()
+  fetchUserStats()
+})
 </script>
 
 <style scoped>
+/* 样式保持不变 */
 .profile-page {
   min-height: 100vh;
   background: #f5f5f5;
@@ -755,4 +852,36 @@ const fetchUserStats = async () => {
 .modal-body { font-size: 15px; line-height: 1.6; color: #444; min-height: 80px; white-space: pre-wrap; }
 .modal-footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px; }
 .modal-time { font-size: 12px; color: #999; }
+
+.post-wrapper {
+  position: relative; /* 为绝对定位的删除按钮提供参考 */
+  margin-bottom: 16px;
+}
+
+/* 调整 Card 的 margin，因为现在由 wrapper 控制间距 */
+.profile-post-card {
+  margin-bottom: 0 !important; 
+}
+
+.delete-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: white;
+  border: 1px solid #ff4d4f;
+  color: #ff4d4f;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 10; /* 确保在卡片上方 */
+  transition: all 0.3s;
+  opacity: 0.8;
+}
+
+.delete-btn:hover {
+  background: #ff4d4f;
+  color: white;
+  opacity: 1;
+}
 </style>

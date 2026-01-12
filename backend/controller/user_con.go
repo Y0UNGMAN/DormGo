@@ -124,6 +124,7 @@ func GetUserInfoPublic(c *gin.Context) {
 			"username":  user.Username,
 			"avatarurl": user.Avatar,
 			"dorm":      user.Dorm,
+			"intro":     user.Intro,
 		},
 	})
 }

@@ -63,7 +63,7 @@ import { defineProps, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import PostStats from '@/components/PostStats.vue'
 import { useUserStore } from '@/stores/user'
-
+const userStore = useUserStore(); 
 const router = useRouter()
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png' 
 
@@ -77,6 +77,19 @@ const props = defineProps({
     default: () => ({})
   }
 })
+
+const displayAvatar = (post) => {
+  const pid = post?.publisherid || post?.PublisherId
+  if (pid && userStore.currentUser && pid === userStore.currentUser.userid) {
+    return post?.publisheravator || userStore.userInfo?.avatarurl || post?.User?.avatarurl || defaultAvatar
+  }
+  return post?.publisheravator || post?.User?.avatarurl || defaultAvatar
+}
+
+const displayIntro = (post) => {
+  return post?.publisherintro || post?.User?.intro || ''
+}
+
 
 // 计算是否是管理员发布的帖子
 const isAdminPost = computed(() => {

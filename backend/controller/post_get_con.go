@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/Y0UNGMAN/DormGo/backend/logic"
-	"github.com/Y0UNGMAN/DormGo/backend/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,19 +21,11 @@ func GetPostDetail(c *gin.Context) {
 		})
 		return
 	}
-	var userId uint = 0
-	if v, exists := c.Get(middleware.CtxUserIDKey); exists {
-		if uid, ok := v.(uint); ok {
-			userId = uid
-		} else if uidInt, ok := v.(int); ok {
-			userId = uint(uidInt)
-		} else {
-			fmt.Printf("UserID type mismatch in Context. Got: %T\n", v)
-		}
-	} else {
-		fmt.Println("UserID not found in context")
+	userId, err := GetCurrentUserId(c)
+	if err != nil {
+		userId = 0
 	}
-	data, isliked, ispinned, isFavorited, err := logic.GetPostDetail(id, userId)
+	data, isliked, isFavorited, ispinned, err := logic.GetPostDetail(id, userId)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(400, gin.H{

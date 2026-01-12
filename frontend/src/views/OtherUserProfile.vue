@@ -11,7 +11,7 @@
           <img :src="userInfo.avatarurl || defaultAvatar" class="large-avatar" />
         </div>
         <h2 class="user-name">{{ userInfo.username || '加载中...' }}</h2>
-        <p class="user-bio">{{ userInfo.bio || '这个人很懒，什么都没写' }}</p>
+        <p class="user-bio">{{ userInfo.intro || '这个人很懒，什么都没写' }}</p>
         
       </div>
     </div>
@@ -60,6 +60,7 @@ const fetchUserInfo = async () => {
     const res = await api.get(`/api/v1/user/info?user_id=${userId}`)
     if (res.data.code === 200) {
       userInfo.value = res.data.data
+      console.log('用户信息:', userInfo.value);
     }
   } catch (err) {
     console.error('获取用户信息失败', err)

@@ -313,6 +313,7 @@ const fetchPost = async () =>{
       isFavorited.value = response.data.isFavorited
       console.log('帖子数据:', post.value);
       console.log('当前用户是否点赞:', isLiked.value);
+      console.log('当前用户是否收藏:', isFavorited.value);
     }
   }catch (err){
       console.error('获取帖子详情失败', err)

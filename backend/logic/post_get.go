@@ -60,8 +60,11 @@ func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, bool, bool, 
 		fmt.Println("IsLiked error: ", err)
 		return nil, false, false, false, err
 	}
-	isFavorited := false
-	isFavorited, err = model.CheckFavoriteExist(usrId, uint(id))
+	isFavorited, err := model.CheckFavoriteExist(usrId, uint(id))
+	if err != nil {
+		fmt.Println("CheckFavoriteExist error: ", err)
+		return nil, false, false, false, err
+	}
 	isSignedUp := false
 	if post.IsLimited {
 		var err error
