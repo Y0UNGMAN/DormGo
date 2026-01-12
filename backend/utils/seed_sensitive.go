@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Y0UNGMAN/DormGo/backend/model"
-	"gorm.io/gorm/clause" // 【新增】引入 clause 包
+	"gorm.io/gorm/clause"
 )
 
 // SeedAllSensitiveWords 批量导入所有预定义的敏感词库
@@ -65,9 +65,6 @@ func SeedSensitiveWords(filePath string, category string) {
 	}
 
 	if len(newWords) > 0 {
-		// 【核心修改】使用 OnConflict DoNothing
-		// 含义：如果插入时发现 word 冲突（已存在），则什么都不做，继续处理下一条
-		// 这样就不会报 Error 1062 了
 		result := model.DB.Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "word"}}, // 指定冲突检测的列
 			DoNothing: true,                            // 冲突时忽略

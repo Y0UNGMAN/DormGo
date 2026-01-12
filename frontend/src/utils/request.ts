@@ -8,8 +8,6 @@ import { useUserStore } from '@/stores/user'
 
 // 创建 axios 实例
 const service = axios.create({
-    // 优先使用环境变量，如果没有则使用默认值。
-    // 注意：如果有代理(proxy)，通常设为 '/api'；如果是跨域直连，设为 'http://127.0.0.1:8080'
     baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080', 
     timeout: 10000,
     headers: {
