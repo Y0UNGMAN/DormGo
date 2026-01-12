@@ -76,6 +76,7 @@ func GetPostDetail(id int, usrId uint) (*model.ApiPostDetail, bool, bool, bool, 
 	postDetail := &model.ApiPostDetail{
 		PublisherName:   publisherName,
 		PublisherAvator: publisherAvatar,
+		PublisherIntro:  user.Intro,
 		IsSignedUp:      isSignedUp,
 		DgPost:          post,
 	}
@@ -101,6 +102,7 @@ func GetPostByDorm(dormid int) ([]*model.ApiPostDetail, error) {
 		postDetails = append(postDetails, &model.ApiPostDetail{
 			PublisherName:   user.Username,
 			PublisherAvator: user.Avatar,
+			PublisherIntro:  user.Intro,
 			DgPost:          p,
 		})
 	}
@@ -138,6 +140,7 @@ func GetPosts(page int, pageSize int) ([]*model.ApiPostDetail, int64, error) {
 		postDetails = append(postDetails, &model.ApiPostDetail{
 			PublisherName:   user.Username,
 			PublisherAvator: user.Avatar,
+			PublisherIntro:  user.Intro,
 			DgPost:          p,
 		})
 	}
@@ -149,4 +152,28 @@ func GetPosts(page int, pageSize int) ([]*model.ApiPostDetail, int64, error) {
 	client.Set(cacheKey, string(jsonBytes), time.Minute*10)
 
 	return postDetails, total, nil
+}
+
+// GetUserPosts 获取指定用户的帖子
+func GetUserPosts(userID int) ([]*model.ApiPostDetail, error) {
+	posts, err := model.GetPostsByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	postDetails := make([]*model.ApiPostDetail, 0, len(posts))
+	for _, post := range posts {
+		user, err := model.GetUserById(int(post.PublisherId))
+		if err != nil {
+			fmt.Println("GetUserById error: ", err)
+			continue
+		}
+		p := post
+		postDetails = append(postDetails, &model.ApiPostDetail{
+			PublisherName:   user.Username,
+			PublisherAvator: user.Avatar,
+			DgPost:          p,
+		})
+	}
+	return postDetails, nil
 }

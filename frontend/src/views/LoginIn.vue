@@ -139,7 +139,8 @@ const handleSubmit = async () => {
             id: data.user.id,          // 假设后端返回的 user id
             username: data.user.username,  // 假设后端返回的 username
             avatarurl: data.user.avatarurl, // 假设后端返回的 avatar url
-            dormid : data.user.dormid
+            dormid : data.user.dormid,
+            intro: data.user.intro || ''
         };
         userStore.setLogin(token, user);
       alert('登录成功！')

@@ -45,15 +45,32 @@ func GetUserFavoriteList(userID uint, page int, size int) (map[string]interface{
 	}
 	offset := (page - 1) * size
 
-	// 调用 Model 查询
+	// 调用 Model 查询，获取帖子列表（DgPost）
 	posts, total, err := model.SelectFavoritesByUserID(userID, offset, size)
 	if err != nil {
 		return nil, err
 	}
 
-	// 组装返回数据结构
+	// 将 DgPost 转换为 ApiPostDetail，补充发布者信息（与 GetPosts/ GetUserPosts 保持一致）
+	postDetails := make([]*model.ApiPostDetail, 0, len(posts))
+	for _, post := range posts {
+		user, err := model.GetUserById(int(post.PublisherId))
+		if err != nil {
+			// 若获取用户失败，跳过该条记录但继续返回其他记录
+			continue
+		}
+		p := post
+		postDetails = append(postDetails, &model.ApiPostDetail{
+			PublisherName:   user.Username,
+			PublisherAvator: user.Avatar,
+			PublisherIntro:  user.Intro,
+			DgPost:          p,
+		})
+	}
+
+	// 组装返回数据结构，保持与其他接口兼容的字段名
 	result := map[string]interface{}{
-		"list":  posts,
+		"list":  postDetails,
 		"total": total,
 		"page":  page,
 		"size":  size,

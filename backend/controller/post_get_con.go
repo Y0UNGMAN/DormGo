@@ -113,3 +113,24 @@ func GetPosts(c *gin.Context) {
 		"has_more": hasMore, // 是否还有下一页
 	})
 }
+
+// GetUserPosts 获取指定用户的帖子
+func GetUserPosts(c *gin.Context) {
+	userIDStr := c.Query("user_id")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "参数错误"})
+		return
+	}
+
+	data, err := logic.GetUserPosts(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "获取用户帖子失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"data": data,
+	})
+}

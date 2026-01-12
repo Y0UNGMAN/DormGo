@@ -14,7 +14,7 @@
         <div class="post-meta">
           <div class="user-info">
             <img 
-              :src="post.publisheravator" 
+              :src="displayAvatar(post)" 
               alt="用户头像" 
               class="user-avatar"
               @click.stop="openUserMenu({ 
@@ -23,7 +23,10 @@
                 avatar: post.publisheravator 
               })"
             >
-            <span class="user-name">{{ post.publishername }}</span>
+            <div class="user-meta">
+              <span class="user-name">{{ post.publishername }}</span>
+              <span v-if="displayIntro(post)" class="user-intro">{{ displayIntro(post) }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -222,6 +225,19 @@ import api from '@/api/index.ts';
 import { useUserStore } from '@/stores/user'
 import { computed } from 'vue'
 const userStore = useUserStore();
+
+const displayAvatar = (p) => {
+  if (!p) return ''
+  const pid = p.publisherid || p.PublisherId || p.PublisherId
+  if (pid && userStore.currentUser && pid === userStore.currentUser.userid) {
+    return p.publisheravator || userStore.userInfo?.avatarurl || p.User?.avatarurl || ''
+  }
+  return p.publisheravator || p.User?.avatarurl || ''
+}
+
+const displayIntro = (p) => {
+  return p?.publisherintro || p?.User?.intro || ''
+}
 
 const route = useRoute()
 const router = useRouter()

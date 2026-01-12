@@ -87,20 +87,20 @@ func Login(c *gin.Context) {
 func GetCurrentUser(c *gin.Context) (userID int64, err error) {
 	uid, ok := c.Get(middleware.CtxUserIDKey)
 	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": http.StatusInternalServerError,
-			"msg":  "用户未登录",
-		})
-		return
+		return 0, fmt.Errorf("user id not found in context")
 	}
-	userID, ok = uid.(int64)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": http.StatusInternalServerError,
-		})
-		return
+	switch v := uid.(type) {
+	case int64:
+		return v, nil
+	case int:
+		return int64(v), nil
+	case uint:
+		return int64(v), nil
+	case uint64:
+		return int64(v), nil
+	default:
+		return 0, fmt.Errorf("unsupported user id type: %T", uid)
 	}
-	return
 
 }
 
