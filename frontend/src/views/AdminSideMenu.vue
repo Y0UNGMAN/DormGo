@@ -31,10 +31,6 @@
       <template #title>通知管理</template>
     </el-menu-item>
 
-    <el-menu-item index="/admin/violations">
-      <el-icon><Warning /></el-icon>
-      <template #title>违规处理</template>
-    </el-menu-item>
     
     <el-sub-menu index="/admin/config-group">
       <template #title>

@@ -13,6 +13,11 @@
           <div class="edit-avatar-badge" @click="goToPage('/profile/detail')">📷</div>
         </div>
         <h2 class="user-name">{{ currentUser?.username || '未登录' }}</h2>
+        <div class="user-tags" v-if="dormname">
+          <span class="dorm-badge">
+            🏠 {{ dormname || '未知宿舍'}}
+          </span>
+        </div>
         <p class="user-bio">{{ userBio || '暂无个性签名...' }}</p>
         
         <div class="user-stats">
@@ -220,6 +225,7 @@ interface Notification {
 interface UserStats {
   total_likes: number;
   bio: string;
+  dorm_name: string;
 }
 
 // 通用 API 响应结构
@@ -247,7 +253,7 @@ const currentUserId = computed<number>(() => userStore.currentUserId || 0)
 // 用户数据
 const userBio = ref<string>('')
 const totalLikes = ref<number>(0)
-
+const dormname = ref<string>('')
 // 列表数据 (指定为数组类型)
 const myPosts = ref<Post[]>([])
 const favoritePosts = ref<Post[]>([])
@@ -401,6 +407,7 @@ const fetchUserStats = async () => {
     if (res.data.code === 200) {
       totalLikes.value = res.data.data?.total_likes || 0
       userBio.value = res.data.data?.bio || ''
+      dormname.value = res.data.data?.dorm_name || ''
     }
   } catch (error) {
     console.error('获取用户统计失败', error)
@@ -435,6 +442,7 @@ onMounted(() => {
   fetchMyPosts()
   fetchFavoritePosts()
   fetchUserStats()
+  console.log('当前用户:', currentUser.value);
 })
 </script>
 
@@ -883,5 +891,21 @@ onMounted(() => {
   background: #ff4d4f;
   color: white;
   opacity: 1;
+}
+/* 【新增】宿舍标签样式 */
+.user-tags {
+  margin: 8px 0 12px 0;
+}
+
+.dorm-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background-color: #e6f7ff; /* 淡蓝色背景 */
+  color: #1890ff;            /* 蓝色文字 */
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #91d5ff;
 }
 </style>

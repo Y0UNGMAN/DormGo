@@ -153,7 +153,7 @@ func GetUserStats(c *gin.Context) {
 
 	// 获取用户个性签名
 	var user model.DgUser
-	if err := model.DB.First(&user, id).Error; err != nil {
+	if err := model.DB.Preload("Dorm").First(&user, id).Error; err != nil {
 		// 如果没找到用户，返回空统计
 		c.JSON(http.StatusOK, gin.H{"code": 200, "data": gin.H{"total_likes": totalLikes, "bio": ""}})
 		return
@@ -164,6 +164,8 @@ func GetUserStats(c *gin.Context) {
 		"data": gin.H{
 			"total_likes": totalLikes,
 			"bio":         user.Intro,
+			"dorm_name":   user.Dorm.DormName,
+			"dorm_id":     user.Dorm.DormId,
 		},
 	})
 }
@@ -194,8 +196,6 @@ func GetUserCoins(c *gin.Context) {
 		},
 	})
 }
-
-
 
 // UploadAvatar 上传头像
 func UploadAvatar(c *gin.Context) {

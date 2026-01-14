@@ -25,7 +25,7 @@
             >
             <div class="user-meta">
               <span class="user-name">{{ post.publishername }}</span>
-              <span v-if="displayIntro(post)" class="user-intro">{{ displayIntro(post) }}</span>
+              
             </div>
           </div>
         </div>
@@ -313,7 +313,7 @@ const fetchPost = async () =>{
       isFavorited.value = response.data.isFavorited
       console.log('帖子数据:', post.value);
       console.log('当前用户是否点赞:', isLiked.value);
-      console.log('当前用户是否收藏:', isFavorited.value);
+      console.log('当前用户是否收藏:', isFavorited.value);s
     }
   }catch (err){
       console.error('获取帖子详情失败', err)
@@ -713,14 +713,34 @@ onMounted(() => {
 .post-content-text { font-size:16px; color:#333; line-height:1.8; margin:0 0 24px 0; white-space:pre-wrap; text-align:left; }
 
 .post-images {
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap:12px; margin-top:16px; justify-items:start;
+  display: grid;
+  /* 核心逻辑：
+     repeat(3, 1fr): 强制分为 3 列
+     或者使用 auto-fill 自动填充
+     这里推荐 3 列布局，最符合手机端习惯
+  */
+  grid-template-columns: repeat(3, 1fr); 
+  gap: 6px;              /* 图片之间的间隙 */
+  margin-top: 16px;
 }
 .detail-image {
-  width:100%; height:200px; border-radius:8px; object-fit:cover; cursor:pointer; transition:transform 0.3s ease;
+  width: 100%;        /* 填满格子宽度 */
+  height: 100%;       /* 填满格子高度 */
+  aspect-ratio: 1 / 1; /* ✅ 关键：强制图片比例为 1:1 的正方形 */
+  
+  /* object-fit: cover; 
+     这是“美观”的关键。它会保持比例填满格子，裁切掉多余边缘。
+     配合“点击预览”，用户可以在大图中看全图。
+     如果不希望裁切（哪怕留黑边也要显示全），请改为 object-fit: contain; 并加上 background: #f0f0f0;
+  */
+  object-fit: cover;  
+  
+  display: block;
+  border-radius: 4px;
+  cursor: zoom-in;     /* 提示可点击 */
+  border: 1px solid #f0f0f0; /* 加上微弱边框，防止白底图片看不清边界 */
 }
-.detail-image:hover { transform:scale(1.02); }
+.detail-image:hover { opacity: 0.95; /* 悬停时轻微反馈 */ }
 
 .action-buttons {
   display:flex; gap:12px; padding:20px; background:white; margin-top:20px; text-align:left;

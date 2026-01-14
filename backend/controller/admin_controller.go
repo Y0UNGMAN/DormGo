@@ -25,7 +25,7 @@ func AdminStatistics(c *gin.Context) {
 	model.DB.Model(&model.DgUser{}).Count(&totalUsers)
 	model.DB.Model(&model.DgPost{}).Count(&totalPosts)
 	model.DB.Model(&model.DgComment{}).Count(&totalComments)
-	model.DB.Model(&model.DgViolation{}).Count(&totalViolations)
+	model.DB.Model(&model.DgPost{}).Where("status = ?", "canceled").Count(&totalViolations)
 	model.DB.Model(&model.DgDorm{}).Count(&totalDorms)
 
 	// 2. 帖子分类统计 (关键修复部分)

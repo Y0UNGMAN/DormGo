@@ -19,7 +19,7 @@ type DgUser struct {
 	Intro       string    `gorm:"column:intro;type:varchar(255);" json:"intro"`
 	Email       string    `gorm:"column:email;type:varchar(255);" json:"email"`
 	DormId      uint      `gorm:"column:dormid" json:"dormid"`
-	Dorm        DgDorm    `gorm:"foreignkey:DormId;references:DormId" `
+	Dorm        DgDorm    `gorm:"foreignkey:DormId;references:DormId" json:"dorm"`
 	Status      int       `gorm:"column:status;default:1" json:"status"`               // 1:正常 2:封禁
 	CreditScore int       `gorm:"column:credit_score;default:100" json:"credit_score"` // 信用分
 	CreatedAt   time.Time `gorm:"column:created_at" json:"created_at"`
@@ -76,7 +76,7 @@ func InsertUser(user *DgUser) error {
 
 func Login(username, password string) (*DgUser, error) {
 	var user DgUser
-	err := DB.Where("username = ?", username).First(&user).Error
+	err := DB.Preload("Dorm").Where("username = ?", username).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("用户不存在")

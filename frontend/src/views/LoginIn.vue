@@ -140,7 +140,8 @@ const handleSubmit = async () => {
             username: data.user.username,  // 假设后端返回的 username
             avatarurl: data.user.avatarurl, // 假设后端返回的 avatar url
             dormid : data.user.dormid,
-            intro: data.user.intro || ''
+            intro: data.user.intro || '',
+            dorm: data.user.dorm
         };
         userStore.setLogin(token, user);
       alert('登录成功！')
@@ -181,19 +182,28 @@ const handleSubmit = async () => {
 .login-container {
   min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #e6f7ff 0%, #ffffff 100%);
+  align-items: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  /* 新增：增加内边距，防止小窗口时卡片贴边 */
   padding: 20px;
+  /* 新增：确保 padding 不会撑大容器 */
+  box-sizing: border-box;
 }
 
 .auth-card {
-  width: 100%;
-  max-width: 400px;
   background: white;
+  /* 修改：宽度改为 100%，让它随容器缩放 */
+  width: 100%;
+  /* 修改：保留原设计的 400px 作为最大宽度 */
+  max-width: 400px;
+  /* 新增：设置最小宽度限制，防止缩得太小无法阅读 (你的诉求) */
+  min-width: 300px;
+  
+  padding: 40px;
   border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  padding: 40px 30px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  /* 新增：平滑过渡效果，让调整窗口大小时更顺滑 */
   transition: all 0.3s ease;
 }
 
@@ -217,9 +227,9 @@ const handleSubmit = async () => {
 
 .auth-title {
   font-size: 24px;
-  color: #333;
-  margin-bottom: 8px;
   font-weight: 600;
+  color: #333;
+  margin: 0 0 5px 0;
 }
 
 .auth-subtitle {
@@ -227,7 +237,6 @@ const handleSubmit = async () => {
   font-size: 14px;
 }
 
-/* Tab 切换 */
 .auth-tabs {
   display: flex;
   margin-bottom: 30px;
@@ -237,10 +246,10 @@ const handleSubmit = async () => {
 .tab-item {
   flex: 1;
   text-align: center;
-  padding: 12px;
+  padding: 12px 0;
   cursor: pointer;
   color: #666;
-  font-weight: 500;
+  font-size: 16px;
   position: relative;
   transition: color 0.3s;
 }
@@ -282,6 +291,8 @@ const handleSubmit = async () => {
   font-size: 14px;
   transition: all 0.3s;
   background: #fafafa;
+  /* 新增：确保输入框宽度计算正确 */
+  box-sizing: border-box;
 }
 
 .custom-input:focus {
@@ -293,13 +304,12 @@ const handleSubmit = async () => {
 
 .submit-btn {
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   background: #1890ff;
   color: white;
   border: none;
   border-radius: 8px;
   font-size: 16px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   margin-top: 10px;
@@ -308,28 +318,41 @@ const handleSubmit = async () => {
 .submit-btn:hover {
   background: #40a9ff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
 }
 
-.auth-footer {
-  margin-top: 20px;
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
+/* --- 响应式适配 (关键优化部分) --- */
+
+/* 当窗口高度较小（如横屏手机或压扁的浏览器窗口）时 */
+@media (max-height: 600px) {
+  .login-container {
+    /* 取消垂直居中，改为顶部对齐，防止内容被切掉无法滚动 */
+    align-items: flex-start;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    /* 允许垂直滚动 */
+    overflow-y: auto; 
+  }
 }
 
-.footer-link {
-  color: #999;
-  cursor: pointer;
-}
+/* 当窗口宽度较小（移动端或缩小窗口）时 */
+@media (max-width: 480px) {
+  .auth-card {
+    /* 减小内边距，腾出更多空间给内容 */
+    padding: 24px;
+    /* 在小屏幕上稍微减小圆角 */
+    border-radius: 16px;
+  }
 
-.footer-text {
-  color: #1890ff;
-  cursor: pointer;
-  margin-left: auto;
-}
+  /* 稍微缩小标题字体 */
+  .auth-title {
+    font-size: 20px;
+  }
 
-.footer-text:hover {
-  text-decoration: underline;
+  .logo-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
 }
 </style>

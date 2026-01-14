@@ -168,6 +168,20 @@
         </button>
       </div>
     </div>
+    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-card" :class="modalType">
+        <div class="modal-icon">
+          <span v-if="modalType === 'success'">🎉</span>
+          <span v-else-if="modalType === 'error'">😭</span>
+          <span v-else>⚠️</span>
+        </div>
+        <h3 class="modal-title">{{ modalTitle }}</h3>
+        <p class="modal-message">{{ modalMessage }}</p>
+        <button class="modal-btn" @click="handleModalConfirm">
+          {{ modalBtnText }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -194,6 +208,38 @@ const form = ref({
   deadline: '',
   maxEnrollment: 0
 })
+
+// --- 【新增】弹窗相关状态 ---
+const showModal = ref(false)
+const modalType = ref('info') // success, error, warning
+const modalTitle = ref('')
+const modalMessage = ref('')
+const modalBtnText = ref('我知道了')
+let modalConfirmCallback = null
+
+// --- 【新增】显示弹窗的辅助函数 ---
+const showAlert = (message, type = 'warning', title = '提示', callback = null) => {
+  modalMessage.value = message
+  modalType.value = type
+  modalTitle.value = title
+  modalBtnText.value = type === 'success' ? '好的' : '关闭'
+  modalConfirmCallback = callback
+  showModal.value = true
+}
+
+// --- 【新增】关闭/确认弹窗 ---
+const closeModal = () => {
+  showModal.value = false
+  if (modalConfirmCallback) {
+    modalConfirmCallback()
+    modalConfirmCallback = null
+  }
+}
+
+const handleModalConfirm = () => {
+  closeModal()
+}
+
 // AI Loading 状态
 const isAiLoading = ref(false)
 // 状态
@@ -302,13 +348,13 @@ const handlePublish = async () => {
   isSubmitting.value = true
 
   if (!userStore.isLoggedIn) {
-        alert("请先登录才能发布帖子！")
-        router.push('/') 
-        return
+      showAlert("请先登录才能发布帖子！", "warning", "未登录", () => router.push('/'))
+      isSubmitting.value = false // 别忘了重置 loading
+      return
     }
   if (form.value.isLimited) {
     if (!form.value.deadline) {
-        alert("请选择截止时间")
+        showAlert("请选择截止时间", "warning")
         isSubmitting.value = false
         return
     }
@@ -337,16 +383,17 @@ const handlePublish = async () => {
     })
     console.log('创建帖子响应:', res.data);
     if (res.data.code === 200) {
-      alert('发布成功！')
-      router.push('/dormgo')
+      showAlert('发布成功！快去看看吧', 'success', '发布成功', () => {
+        router.push('/dormgo')
+      })
     } else {
       // 这里会显示 "内容审核未通过: xxx"
-      alert(res.data.msg || "发布失败")
+      showAlert(res.data.msg || "发布失败", 'error', '发布被拦截')
     }
     
   } catch (error) {
     console.error('网络崩溃:', error)
-    alert("网络连接异常")
+    showAlert("网络连接异常，请检查网络", "error", "网络错误")
     // request.ts 拦截器会处理错误提示
   } finally {
     isSubmitting.value = false
@@ -356,7 +403,7 @@ const handlePublish = async () => {
 const handleAiPolish = async () => {
   // 简单校验
   if (!form.value.content || form.value.content.trim().length < 2) {
-    alert("请至少写几个字，AI 才能帮你润色哦~")
+    showAlert("请至少写几个字，AI 才能帮你润色哦~", "warning")
     return
   }
 
@@ -864,4 +911,94 @@ onMounted(() => {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ... 原有的样式 ... */
+
+/* --- 【新增】弹窗样式 --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6); /* 半透明深色遮罩 */
+  backdrop-filter: blur(4px); /* 背景模糊效果，更高级 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-card {
+  background: white;
+  width: 80%;
+  max-width: 320px;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: scale(0.9);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; /* 弹性弹出动画 */
+}
+
+/* 状态颜色边框装饰 */
+.modal-card.error { border-top: 5px solid #ff4d4f; }
+.modal-card.success { border-top: 5px solid #52c41a; }
+.modal-card.warning { border-top: 5px solid #faad14; }
+
+.modal-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.modal-message {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 24px;
+  /* 允许长文本换行 */
+  white-space: pre-wrap; 
+}
+
+.modal-btn {
+  width: 100%;
+  padding: 12px 0;
+  background: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.modal-btn:hover {
+  background: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.modal-card.error .modal-btn { background: #ff4d4f; }
+.modal-card.error .modal-btn:hover { background: #ff7875; box-shadow: 0 4px 12px rgba(255, 77, 79, 0.3); }
+
+/* 动画定义 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 </style>

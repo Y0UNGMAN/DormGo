@@ -11,6 +11,12 @@
           <img :src="userInfo.avatarurl || defaultAvatar" class="large-avatar" />
         </div>
         <h2 class="user-name">{{ userInfo.username || '加载中...' }}</h2>
+        <div class="user-tags" v-if="userInfo.dorm">
+          <span class="dorm-badge">
+            🏠 {{ userInfo.dorm.dormname }}
+          </span>
+        </div>
+
         <p class="user-bio">{{ userInfo.intro || '这个人很懒，什么都没写' }}</p>
         
       </div>
@@ -122,4 +128,23 @@ onMounted(() => {
 .list-container { padding-top: 10px; }
 .empty-state { text-align: center; padding: 60px 0; color: #999; }
 .empty-emoji { font-size: 40px; margin-bottom: 10px; }
+
+/* 【新增】宿舍标签样式 */
+.user-tags {
+  margin: 8px 0 12px 0;
+  display: flex;
+  justify-content: center; /* 居中显示 */
+}
+
+.dorm-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background-color: #f6ffed; /* 绿色背景，区分自己 */
+  color: #52c41a;            /* 绿色文字 */
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #b7eb8f;
+}
 </style>
