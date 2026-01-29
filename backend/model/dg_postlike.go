@@ -17,12 +17,37 @@ type DgPostLike struct {
 	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
+// PostLike 点赞操作，使用事务确保点赞和通知的一致性
 func PostLike(like *DgPostLike) error {
-	err := DB.Create(like).Error
-	if err != nil {
-		return err
-	}
-	return nil
+	return DB.Transaction(func(tx *gorm.DB) error {
+		// 1. 在点赞表中增加记录
+		if err := tx.Create(like).Error; err != nil {
+			return err
+		}
+
+		// 2. 获取被点赞的帖子信息（为了拿到 PublisherId）
+		var post DgPost
+		// 只查询 publisherid 字段即可
+		if err := tx.Select("publisherid").Where("id = ?", like.PostID).First(&post).Error; err != nil {
+			return err
+		}
+
+		// 3. 给帖子发布者发送通知（如果点赞的不是自己的帖子）
+		if post.PublisherId != like.LikerID {
+			notification := DgNotification{
+				ReceiverID: post.PublisherId,
+				SenderID:   like.LikerID, // 点赞者即为发送通知的人
+				Type:       "like",       // 通知的类型，前端可据此显示图标等
+				PostID:     like.PostID,
+				Content:    "赞了你的帖子", // 通知的具体内容
+			}
+			if err := tx.Create(&notification).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func CancelPostLike(postid uint, likerid uint) error {

@@ -100,6 +100,14 @@
                 <span v-if="note.post" class="highlight">《{{ note.post.title }}》</span>
               </p>
             </template>
+
+            <template v-else-if="note.type === 'like'">
+              <p class="note-text">
+                <span class="highlight">{{ note.sender?.username }}</span> 
+                {{ note.content }} <span v-if="note.post" class="highlight">《{{ note.post.title }}》</span>
+              </p>
+            </template>
+
             <span class="note-time">{{ formatTime(note.created_at) }}</span>
           </div>
 
@@ -187,48 +195,43 @@ import api from '@/api/index'
 
 // --- 1. 类型定义 (Interfaces) ---
 
-// 宿舍类型
 interface Dorm {
   dormname: string;
 }
 
-// 用户类型
 interface User {
   id: number;
   username: string;
   avatarurl: string;
   studentid?: string;
-  intro?: string; // 对应 bio
+  intro?: string; 
   dorm?: Dorm;
 }
 
-// 简化的帖子类型 (根据 Card 组件需求)
 interface Post {
   id: number;
   title: string;
   content?: string;
-  [key: string]: any; // 允许其他字段
+  [key: string]: any; 
 }
 
-// 通知类型
+// 【修改】增加 'like' 类型
 interface Notification {
   id: number;
-  type: 'system' | 'signup';
+  type: 'system' | 'signup' | 'like';
   content: string;
   created_at: string;
   sender?: User;
-  post?: { title: string };
+  post?: { id: number; title: string }; // 确保包含 id 方便跳转
   is_read?: boolean;
 }
 
-// 统计数据响应结构
 interface UserStats {
   total_likes: number;
   bio: string;
   dorm_name: string;
 }
 
-// 通用 API 响应结构
 interface ApiResponse<T> {
   code: number;
   data: T;
@@ -242,7 +245,6 @@ const userStore = useUserStore()
 
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
-// 使用具体的类型定义 tab
 type TabType = 'posts' | 'likes' | 'notifications';
 const activeTab = ref<TabType>('posts')
 
@@ -250,20 +252,17 @@ const unreadCount = computed<number>(() => userStore.unreadCount || 0)
 const currentUser = computed<User | null>(() => userStore.currentUser as User | null)
 const currentUserId = computed<number>(() => userStore.currentUserId || 0)
 
-// 用户数据
 const userBio = ref<string>('')
 const totalLikes = ref<number>(0)
 const dormname = ref<string>('')
-// 列表数据 (指定为数组类型)
+
 const myPosts = ref<Post[]>([])
 const favoritePosts = ref<Post[]>([])
 const notifications = ref<Notification[]>([])
 
-// 弹窗状态与数据
 const showModal = ref(false)
 const showSystemModal = ref(false)
 
-// currentApplicant 可能是 Notification，也可能是 null (或者使用 Partial<Notification> 初始化为空对象)
 const currentApplicant = ref<Partial<Notification>>({}) 
 const currentSystemNote = ref<Partial<Notification>>({})
 
@@ -293,7 +292,6 @@ const formatTime = (timeStr?: string): string => {
 // 获取通知
 const fetchNotifications = async () => {
   try {
-    // 显式指定 API 返回类型
     const res = await api.get<ApiResponse<Notification[]>>('/api/v1/message/notifications')
     if (res.data.code === 200) {
       notifications.value = res.data.data
@@ -305,7 +303,6 @@ const fetchNotifications = async () => {
 
 const handleDeletePost = async (postId: number) => {
   try {
-    // 1. 确认弹窗
     await ElMessageBox.confirm(
       '确定要删除这条帖子吗？删除后无法恢复。',
       '提示',
@@ -316,16 +313,11 @@ const handleDeletePost = async (postId: number) => {
       }
     )
 
-    // 2. 调用 API (根据后端路由 /api/v1/post/:id)
     const res = await api.delete(`/api/v1/post/${postId}`)
 
     if (res.data.code === 200) {
       ElMessage.success('删除成功')
-      
-      // 3. 更新本地列表（不用刷新页面）
       myPosts.value = myPosts.value.filter(p => p.id !== postId)
-      
-      // 可选：更新统计数据
       fetchUserStats()
     } else {
       ElMessage.error(res.data.msg || '删除失败')
@@ -338,29 +330,31 @@ const handleDeletePost = async (postId: number) => {
   }
 }
 
-// 显示报名者详情
 const showApplicantInfo = (note: Notification) => {
   currentApplicant.value = note
   showModal.value = true
 }
 
-// 显示系统通知详情
 const showSystemDetail = (note: Notification) => {
   currentSystemNote.value = note
   showSystemModal.value = true
 }
 
-// 处理点击通知条目
+// 【修改】处理点击通知
 const handleNoteClick = (note: Notification) => {
   if (note.type === 'system') {
-    // 系统通知可以在这里做逻辑，比如直接查看
-    // showSystemDetail(note); 
     return
   }
   
   if (note.type === 'signup') {
     currentApplicant.value = note
     showModal.value = true
+    return
+  }
+
+  // 新增：点击点赞通知跳转到帖子详情页
+  if (note.type === 'like' && note.post?.id) {
+    router.push(`/post/${note.post.id}`)
   }
 }
 
@@ -372,7 +366,6 @@ const goToChat = (targetUserId?: number) => {
   })
 }
 
-// 获取我的帖子
 const fetchMyPosts = async () => {
   try {
     const res = await api.get<ApiResponse<Post[]>>('/api/v1/post/user_posts', {
@@ -387,12 +380,10 @@ const fetchMyPosts = async () => {
   }
 }
 
-// 获取收藏
 const fetchFavoritePosts = async () => {
   try {
     const res = await api.get<ApiResponse<Post[]>>('/api/v1/post/my_favorites')
     if (res.data.code === 200) {
-      console.log('my_favorites API 返回：', res.data.data)
       favoritePosts.value = res.data.data || []
     }
   } catch (error) {
@@ -400,7 +391,6 @@ const fetchFavoritePosts = async () => {
   }
 }
 
-// 获取用户统计
 const fetchUserStats = async () => {
   try {
     const res = await api.get<ApiResponse<UserStats>>('/api/v1/user/stats')
@@ -411,14 +401,12 @@ const fetchUserStats = async () => {
     }
   } catch (error) {
     console.error('获取用户统计失败', error)
-    // 降级策略
     if (currentUser.value && currentUser.value.intro) {
       userBio.value = currentUser.value.intro
     }
   }
 }
 
-// 计算属性：根据 Tab 显示不同列表
 const displayPosts = computed<Post[]>(() => {
   if (activeTab.value === 'posts') return myPosts.value
   if (activeTab.value === 'likes') return favoritePosts.value
@@ -430,9 +418,8 @@ const displayPosts = computed<Post[]>(() => {
 watch(activeTab, async (newVal) => {
   if (newVal === 'notifications') {
     await fetchNotifications()
-    // 标记已读
     await api.post('/api/v1/message/read_all')
-    userStore.clearUnread() // 假设 store 有这个 action
+    userStore.clearUnread() 
   } else if (newVal === 'likes') {
     await fetchFavoritePosts()
   }
@@ -442,7 +429,6 @@ onMounted(() => {
   fetchMyPosts()
   fetchFavoritePosts()
   fetchUserStats()
-  console.log('当前用户:', currentUser.value);
 })
 </script>
 
@@ -453,7 +439,6 @@ onMounted(() => {
   background: #f5f5f5;
 }
 
-/* 顶部导航 */
 .nav-bar {
   background: white;
   padding: 15px 20px;
@@ -475,7 +460,7 @@ onMounted(() => {
 }
 
 .logout-btn {
-  color: #ff4d4f; /* 红色警告色 */
+  color: #ff4d4f; 
 }
 
 .page-title {
@@ -483,7 +468,6 @@ onMounted(() => {
   font-size: 16px;
 }
 
-/* 头部信息 */
 .profile-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 30px 20px;
@@ -566,7 +550,6 @@ onMounted(() => {
   margin-top: 4px;
 }
 
-/* 功能入口区 */
 .function-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -603,7 +586,6 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* 内容区域 */
 .profile-content {
   max-width: 800px;
   margin: 0 auto;
@@ -651,7 +633,6 @@ onMounted(() => {
   padding-top: 10px;
 }
 
-/* 空状态 */
 .empty-state {
   text-align: center;
   padding: 60px 0;
@@ -673,11 +654,10 @@ onMounted(() => {
   cursor: pointer;
 }
 
-/* --- 新增：通知列表样式 --- */
 .notification-list {
   background: white;
   min-height: 300px;
-  padding: 0; /* 贴合边缘 */
+  padding: 0; 
 }
 
 .notification-item {
@@ -739,7 +719,6 @@ onMounted(() => {
   border-color: #1890ff;
 }
 
-/* 小红点 badge */
 .badge {
   display: inline-block;
   width: 8px;
@@ -751,14 +730,13 @@ onMounted(() => {
   right: -5px;
 }
 
-/* --- 新增：弹窗样式 --- */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6); /* 半透明遮罩 */
+  background: rgba(0, 0, 0, 0.6); 
   display: flex;
   justify-content: center;
   align-items: center;
@@ -842,7 +820,6 @@ onMounted(() => {
   background: #e6e6e6;
 }
 
-/* 动画 */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -862,11 +839,10 @@ onMounted(() => {
 .modal-time { font-size: 12px; color: #999; }
 
 .post-wrapper {
-  position: relative; /* 为绝对定位的删除按钮提供参考 */
+  position: relative; 
   margin-bottom: 16px;
 }
 
-/* 调整 Card 的 margin，因为现在由 wrapper 控制间距 */
 .profile-post-card {
   margin-bottom: 0 !important; 
 }
@@ -882,7 +858,7 @@ onMounted(() => {
   padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
-  z-index: 10; /* 确保在卡片上方 */
+  z-index: 10; 
   transition: all 0.3s;
   opacity: 0.8;
 }
@@ -892,7 +868,7 @@ onMounted(() => {
   color: white;
   opacity: 1;
 }
-/* 【新增】宿舍标签样式 */
+
 .user-tags {
   margin: 8px 0 12px 0;
 }
@@ -901,8 +877,8 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  background-color: #e6f7ff; /* 淡蓝色背景 */
-  color: #1890ff;            /* 蓝色文字 */
+  background-color: #e6f7ff; 
+  color: #1890ff;            
   border-radius: 12px;
   font-size: 13px;
   font-weight: 500;
