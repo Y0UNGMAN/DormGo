@@ -65,6 +65,11 @@
 
       <!-- 正文内容 -->
       <div class="content-section">
+        <!-- 新增摘要区域 -->
+        <div v-if="post.summary" class="summary-section">
+          <div class="summary-label">📝 摘要</div>
+          <p class="summary-text">{{ post.summary }}</p>
+        </div>
         <p class="post-content-text">{{ post.content }}</p>
         <div v-if="post.images && post.images.length > 0" class="post-images">
           <img 
@@ -1225,6 +1230,26 @@ onMounted(() => {
     background: #fffbe6; 
     color: #faad14; 
     border-color: #faad14;
+}
+/* 摘要样式 */
+.summary-section {
+  background: #f0f7ff;
+  border-left: 4px solid #1890ff;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+.summary-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1890ff;
+  margin-bottom: 6px;
+}
+.summary-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #555;
+  margin: 0;
 }
 
 </style>

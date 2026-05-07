@@ -10,6 +10,7 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
+	github.com/importcjj/sensitive v0.0.0-20200106142752-42d1c505be7b
 	github.com/spf13/viper v1.21.0
 	golang.org/x/crypto v0.42.0
 	gorm.io/driver/mysql v1.6.0
@@ -31,7 +32,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
-	github.com/importcjj/sensitive v0.0.0-20200106142752-42d1c505be7b // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

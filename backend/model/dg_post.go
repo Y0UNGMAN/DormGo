@@ -15,6 +15,7 @@ type DgPost struct {
 	Dorm              DgDorm     `gorm:"foreignkey:DormId;references:DormId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" `
 	Title             string     `gorm:"column:title;type:varchar(255);" json:"title" binding:"required"`
 	Content           string     `gorm:"column:content;type:text;" json:"content" binding:"required"`
+	Summary           string     `gorm:"column:summary;type:varchar(500);default:''" json:"summary"`
 	TypeId            uint       `gorm:"column:typeid" json:"typeid" binding:"required"`
 	Type              DgType     `gorm:"foreignkey:TypeId;references:TypeId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" `
 	Status            string     `gorm:"column:status;type:varchar(50);" json:"status"`
