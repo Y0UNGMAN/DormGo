@@ -139,6 +139,10 @@
       <span class="fab-icon">📝</span>
       发布帖子
     </button>
+    <button class="agent-fab" @click="goToAgent">
+      <span class="fab-icon">✦</span>
+      校园助手
+    </button>
   </div>
 </template>
 
@@ -334,6 +338,10 @@ const clearAllFilters = () => {
 // 路由跳转
 const handlePublish = () => {
   router.push('/publish')
+}
+
+const goToAgent = () => {
+  router.push('/agent')
 }
 
 const goToProfile = () => {
@@ -535,6 +543,33 @@ onUnmounted(() => {
   transform: translateY(-4px) scale(1.02); /* 悬浮效果增强 */
   box-shadow: 0 12px 24px rgba(118, 75, 162, 0.5);
 }
+
+.agent-fab {
+  position: fixed;
+  bottom: 96px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 22px;
+  background: #ffffff;
+  color: #38405f;
+  border: 1px solid #d9dde7;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(31, 41, 55, 0.16);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.agent-fab:hover {
+  transform: translateY(-3px);
+  border-color: #667eea;
+  color: #4f5fc8;
+}
+
 /* 主内容区 */
 .main-content { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; }
 .sidebar {
@@ -707,6 +742,13 @@ onUnmounted(() => {
     bottom: 20px;
     right: 20px;
     padding: 14px 20px;
+    font-size: 14px;
+  }
+
+  .agent-fab {
+    bottom: 82px;
+    right: 20px;
+    padding: 12px 18px;
     font-size: 14px;
   }
 }

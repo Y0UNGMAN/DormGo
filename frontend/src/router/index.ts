@@ -28,6 +28,7 @@ const LoginIn = () => import('@/views/LoginIn.vue')
 const ChatPage = () => import('@/views/ChatPage.vue')
 const Messages = () => import('@/views/MessageList.vue')
 const OtherUserProfile = () => import('@/views/OtherUserProfile.vue')
+const AgentAssistant = () => import('@/views/AgentAssistant.vue')
 // 用户个人中心子页面
 const UserDetail = () => import('@/views/UserDetail.vue')
 const CoinFlow = () => import('@/views/CoinFlow.vue')
@@ -194,6 +195,12 @@ const routes: RouteRecordRaw[] = [
     name: 'Messages',
     component: Messages,
     meta: { title : "消息列表" }
+  },
+  {
+    path: '/agent',
+    name: 'AgentAssistant',
+    component: AgentAssistant,
+    meta: { title: '校园任务助手' }
   },
   {
     path: '/user/:id', 

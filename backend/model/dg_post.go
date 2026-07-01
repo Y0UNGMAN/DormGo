@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -95,6 +96,53 @@ func GetPosts(page int, pageSize int) ([]*DgPost, int64, error) {
 		return nil, 0, err
 	}
 	return posts, total, err
+}
+
+func SearchSignupPosts(keyword string, limit int) ([]*DgPost, error) {
+	return searchPosts(keyword, limit, true)
+}
+
+func SearchNormalPosts(keyword string, limit int) ([]*DgPost, error) {
+	return searchPosts(keyword, limit, false)
+}
+
+func searchPosts(keyword string, limit int, signupOnly bool) ([]*DgPost, error) {
+	posts := make([]*DgPost, 0)
+	query := DB.Preload("Images").
+		Preload("Dorm").
+		Preload("Type").
+		Where("status = ?", "normal")
+
+	if signupOnly {
+		query = query.Where("is_limited = ?", true).
+			Where("(deadline IS NULL OR deadline > ?)", time.Now()).
+			Where("(max_enrollment = 0 OR current_enrollment < max_enrollment)")
+	}
+
+	terms := strings.Fields(strings.TrimSpace(keyword))
+	if len(terms) == 0 && strings.TrimSpace(keyword) != "" {
+		terms = []string{strings.TrimSpace(keyword)}
+	}
+	if len(terms) > 0 {
+		likeArgs := make([]interface{}, 0, len(terms)*2)
+		conditions := make([]string, 0, len(terms))
+		for _, term := range terms {
+			like := "%" + term + "%"
+			conditions = append(conditions, "(title LIKE ? OR content LIKE ?)")
+			likeArgs = append(likeArgs, like, like)
+		}
+		query = query.Where(strings.Join(conditions, " OR "), likeArgs...)
+	}
+
+	if limit <= 0 || limit > 10 {
+		limit = 5
+	}
+	err := query.Order("is_pinned desc, created_at desc").Limit(limit).Find(&posts).Error
+	if err != nil {
+		fmt.Println("search posts error: ", err)
+		return nil, err
+	}
+	return posts, nil
 }
 
 // 点赞数加一

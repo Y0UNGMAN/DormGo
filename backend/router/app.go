@@ -87,6 +87,23 @@ func App() *gin.Engine {
 		message.GET("/conversations", controller.GetConversations)
 	}
 
+	agent := r.Group("/api/v1/agent")
+	agent.Use(middleware.JWTAuthMiddleware())
+	{
+		agent.POST("/chat", controller.AgentChat)
+	}
+
+	internalAgent := r.Group("/internal/agent/tools")
+	{
+		internalAgent.POST("/search_posts", controller.InternalSearchPosts)
+		internalAgent.POST("/search_signup_posts", controller.InternalSearchSignupPosts)
+		internalAgent.POST("/prepare_signup", controller.InternalPrepareSignup)
+		internalAgent.POST("/prepare_signup_from_candidate", controller.InternalPrepareSignupFromCandidate)
+		internalAgent.POST("/confirm_signup", controller.InternalConfirmSignup)
+		internalAgent.POST("/get_session", controller.InternalGetAgentSession)
+		internalAgent.POST("/save_session", controller.InternalSaveAgentSession)
+	}
+
 	post := r.Group("/api/v1/post")
 	{
 		//获取所有宿舍
