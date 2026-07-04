@@ -4,7 +4,7 @@ import path from 'path'
 import type { ConfigEnv, UserConfig } from 'vite' // 补充类型导入
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
+export default defineConfig(({}: ConfigEnv): UserConfig => {
   return {
     plugins: [vue()],
     resolve: {

@@ -26,6 +26,14 @@ class GoToolClient:
         payload = {"user_id": user_id, "index": index}
         return self._post("/internal/agent/tools/prepare_signup_from_candidate", payload)
 
+    def get_post_detail(self, user_id: int, post_id: int):
+        payload = {"user_id": user_id, "post_id": post_id}
+        return self._post("/internal/agent/tools/post_detail", payload)
+
+    def get_post_detail_from_candidate(self, user_id: int, index: int = 1):
+        payload = {"user_id": user_id, "index": index}
+        return self._post("/internal/agent/tools/post_detail_from_candidate", payload)
+
     def confirm_signup(self, user_id: int, action_id: str = ""):
         payload = {"user_id": user_id, "action_id": action_id}
         return self._post("/internal/agent/tools/confirm_signup", payload)
@@ -35,11 +43,18 @@ class GoToolClient:
         data = self._post("/internal/agent/tools/get_session", payload)
         return data.get("data") or {"user_id": user_id, "last_candidates": [], "history": []}
 
-    def save_session(self, user_id: int, last_candidates=None, history=None):
+    def get_all_posts(self, limit: int = 100):
+        payload = {"limit": limit}
+        data = self._post("/internal/agent/tools/all_posts", payload)
+        return data.get("data") or []
+
+    def save_session(self, user_id: int, last_candidates=None, history=None, selected_post=None, pending_action=None):
         payload = {
             "user_id": user_id,
             "last_candidates": last_candidates or [],
             "history": history or [],
+            "selected_post": selected_post or {},
+            "pending_action": pending_action or {},
         }
         return self._post("/internal/agent/tools/save_session", payload)
 

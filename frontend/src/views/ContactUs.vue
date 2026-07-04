@@ -96,7 +96,9 @@ const goBack = () => {
 }
 
 const toggleFaq = (index: number) => {
-  faqs.value[index].expanded = !faqs.value[index].expanded
+  const faq = faqs.value[index]
+  if (!faq) return
+  faq.expanded = !faq.expanded
 }
 </script>
 

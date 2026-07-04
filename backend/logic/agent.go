@@ -53,10 +53,12 @@ type AgentHistoryItem struct {
 }
 
 type AgentSession struct {
-	UserID         uint                `json:"user_id"`
-	LastCandidates []AgentCandidateRef `json:"last_candidates"`
-	History        []AgentHistoryItem  `json:"history"`
-	UpdatedAt      time.Time           `json:"updated_at"`
+	UserID         uint                   `json:"user_id"`
+	LastCandidates []AgentCandidateRef    `json:"last_candidates"`
+	History        []AgentHistoryItem     `json:"history"`
+	SelectedPost   map[string]interface{} `json:"selected_post,omitempty"`
+	PendingAction  map[string]interface{} `json:"pending_action,omitempty"`
+	UpdatedAt      time.Time              `json:"updated_at"`
 }
 
 func PendingActionKey(userID uint) string {
@@ -135,6 +137,34 @@ func SearchSignupPosts(keyword string, limit int, userID uint) ([]*model.ApiPost
 
 func SearchPosts(keyword string, limit int, userID uint) ([]*model.ApiPostDetail, error) {
 	return buildPostDetails(model.SearchNormalPosts, keyword, limit, userID)
+}
+
+func GetAgentPostDetail(userID uint, postID uint) (*model.ApiPostDetail, error) {
+	post, err := model.GetPostDetail(int(postID))
+	if err != nil {
+		return nil, err
+	}
+	user, err := model.GetUserById(int(post.PublisherId))
+	if err != nil {
+		return nil, err
+	}
+	isSignedUp := false
+	if userID > 0 {
+		isSignedUp, _ = model.CheckIsSignedUp(post.ID, userID)
+	}
+	return &model.ApiPostDetail{
+		PublisherName:   user.Username,
+		PublisherAvator: user.Avatar,
+		PublisherIntro:  user.Intro,
+		IsSignedUp:      isSignedUp,
+		DgPost:          post,
+	}, nil
+}
+
+// GetAllPostsForIndex returns all active posts for vector index building.
+// Returns bare DgPost models (no user enrichment) for embedding.
+func GetAllPostsForIndex(limit int) ([]*model.DgPost, error) {
+	return model.GetAllActivePostsForIndex(limit)
 }
 
 func buildPostDetails(search func(string, int) ([]*model.DgPost, error), keyword string, limit int, userID uint) ([]*model.ApiPostDetail, error) {
@@ -255,6 +285,20 @@ func SaveAgentSession(session *AgentSession) error {
 	return myredis.GetClient().Set(AgentSessionKey(session.UserID), string(payload), agentSessionTTL).Err()
 }
 
+func GetPostDetailFromCandidate(userID uint, index int) (*model.ApiPostDetail, error) {
+	session, err := GetAgentSession(userID)
+	if err != nil {
+		return nil, err
+	}
+	if index <= 0 {
+		index = 1
+	}
+	if index > len(session.LastCandidates) {
+		return nil, errors.New("没有可引用的候选帖子，请先搜索帖子")
+	}
+	return GetAgentPostDetail(userID, session.LastCandidates[index-1].PostID)
+}
+
 func PrepareSignupFromCandidate(userID uint, index int) (*PendingSignupAction, error) {
 	session, err := GetAgentSession(userID)
 	if err != nil {
@@ -271,4 +315,72 @@ func PrepareSignupFromCandidate(userID uint, index int) (*PendingSignupAction, e
 		return nil, errors.New("这个帖子没有开启报名，不能报名")
 	}
 	return PrepareSignupAction(userID, candidate.PostID)
+}
+
+func ChatWithAgentStream(userID uint, message string, w http.ResponseWriter) error {
+	message = strings.TrimSpace(message)
+	if message == "" {
+		return errors.New("消息不能为空")
+	}
+
+	serviceURL := strings.TrimRight(viper.GetString("agent.ServiceURL"), "/")
+	if serviceURL == "" {
+		serviceURL = "http://127.0.0.1:8090"
+	}
+
+	reqBody := agentPythonRequest{
+		UserID:        userID,
+		Message:       message,
+		InternalToken: AgentInternalToken(),
+		GoBaseURL:     GoPublicBaseURL(),
+	}
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, serviceURL+"/chat/stream", bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 90 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Agent 服务不可用: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("Agent 服务返回异常状态: %d", resp.StatusCode)
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		return errors.New("streaming not supported")
+	}
+
+	buf := make([]byte, 4096)
+	for {
+		n, readErr := resp.Body.Read(buf)
+		if n > 0 {
+			if _, writeErr := w.Write(buf[:n]); writeErr != nil {
+				return writeErr
+			}
+			flusher.Flush()
+		}
+		if readErr != nil {
+			if readErr.Error() == "EOF" {
+				break
+			}
+			return readErr
+		}
+	}
+	return nil
 }

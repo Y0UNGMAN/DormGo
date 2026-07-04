@@ -1,0 +1,194 @@
+{"kind":"deck","id":"pr/e62mln","name":"Deck"}
+{"kind":"layout","layoutId":"/ppt/slideMasters/slideMaster1.xml","name":"","type":"master","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"body","type":"body","textPreview":"单击此处编辑母版文本样式 | 二级 | 三级 | 四级 | 五级"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout1.xml","name":"标题幻灯片","type":"title","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"subtitle","type":"subtitle","textPreview":"单击此处编辑母版副标题样式"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout2.xml","name":"标题和内容","type":"obj","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"2","textPreview":"单击此处编辑母版文本样式 | 二级 | 三级 | 四级 | 五级"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout3.xml","name":"节标题","type":"secHead","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"body","type":"body","textPreview":"单击此处编辑母版文本样式"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout4.xml","name":"两栏内容","type":"twoObj","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"2","textPreview":"单击此处编辑母版文本样式 | 二级 | 三级 | 四级 | 五级"},{"name":"3","textPreview":"单击此处编辑母版文本样式 | 二级 | 三级 | 四级 | 五级"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout5.xml","name":"比较","type":"twoTxTwoObj","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"body","type":"body","textPreview":"单击此处编辑母版文本样式"},{"name":"3","textPreview":"单击此处编辑母版文本样式 | 二级 | 三级 | 四级 | 五级"},{"name":"body","type":"body","textPreview":"单击此处编辑母版文本样式"},{"name":"5","textPreview":"单击此处编辑母版文本样式 | 二级 | 三级 | 四级 | 五级"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout6.xml","name":"仅标题","type":"titleOnly","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout7.xml","name":"空白","type":"blank","placeholders":[{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout8.xml","name":"内容与标题","type":"objTx","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"2","textPreview":"单击此处编辑母版文本样式 | 二级 | 三级 | 四级 | 五级"},{"name":"body","type":"body","textPreview":"单击此处编辑母版文本样式"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout9.xml","name":"图片与标题","type":"picTx","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"picture","type":"picture"},{"name":"body","type":"body","textPreview":"单击此处编辑母版文本样式"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout10.xml","name":"标题和竖排文字","type":"vertTx","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"body","type":"body","textPreview":"单击此处编辑母版文本样式 | 二级 | 三级 | 四级 | 五级"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout11.xml","name":"竖排标题与文本","type":"vertTitleAndTx","placeholders":[{"name":"title","type":"title","textPreview":"单击此处编辑母版标题样式"},{"name":"body","type":"body","textPreview":"单击此处编辑母版文本样式 | 二级 | 三级 | 四级 | 五级"},{"name":"dateTime","type":"dateTime","textPreview":"2026/01/14"},{"name":"footer","type":"footer"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"}]}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout12.xml","name":"1_标题幻灯片"}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout13.xml","name":"1_标题和内容","placeholders":[{"name":"title","type":"title","textPreview":"在这里填，求不弄乱样式"},{"name":"2","textPreview":"在这里填，求不弄乱样式"},{"name":"slideNumber","type":"slideNumber","textPreview":"‹#›"},{"name":"2","textPreview":"在这里填，求不弄乱样式"}]}
+{"kind":"slide","id":"sl/2x4nap4r","slide":1,"title":"《综合实训项目答辩》","textShapes":3}
+{"kind":"shape","id":"sh/54zidony","slide":1,"name":"直接连接符 6","bbox":[0,100.04,1280,1.75]}
+{"kind":"shape","id":"sh/u9knih4b","slide":1,"name":"矩形 7","bbox":[0,187.85,1280,287.34]}
+{"kind":"textbox","id":"sh/judg7ads","slide":1,"name":"矩形 8","text":"《综合实训项目答辩》\n--DormGo Agent 功能升级","textPreview":"《综合实训项目答辩》 | --DormGo Agent 功能升级","textChars":30,"textLines":2,"bbox":[224.39,258.21,843.36,193.92]}
+{"kind":"textbox","id":"sh/cvixczed","slide":1,"name":"文本框 1","text":"主题：面向校园社区的任务型 Agent\n核心：ReAct 推理循环 + 工具调用 + 安全报名确认","textPreview":"主题：面向校园社区的任务型 Agent | 核心：ReAct 推理循环 + 工具调用 + 安全报名确认","textChars":49,"textLines":2,"bbox":[356.83,596.64,661.05,96]}
+{"kind":"textbox","id":"sh/udg7adsj","slide":1,"name":"文本框 10","text":"组号：11","textPreview":"组号：11","textChars":5,"textLines":1,"bbox":[542,500,196,42]}
+{"kind":"image","id":"im/u9knih4b","slide":1,"name":"图片 9","bbox":[1089.61,39.75,105.84,121.37]}
+{"kind":"image","id":"im/judg7ads","slide":1,"name":"图片 5","bbox":[0,39.18,680.94,121.37]}
+{"kind":"notes","id":"nt/2x4nap4r","slide":1,"text":""}
+{"kind":"slide","id":"sl/pg3ex0nu","slide":2,"title":"1 分工介绍","textShapes":18}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":2,"name":"标题 1","placeholder":"title","text":"1 分工介绍","textPreview":"1 分工介绍","textChars":6,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/r65wjudg","slide":2,"name":"灯片编号占位符 3","placeholder":"slideNumber","text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":2,"text":"本次综合实训在原有社区系统基础上，重点补充 Agent 功能链路。","textPreview":"本次综合实训在原有社区系统基础上，重点补充 Agent 功能链路。","textChars":33,"textLines":1,"bbox":[58,113,1030,34]}
+{"kind":"textbox","id":"sh/9cvixcze","slide":2,"text":"刘宇涛","textPreview":"刘宇涛","textChars":3,"textLines":1,"bbox":[82,174,126,34]}
+{"kind":"textbox","id":"sh/gr2p8nqx","slide":2,"text":"Agent 后端编排","textPreview":"Agent 后端编排","textChars":10,"textLines":1,"bbox":[238,168,260,30]}
+{"kind":"textbox","id":"sh/rytsvu9k","slide":2,"text":"ReAct 循环、工具注册、检索过滤与单元测试","textPreview":"ReAct 循环、工具注册、检索过滤与单元测试","textChars":23,"textLines":1,"bbox":[238,200,820,28]}
+{"kind":"textbox","id":"sh/yd0z6103","slide":2,"text":"张建锦","textPreview":"张建锦","textChars":3,"textLines":1,"bbox":[82,252,126,34]}
+{"kind":"textbox","id":"sh/wb2hwfyx","slide":2,"text":"前端交互","textPreview":"前端交互","textChars":4,"textLines":1,"bbox":[238,246,260,30]}
+{"kind":"textbox","id":"sh/lwval87e","slide":2,"text":"Agent 聊天页、推理过程展示、刷新后的会话保留","textPreview":"Agent 聊天页、推理过程展示、刷新后的会话保留","textChars":25,"textLines":1,"bbox":[238,278,820,28]}
+{"kind":"textbox","id":"sh/e9cvixcz","slide":2,"text":"张萍萍","textPreview":"张萍萍","textChars":3,"textLines":1,"bbox":[82,330,126,34]}
+{"kind":"textbox","id":"sh/3q5o7qpg","slide":2,"text":"后端业务","textPreview":"后端业务","textChars":4,"textLines":1,"bbox":[238,324,260,30]}
+{"kind":"textbox","id":"sh/w3m94fu1","slide":2,"text":"Go 内部工具、报名确认、Redis 会话状态","textPreview":"Go 内部工具、报名确认、Redis 会话状态","textChars":23,"textLines":1,"bbox":[238,356,820,28]}
+{"kind":"textbox","id":"sh/loj2t83i","slide":2,"text":"黄悦","textPreview":"黄悦","textChars":2,"textLines":1,"bbox":[82,408,126,34]}
+{"kind":"textbox","id":"sh/ex0nuxc3","slide":2,"text":"测试与演示","textPreview":"测试与演示","textChars":5,"textLines":1,"bbox":[238,402,260,30]}
+{"kind":"textbox","id":"sh/3itgfmlk","slide":2,"text":"搜索、详情、报名、多轮上下文测试用例","textPreview":"搜索、详情、报名、多轮上下文测试用例","textChars":18,"textLines":1,"bbox":[238,434,820,28]}
+{"kind":"textbox","id":"sh/szqtcj6t","slide":2,"text":"卢雪倩","textPreview":"卢雪倩","textChars":3,"textLines":1,"bbox":[82,486,126,34]}
+{"kind":"textbox","id":"sh/lkjm1cfa","slide":2,"text":"文档与答辩","textPreview":"文档与答辩","textChars":5,"textLines":1,"bbox":[238,480,260,30]}
+{"kind":"textbox","id":"sh/lc7u54zi","slide":2,"text":"需求梳理、展示流程、答辩材料整理","textPreview":"需求梳理、展示流程、答辩材料整理","textChars":16,"textLines":1,"bbox":[238,512,820,28]}
+{"kind":"notes","id":"nt/pg3ex0nu","slide":2,"text":""}
+{"kind":"slide","id":"sl/s72x4nap","slide":3,"title":"2 项目介绍：原有系统已经覆盖完整社区流程","textShapes":16}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":3,"name":"标题 1","placeholder":"title","text":"2 项目介绍：原有系统已经覆盖完整社区流程","textPreview":"2 项目介绍：原有系统已经覆盖完整社区流程","textChars":21,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":3,"name":"灯片编号占位符 3","placeholder":"slideNumber","text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/vy90je9c","slide":3,"text":"旧功能不展开讲，综合实训重点放在新增 Agent。","textPreview":"旧功能不展开讲，综合实训重点放在新增 Agent。","textChars":25,"textLines":1,"bbox":[58,113,1030,34]}
+{"kind":"shape","id":"sh/oj2t83it","slide":3,"bbox":[72,172,322,116]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":3,"text":"帖子社区","textPreview":"帖子社区","textChars":4,"textLines":1,"bbox":[90,186,286,28]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":3,"text":"发布、分类、宿舍筛选、图片、评论、点赞、收藏","textPreview":"发布、分类、宿舍筛选、图片、评论、点赞、收藏","textChars":22,"textLines":1,"bbox":[90,222,286,54]}
+{"kind":"shape","id":"sh/z25kb6xk","slide":3,"bbox":[454,172,322,116]}
+{"kind":"textbox","id":"sh/vy90je9c","slide":3,"text":"报名协作","textPreview":"报名协作","textChars":4,"textLines":1,"bbox":[472,186,286,28]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":3,"text":"限额报名、报名状态、通知提醒、事务写入","textPreview":"限额报名、报名状态、通知提醒、事务写入","textChars":19,"textLines":1,"bbox":[472,222,286,54]}
+{"kind":"shape","id":"sh/d4vmtwra","slide":3,"bbox":[836,172,322,116]}
+{"kind":"textbox","id":"sh/oj2t83it","slide":3,"text":"消息通知","textPreview":"消息通知","textChars":4,"textLines":1,"bbox":[854,186,286,28]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":3,"text":"私信会话、未读数、报名通知、系统消息","textPreview":"私信会话、未读数、报名通知、系统消息","textChars":18,"textLines":1,"bbox":[854,222,286,54]}
+{"kind":"shape","id":"sh/61032lsz","slide":3,"bbox":[72,342,322,116]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":3,"text":"管理后台","textPreview":"管理后台","textChars":4,"textLines":1,"bbox":[90,356,286,28]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":3,"text":"用户管理、内容审核、楼栋管理、敏感词与统计","textPreview":"用户管理、内容审核、楼栋管理、敏感词与统计","textChars":21,"textLines":1,"bbox":[90,392,286,54]}
+{"kind":"shape","id":"sh/vahoza1g","slide":3,"bbox":[454,342,322,116]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":3,"text":"内容安全","textPreview":"内容安全","textChars":4,"textLines":1,"bbox":[472,356,286,28]}
+{"kind":"textbox","id":"sh/epkzupwb","slide":3,"text":"敏感词过滤结合 AI 审核，降低违规内容风险","textPreview":"敏感词过滤结合 AI 审核，降低违规内容风险","textChars":22,"textLines":1,"bbox":[472,392,286,54]}
+{"kind":"shape","id":"sh/7adsji5s","slide":3,"bbox":[836,342,322,116]}
+{"kind":"textbox","id":"sh/wval87ed","slide":3,"text":"技术栈","textPreview":"技术栈","textChars":3,"textLines":1,"bbox":[854,356,286,28]}
+{"kind":"textbox","id":"sh/pg3ex0nu","slide":3,"text":"Vue 3 + Go Gin + MySQL + Redis + Python Agent","textPreview":"Vue 3 + Go Gin + MySQL + Redis + Python Agent","textChars":45,"textLines":1,"bbox":[854,392,286,54]}
+{"kind":"textbox","id":"sh/e1w7mp0b","slide":3,"text":"一句话概括：旧系统已完成社区闭环，本次重点升级自然语言 Agent。","textPreview":"一句话概括：旧系统已完成社区闭环，本次重点升级自然语言 Agent。","textChars":34,"textLines":1,"bbox":[220,560,820,42]}
+{"kind":"notes","id":"nt/s72x4nap","slide":3,"text":""}
+{"kind":"slide","id":"sl/val87ed8","slide":4,"title":"3 为什么要加入 Agent","textShapes":11}
+{"kind":"textbox","id":"sh/qtcj6tov","slide":4,"name":"标题 1","placeholder":"title","text":"3 为什么要加入 Agent","textPreview":"3 为什么要加入 Agent","textChars":14,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/87ed8bat","slide":4,"name":"灯片编号占位符 3","placeholder":"slideNumber","text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/xs72x4na","slide":4,"text":"目标不是做聊天机器人，而是让用户用自然语言完成真实业务任务。","textPreview":"目标不是做聊天机器人，而是让用户用自然语言完成真实业务任务。","textChars":30,"textLines":1,"bbox":[58,113,1030,34]}
+{"kind":"shape","id":"sh/q1orytsv","slide":4,"bbox":[78,176,330,160]}
+{"kind":"textbox","id":"sh/fmlkjm1c","slide":4,"text":"原来的操作方式","textPreview":"原来的操作方式","textChars":7,"textLines":1,"bbox":[96,190,294,28]}
+{"kind":"textbox","id":"sh/8jqh0fep","slide":4,"text":"用户需要自己筛选分类、搜索关键词、打开详情、判断是否可报名。","textPreview":"用户需要自己筛选分类、搜索关键词、打开详情、判断是否可报名。","textChars":30,"textLines":1,"bbox":[96,226,294,98]}
+{"kind":"shape","id":"sh/x4nap4r6","slide":4,"bbox":[438,238,74,26]}
+{"kind":"shape","id":"sh/1w7mp0bi","slide":4,"bbox":[548,176,360,160]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":4,"text":"加入 Agent 后","textPreview":"加入 Agent 后","textChars":10,"textLines":1,"bbox":[566,190,324,28]}
+{"kind":"textbox","id":"sh/jqh0fepk","slide":4,"text":"用户直接说“有没有一起出去玩的帖子”“帮我报名第一个”，系统自动规划工具调用。","textPreview":"用户直接说“有没有一起出去玩的帖子”“帮我报名第一个”，系统自动规划工具调用。","textChars":39,"textLines":1,"bbox":[566,226,324,98]}
+{"kind":"shape","id":"sh/q5o7qpg3","slide":4,"bbox":[938,238,74,26]}
+{"kind":"shape","id":"sh/18jqh0fe","slide":4,"bbox":[1030,176,180,160]}
+{"kind":"textbox","id":"sh/8nqxs72x","slide":4,"text":"最终体验","textPreview":"最终体验","textChars":4,"textLines":1,"bbox":[1048,190,144,28]}
+{"kind":"textbox","id":"sh/j2t83itg","slide":4,"text":"搜索、详情、报名确认都在同一条对话链路中完成。","textPreview":"搜索、详情、报名确认都在同一条对话链路中完成。","textChars":23,"textLines":1,"bbox":[1048,226,144,98]}
+{"kind":"textbox","id":"sh/qh0fepkz","slide":4,"text":"这次综合实训的核心变化","textPreview":"这次综合实训的核心变化","textChars":11,"textLines":1,"bbox":[78,402,340,36]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":4,"text":"把“平台功能”封装成可被 Agent 安全调用的工具，再让模型在 ReAct 循环中按任务一步步选择工具。","textPreview":"把“平台功能”封装成可被 Agent 安全调用的工具，再让模型在 ReAct 循环中按任务一步步选择工具。","textChars":53,"textLines":1,"bbox":[78,450,980,58]}
+{"kind":"notes","id":"nt/val87ed8","slide":4,"text":""}
+{"kind":"slide","id":"sl/mlkjm1cf","slide":5,"title":"4 Agent 采用受控工具调用架构","textShapes":12}
+{"kind":"textbox","id":"sh/ovahoza1","slide":5,"name":"标题 1","placeholder":"title","text":"4 Agent 采用受控工具调用架构","textPreview":"4 Agent 采用受控工具调用架构","textChars":18,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":5,"name":"灯片编号占位符 3","placeholder":"slideNumber","text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":5,"text":"Python 负责推理和检索，Go 继续负责权限、事务和数据写入。","textPreview":"Python 负责推理和检索，Go 继续负责权限、事务和数据写入。","textChars":33,"textLines":1,"bbox":[58,113,1030,34]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":5,"text":"Vue\nAgent 页面","textPreview":"Vue | Agent 页面","textChars":12,"textLines":2,"bbox":[64,204,160,70]}
+{"kind":"shape","id":"sh/d8v6psfi","slide":5,"bbox":[244,226,45,26]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":5,"text":"Go\nAgent 网关","textPreview":"Go | Agent 网关","textChars":11,"textLines":2,"bbox":[272,204,160,70]}
+{"kind":"shape","id":"sh/vy90je9c","slide":5,"bbox":[452,226,45,26]}
+{"kind":"textbox","id":"sh/nuxc3ylc","slide":5,"text":"Python\nReAct Loop","textPreview":"Python | ReAct Loop","textChars":17,"textLines":2,"bbox":[500,204,160,70]}
+{"kind":"shape","id":"sh/y90je9cv","slide":5,"bbox":[680,226,45,26]}
+{"kind":"textbox","id":"sh/5wjudg7a","slide":5,"text":"Go 内部工具\n业务接口","textPreview":"Go 内部工具 | 业务接口","textChars":12,"textLines":2,"bbox":[760,204,160,70]}
+{"kind":"shape","id":"sh/gbq1oryt","slide":5,"bbox":[940,226,45,26]}
+{"kind":"textbox","id":"sh/n29gr2p8","slide":5,"text":"MySQL / Redis\nFAISS 索引","textPreview":"MySQL / Redis | FAISS 索引","textChars":22,"textLines":2,"bbox":[1010,204,190,70]}
+{"kind":"shape","id":"sh/yhgn29gr","slide":5,"bbox":[90,360,500,130]}
+{"kind":"textbox","id":"sh/58z25kb6","slide":5,"text":"关键边界","textPreview":"关键边界","textChars":4,"textLines":1,"bbox":[108,374,464,28]}
+{"kind":"textbox","id":"sh/gn29gr2p","slide":5,"text":"Python Agent 不直接写数据库；报名、权限、事务、Redis 状态都由 Go 后端执行。","textPreview":"Python Agent 不直接写数据库；报名、权限、事务、Redis 状态都由 Go 后端执行。","textChars":49,"textLines":1,"bbox":[108,410,464,68]}
+{"kind":"shape","id":"sh/neloj2t8","slide":5,"bbox":[690,360,500,130]}
+{"kind":"textbox","id":"sh/ytsvu9kn","slide":5,"text":"为什么这样设计","textPreview":"为什么这样设计","textChars":7,"textLines":1,"bbox":[708,374,464,28]}
+{"kind":"textbox","id":"sh/2x4nap4r","slide":5,"text":"模型只决定“下一步调用什么工具”，不会绕过业务规则，也不会直接修改核心数据。","textPreview":"模型只决定“下一步调用什么工具”，不会绕过业务规则，也不会直接修改核心数据。","textChars":38,"textLines":1,"bbox":[708,410,464,68]}
+{"kind":"notes","id":"nt/mlkjm1cf","slide":5,"text":""}
+{"kind":"slide","id":"sl/58z25kb6","slide":6,"title":"5 ReAct 循环让每一步都有依据","textShapes":15}
+{"kind":"textbox","id":"sh/ylc7u54z","slide":6,"name":"标题 1","placeholder":"title","text":"5 ReAct 循环让每一步都有依据","textPreview":"5 ReAct 循环让每一步都有依据","textChars":18,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/g3ex0nux","slide":6,"name":"灯片编号占位符 3","placeholder":"slideNumber","text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/5o7qpg3e","slide":6,"text":"一次对话由“思考、行动、观察、收口”组成，并把过程展示给用户。","textPreview":"一次对话由“思考、行动、观察、收口”组成，并把过程展示给用户。","textChars":31,"textLines":1,"bbox":[58,113,1030,34]}
+{"kind":"shape","id":"sh/yxobm58z","slide":6,"bbox":[82,190,225,150]}
+{"kind":"textbox","id":"sh/nih4byhg","slide":6,"text":"Thought","textPreview":"Thought","textChars":7,"textLines":1,"bbox":[100,204,189,28]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":6,"text":"判断用户意图\n是否搜索、详情或报名","textPreview":"判断用户意图 | 是否搜索、详情或报名","textChars":17,"textLines":2,"bbox":[100,240,189,88]}
+{"kind":"shape","id":"sh/9s36hcrm","slide":6,"bbox":[320,252,44,26]}
+{"kind":"shape","id":"sh/d8v6psfi","slide":6,"bbox":[377,190,225,150]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":6,"text":"Action","textPreview":"Action","textChars":6,"textLines":1,"bbox":[395,204,189,28]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":6,"text":"调用一个工具\nsearch / detail / prepare","textPreview":"调用一个工具 | search / detail / prepare","textChars":32,"textLines":2,"bbox":[395,240,189,88]}
+{"kind":"shape","id":"sh/6hcrmhk3","slide":6,"bbox":[615,252,44,26]}
+{"kind":"shape","id":"sh/dg7adsji","slide":6,"bbox":[672,190,225,150]}
+{"kind":"textbox","id":"sh/ovahoza1","slide":6,"text":"Observation","textPreview":"Observation","textChars":11,"textLines":1,"bbox":[690,204,189,28]}
+{"kind":"textbox","id":"sh/vahoza1g","slide":6,"text":"读取工具结果\n候选、详情或待确认动作","textPreview":"读取工具结果 | 候选、详情或待确认动作","textChars":18,"textLines":2,"bbox":[690,240,189,88]}
+{"kind":"shape","id":"sh/6tovahoz","slide":6,"bbox":[910,252,44,26]}
+{"kind":"shape","id":"sh/dsji5sne","slide":6,"bbox":[967,190,225,150]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":6,"text":"Finish","textPreview":"Finish","textChars":6,"textLines":1,"bbox":[985,204,189,28]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":6,"text":"生成最终回复\n必要时等待用户确认","textPreview":"生成最终回复 | 必要时等待用户确认","textChars":16,"textLines":2,"bbox":[985,240,189,88]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":6,"text":"工程化补充","textPreview":"工程化补充","textChars":5,"textLines":1,"bbox":[82,412,220,34]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":6,"text":"• 搜索成功或空结果时快速收口，避免模型重复搜索","textPreview":"• 搜索成功或空结果时快速收口，避免模型重复搜索","textChars":24,"textLines":1,"bbox":[110,462,900,30]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":6,"text":"• 详情读取成功后直接生成详情回复，避免反复调用工具","textPreview":"• 详情读取成功后直接生成详情回复，避免反复调用工具","textChars":26,"textLines":1,"bbox":[110,504,900,30]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":6,"text":"• 报名准备成功后只创建待确认动作，不直接报名","textPreview":"• 报名准备成功后只创建待确认动作，不直接报名","textChars":23,"textLines":1,"bbox":[110,546,900,30]}
+{"kind":"notes","id":"nt/58z25kb6","slide":6,"text":""}
+{"kind":"slide","id":"sl/0z61032l","slide":7,"title":"6 工具和状态把多轮任务接起来","textShapes":9}
+{"kind":"textbox","id":"sh/x4nap4r6","slide":7,"name":"标题 1","placeholder":"title","text":"6 工具和状态把多轮任务接起来","textPreview":"6 工具和状态把多轮任务接起来","textChars":15,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/fa9w3m94","slide":7,"name":"灯片编号占位符 3","placeholder":"slideNumber","text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/qpg3ex0n","slide":7,"text":"Agent 能理解“第二个”“报名这个”，依赖的是服务端状态，而不是前端临时记忆。","textPreview":"Agent 能理解“第二个”“报名这个”，依赖的是服务端状态，而不是前端临时记忆。","textChars":41,"textLines":1,"bbox":[58,113,1030,34]}
+{"kind":"shape","id":"sh/xczed8v6","slide":7,"bbox":[80,170,360,300]}
+{"kind":"textbox","id":"sh/8v6psfil","slide":7,"text":"工具集合","textPreview":"工具集合","textChars":4,"textLines":1,"bbox":[98,184,324,28]}
+{"kind":"textbox","id":"sh/je9cvixc","slide":7,"text":"search_posts\nsearch_signup_posts\nget_post_detail_from_candidate\nprepare_signup_from_candidate\nconfirm_signup","textPreview":"search_posts | search_signup_posts | get_post_detail_from_candidate | prepare_signup_from_candidate | confirm_signup","textChars":108,"textLines":5,"bbox":[98,220,324,238]}
+{"kind":"shape","id":"sh/qtcj6tov","slide":7,"bbox":[472,170,360,300]}
+{"kind":"textbox","id":"sh/svu9knih","slide":7,"text":"会话状态","textPreview":"会话状态","textChars":4,"textLines":1,"bbox":[490,184,324,28]}
+{"kind":"textbox","id":"sh/hgn29gr2","slide":7,"text":"last_candidates：上次搜索候选\nselected_post：当前详情帖子\npending_action：待确认报名\nhistory：最近对话上下文","textPreview":"last_candidates：上次搜索候选 | selected_post：当前详情帖子 | pending_action：待确认报名 | history：最近对话上下文","textChars":80,"textLines":4,"bbox":[490,220,324,238]}
+{"kind":"shape","id":"sh/ap4r65wj","slide":7,"bbox":[864,170,330,300]}
+{"kind":"textbox","id":"sh/za1gvy90","slide":7,"text":"业务保护","textPreview":"业务保护","textChars":4,"textLines":1,"bbox":[882,184,294,28]}
+{"kind":"textbox","id":"sh/s36hcrmh","slide":7,"text":"Go 后端校验用户身份、帖子状态、报名人数和确认动作；Redis 中待确认动作 5 分钟过期。","textPreview":"Go 后端校验用户身份、帖子状态、报名人数和确认动作；Redis 中待确认动作 5 分钟过期。","textChars":47,"textLines":1,"bbox":[882,220,294,238]}
+{"kind":"notes","id":"nt/0z61032l","slide":7,"text":""}
+{"kind":"slide","id":"sl/fu18jqh0","slide":8,"title":"7 语义检索处理“说法不同但意思相近”的请求","textShapes":11}
+{"kind":"textbox","id":"sh/u9knih4b","slide":8,"name":"标题 1","placeholder":"title","text":"7 语义检索处理“说法不同但意思相近”的请求","textPreview":"7 语义检索处理“说法不同但意思相近”的请求","textChars":22,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":8,"name":"灯片编号占位符 3","placeholder":"slideNumber","text":"8","textPreview":"8","textChars":1,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/1orytsvu","slide":8,"text":"搜索不只看关键词，而是先召回语义相近帖子，再做阈值和精确词过滤。","textPreview":"搜索不只看关键词，而是先召回语义相近帖子，再做阈值和精确词过滤。","textChars":32,"textLines":1,"bbox":[58,113,1030,34]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":8,"text":"用户自然语言\n一起出去玩","textPreview":"用户自然语言 | 一起出去玩","textChars":12,"textLines":2,"bbox":[82,185,180,70]}
+{"kind":"shape","id":"sh/jm1cfa9w","slide":8,"bbox":[282,207,52,26]}
+{"kind":"textbox","id":"sh/cvixczed","slide":8,"text":"BGE 向量\nFAISS 召回","textPreview":"BGE 向量 | FAISS 召回","textChars":15,"textLines":2,"bbox":[354,185,180,70]}
+{"kind":"shape","id":"sh/5gbq1ory","slide":8,"bbox":[554,207,52,26]}
+{"kind":"textbox","id":"sh/18jqh0fe","slide":8,"text":"分数过滤\n0.55 / 0.52","textPreview":"分数过滤 | 0.55 / 0.52","textChars":16,"textLines":2,"bbox":[626,185,180,70]}
+{"kind":"shape","id":"sh/8nqxs72x","slide":8,"bbox":[826,207,52,26]}
+{"kind":"textbox","id":"sh/j2t83itg","slide":8,"text":"候选结果\n爬山 / 志愿活动","textPreview":"候选结果 | 爬山 / 志愿活动","textChars":14,"textLines":2,"bbox":[898,185,220,70]}
+{"kind":"shape","id":"sh/qh0fepkz","slide":8,"bbox":[94,348,500,150]}
+{"kind":"textbox","id":"sh/1w7mp0bi","slide":8,"text":"为什么要两级阈值","textPreview":"为什么要两级阈值","textChars":8,"textLines":1,"bbox":[112,362,464,28]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":8,"text":"严格阈值避免明显噪声；当严格结果为空时，用 relaxed 窗口保留“出去玩”这类泛化语义。","textPreview":"严格阈值避免明显噪声；当严格结果为空时，用 relaxed 窗口保留“出去玩”这类泛化语义。","textChars":46,"textLines":1,"bbox":[112,398,464,88]}
+{"kind":"shape","id":"sh/jqh0fepk","slide":8,"bbox":[684,348,500,150]}
+{"kind":"textbox","id":"sh/q5o7qpg3","slide":8,"text":"为什么还要精确词过滤","textPreview":"为什么还要精确词过滤","textChars":10,"textLines":1,"bbox":[702,362,464,28]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":8,"text":"“今晚”“一起”这种弱词不能单独保留低分结果，避免“吃饭”搜出跑步或快递。","textPreview":"“今晚”“一起”这种弱词不能单独保留低分结果，避免“吃饭”搜出跑步或快递。","textChars":37,"textLines":1,"bbox":[702,398,464,88]}
+{"kind":"notes","id":"nt/fu18jqh0","slide":8,"text":""}
+{"kind":"slide","id":"sl/qh0fepkz","slide":9,"title":"8 报名功能必须先确认再执行","textShapes":10}
+{"kind":"textbox","id":"sh/ovahoza1","slide":9,"name":"标题 1","placeholder":"title","text":"8 报名功能必须先确认再执行","textPreview":"8 报名功能必须先确认再执行","textChars":14,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":9,"name":"灯片编号占位符 3","placeholder":"slideNumber","text":"9","textPreview":"9","textChars":1,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":9,"text":"带副作用的动作被拆成 prepare 和 confirm 两步，避免模型直接替用户报名。","textPreview":"带副作用的动作被拆成 prepare 和 confirm 两步，避免模型直接替用户报名。","textChars":44,"textLines":1,"bbox":[58,113,1030,34]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":9,"text":"搜索候选","textPreview":"搜索候选","textChars":4,"textLines":1,"bbox":[75,205,165,70]}
+{"kind":"shape","id":"sh/d8v6psfi","slide":9,"bbox":[253,228,38,26]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":9,"text":"准备报名","textPreview":"准备报名","textChars":4,"textLines":1,"bbox":[305,205,165,70]}
+{"kind":"shape","id":"sh/vy90je9c","slide":9,"bbox":[483,228,38,26]}
+{"kind":"textbox","id":"sh/nuxc3ylc","slide":9,"text":"生成待确认动作","textPreview":"生成待确认动作","textChars":7,"textLines":1,"bbox":[535,205,165,70]}
+{"kind":"shape","id":"sh/y90je9cv","slide":9,"bbox":[713,228,38,26]}
+{"kind":"textbox","id":"sh/5wjudg7a","slide":9,"text":"用户确认","textPreview":"用户确认","textChars":4,"textLines":1,"bbox":[765,205,165,70]}
+{"kind":"shape","id":"sh/gbq1oryt","slide":9,"bbox":[943,228,38,26]}
+{"kind":"textbox","id":"sh/n29gr2p8","slide":9,"text":"Go 执行报名事务","textPreview":"Go 执行报名事务","textChars":9,"textLines":1,"bbox":[995,205,165,70]}
+{"kind":"textbox","id":"sh/yhgn29gr","slide":9,"text":"这条链路解决的问题","textPreview":"这条链路解决的问题","textChars":9,"textLines":1,"bbox":[90,382,300,34]}
+{"kind":"textbox","id":"sh/58z25kb6","slide":9,"text":"• 用户说“帮我报名第一个”时，Agent 只创建 pending_action\n• 用户回复“确认报名”后，Go 后端再检查帖子、人数和身份\n• 动作存 Redis 并设置过期时间，避免旧确认误操作","textPreview":"• 用户说“帮我报名第一个”时，Agent 只创建 pending_action | • 用户回复“确认报名”后，Go 后端再检查帖子、人数和身份 | • 动作存 Redis 并设置过期时间，避免旧确认误操作","textChars":100,"textLines":3,"bbox":[110,436,980,110]}
+{"kind":"notes","id":"nt/qh0fepkz","slide":9,"text":""}
+{"kind":"slide","id":"sl/29gr2p8n","slide":10,"title":"9 演示流程与项目总结","textShapes":11}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":10,"name":"标题 1","placeholder":"title","text":"9 演示流程与项目总结","textPreview":"9 演示流程与项目总结","textChars":11,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":10,"name":"灯片编号占位符 3","placeholder":"slideNumber","text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[0,0,0,0]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":10,"text":"综合实训的重点成果是把 DormGo 做成可对话、可追踪、可控执行的任务型系统。","textPreview":"综合实训的重点成果是把 DormGo 做成可对话、可追踪、可控执行的任务型系统。","textChars":40,"textLines":1,"bbox":[58,113,1030,34]}
+{"kind":"shape","id":"sh/94fu18jq","slide":10,"bbox":[80,168,340,170]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":10,"text":"演示 1：自然语言找帖","textPreview":"演示 1：自然语言找帖","textChars":11,"textLines":1,"bbox":[98,182,304,28]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":10,"text":"“有一起出去玩的帖子吗？”\n返回爬山、志愿活动等语义相关结果。","textPreview":"“有一起出去玩的帖子吗？” | 返回爬山、志愿活动等语义相关结果。","textChars":31,"textLines":2,"bbox":[98,218,304,108]}
+{"kind":"shape","id":"sh/25kb6xkf","slide":10,"bbox":[470,168,340,170]}
+{"kind":"textbox","id":"sh/4fu18jqh","slide":10,"text":"演示 2：追问详情","textPreview":"演示 2：追问详情","textChars":9,"textLines":1,"bbox":[488,182,304,28]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":10,"text":"“详细介绍第二个”\n从 last_candidates 读取候选详情，不重新搜索。","textPreview":"“详细介绍第二个” | 从 last_candidates 读取候选详情，不重新搜索。","textChars":41,"textLines":2,"bbox":[488,218,304,108]}
+{"kind":"shape","id":"sh/m94fu18j","slide":10,"bbox":[860,168,340,170]}
+{"kind":"textbox","id":"sh/fu18jqh0","slide":10,"text":"演示 3：确认报名","textPreview":"演示 3：确认报名","textChars":9,"textLines":1,"bbox":[878,182,304,28]}
+{"kind":"textbox","id":"sh/83itgfml","slide":10,"text":"“帮我报名这个”\n先生成待确认动作，用户确认后才真正写入。","textPreview":"“帮我报名这个” | 先生成待确认动作，用户确认后才真正写入。","textChars":29,"textLines":2,"bbox":[878,218,304,108]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":10,"text":"最终收获","textPreview":"最终收获","textChars":4,"textLines":1,"bbox":[88,424,180,34]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":10,"text":"DormGo 不再只是功能堆叠，而是把已有社区能力封装成 Agent 可调用的工具，并通过 ReAct 循环、状态保存和确认机制完成真实业务任务。","textPreview":"DormGo 不再只是功能堆叠，而是把已有社区能力封装成 Agent 可调用的工具，并通过 ReAct 循环、状态保存和确认机制完成真实业务任务。","textChars":73,"textLines":1,"bbox":[88,472,1030,76]}
+{"kind":"notes","id":"nt/29gr2p8n","slide":10,"text":""}

@@ -291,6 +291,24 @@ func UpdateViewCount(postID uint, delta int) error {
 	return nil
 }
 
+// GetAllActivePostsForIndex returns all active posts with minimal fields for vector indexing.
+// Used by the Python agent to build/refresh the FAISS semantic search index.
+func GetAllActivePostsForIndex(limit int) ([]*DgPost, error) {
+	posts := make([]*DgPost, 0)
+	if limit <= 0 || limit > 200 {
+		limit = 100
+	}
+	err := DB.Where("status = ?", "normal").
+		Order("is_pinned desc, created_at desc").
+		Limit(limit).
+		Find(&posts).Error
+	if err != nil {
+		fmt.Println("get all posts for index error: ", err)
+		return nil, err
+	}
+	return posts, nil
+}
+
 // GetPostsByUserID 根据用户ID获取该用户发布的所有帖子
 func GetPostsByUserID(userID int) ([]*DgPost, error) {
 	posts := make([]*DgPost, 0)

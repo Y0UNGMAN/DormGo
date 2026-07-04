@@ -91,6 +91,7 @@ func App() *gin.Engine {
 	agent.Use(middleware.JWTAuthMiddleware())
 	{
 		agent.POST("/chat", controller.AgentChat)
+		agent.POST("/chat/stream", controller.AgentChatStream)
 	}
 
 	internalAgent := r.Group("/internal/agent/tools")
@@ -99,9 +100,12 @@ func App() *gin.Engine {
 		internalAgent.POST("/search_signup_posts", controller.InternalSearchSignupPosts)
 		internalAgent.POST("/prepare_signup", controller.InternalPrepareSignup)
 		internalAgent.POST("/prepare_signup_from_candidate", controller.InternalPrepareSignupFromCandidate)
+		internalAgent.POST("/post_detail", controller.InternalPostDetail)
+		internalAgent.POST("/post_detail_from_candidate", controller.InternalPostDetailFromCandidate)
 		internalAgent.POST("/confirm_signup", controller.InternalConfirmSignup)
 		internalAgent.POST("/get_session", controller.InternalGetAgentSession)
 		internalAgent.POST("/save_session", controller.InternalSaveAgentSession)
+		internalAgent.POST("/all_posts", controller.InternalAllPosts)
 	}
 
 	post := r.Group("/api/v1/post")
